@@ -166,6 +166,7 @@ class FirestoreProfileRepository implements ProfileRepository {
         await user.delete();
       } catch (e) {
         debugPrint('FirestoreProfileRepository delete user error: $e');
+        rethrow;
       }
     }
   }
