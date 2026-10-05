@@ -8,6 +8,7 @@ abstract final class AppRoutes {
   static const splash = '/splash';
   static const onboarding = '/onboarding';
   static const welcome = '/welcome';
+  static const emailAuth = '/welcome/email';
 
   // Tab shell.
   static const home = '/home';
@@ -25,14 +26,13 @@ abstract final class AppRoutes {
   static String artwork(String id) => '/artwork/$id';
   static String story(String id) => '/artwork/$id/story';
   static String lookCloser(String id) => '/artwork/$id/look-closer';
-  static String listen(String id) => '/artwork/$id/listen';
-  static String compare(String id) => '/artwork/$id/compare';
   static const detective = '/detective';
 
   // You.
   static const history = '/history';
   static const personality = '/personality';
   static const paywall = '/paywall';
+  static const accountWall = '/account-wall';
   static const settings = '/settings';
 }
 

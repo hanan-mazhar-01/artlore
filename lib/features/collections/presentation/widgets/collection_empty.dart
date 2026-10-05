@@ -9,7 +9,20 @@ import '../../../../core/widgets/fade_slide_in.dart';
 
 /// Empty walls — an invitation rather than an error.
 class CollectionEmpty extends StatelessWidget {
-  const CollectionEmpty({super.key});
+  const CollectionEmpty({
+    super.key,
+    this.lead = 'Your walls',
+    this.emphasis = 'are still bare.',
+    this.message =
+        'Save a painting from its story and it will hang here, in a '
+        'gallery of your own.',
+    this.buttonLabel = 'Scan an artwork',
+  });
+
+  final String lead;
+  final String emphasis;
+  final String message;
+  final String buttonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +34,8 @@ class CollectionEmpty extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             EditorialHeading(
-              lead: 'Your walls',
-              emphasis: 'are still bare.',
+              lead: lead,
+              emphasis: emphasis,
               style: AppTypography.serif(
                 34,
                 weight: FontWeight.w500,
@@ -31,13 +44,12 @@ class CollectionEmpty extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Save a painting from its story and it will hang here, in a '
-              'gallery of your own.',
+              message,
               style: AppTypography.bodySmall.copyWith(color: p.muted),
             ),
             const SizedBox(height: 26),
             PillButton(
-              label: 'Scan an artwork',
+              label: buttonLabel,
               style: PillStyle.outline,
               trailingArrow: true,
               onTap: () => context.push(AppRoutes.scan),

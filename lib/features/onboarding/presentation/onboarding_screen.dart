@@ -8,7 +8,6 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/art_scaffold.dart';
 import '../../../core/widgets/buttons.dart';
-import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/icons/art_icon.dart';
 import '../../../core/widgets/icons/art_icons.dart';
 import '../../../core/widgets/tappable.dart';
@@ -25,30 +24,25 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
+  final PageController _pageController = PageController();
   int _index = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void _next() {
     if (_index < onboardingSlides.length - 1) {
-      setState(() => _index++);
+      Haptics.play(HapticKind.selection);
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeInOutCubic,
+      );
     } else {
+      Haptics.play(HapticKind.light);
       context.go(AppRoutes.welcome);
-    }
-  }
-
-  void _previous() {
-    if (_index > 0) {
-      Haptics.play(HapticKind.selection);
-      setState(() => _index--);
-    }
-  }
-
-  void _onSwipe(DragEndDetails d) {
-    final v = d.primaryVelocity ?? 0;
-    if (v < -250) {
-      Haptics.play(HapticKind.selection);
-      _next();
-    } else if (v > 250) {
-      _previous();
     }
   }
 
@@ -59,39 +53,55 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final bottomPad = math.max(28.0, context.bottomInset + 10);
     return ArtScaffold(
       swipeBack: false,
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onHorizontalDragEnd: _onSwipe,
-        child: Column(
-          children: [
-            Expanded(
-              child: ClipRect(
-                child: AnimatedSwitcher(
-                  duration: const Duration(seconds: 1),
-                  child: KeyedSubtree(
-                    key: ValueKey(_index),
-                    child: SizedBox.expand(child: onboardingCollage(_index)),
-                  ),
-                ),
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: onboardingSlides.length,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (i) {
+                if (i != _index) {
+                  Haptics.play(HapticKind.selection);
+                  setState(() => _index = i);
+                }
+              },
+              itemBuilder: (context, i) => KeyedSubtree(
+                key: ValueKey(i),
+                child: SizedBox.expand(child: onboardingCollage(i)),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(32, 0, 32, bottomPad),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  OnboardingProgress(
-                    count: onboardingSlides.length,
-                    current: _index,
-                  ),
-                  const SizedBox(height: 22),
-                  ConstrainedBox(
-                    // Keeps the controls steady between pages, but lets
-                    // larger text push the artwork up instead of clipping.
-                    constraints: const BoxConstraints(minHeight: 150),
-                    child: FadeSlideIn(
-                      key: ValueKey('copy$_index'),
-                      duration: const Duration(milliseconds: 800),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(32, 0, 32, bottomPad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                OnboardingProgress(
+                  count: onboardingSlides.length,
+                  current: _index,
+                ),
+                const SizedBox(height: 22),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 150),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.12),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: KeyedSubtree(
+                      key: ValueKey(_index),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -116,25 +126,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextAction(
-                        label: 'Skip',
-                        onTap: () => context.go(AppRoutes.welcome),
-                      ),
-                      _NextButton(
-                        last: _index == onboardingSlides.length - 1,
-                        onTap: _next,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextAction(
+                      label: 'Skip',
+                      onTap: () => context.go(AppRoutes.welcome),
+                    ),
+                    _NextButton(
+                      last: _index == onboardingSlides.length - 1,
+                      onTap: _next,
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -152,14 +162,36 @@ class _NextButton extends StatelessWidget {
     return Tappable(
       onTap: onTap,
       semanticLabel: last ? 'Get started' : 'Continue',
-      pressedScale: .94,
+      pressedScale: .92,
       haptic: HapticKind.light,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOutCubic,
         width: 60,
         height: 60,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: p.inverse, shape: BoxShape.circle),
-        child: ArtIcon(ArtIcons.arrowRight, size: 22, color: p.onInverse),
+        decoration: BoxDecoration(
+          color: last ? p.accent : p.inverse,
+          shape: BoxShape.circle,
+          boxShadow: last
+              ? [
+                  BoxShadow(
+                    color: p.accentAlpha(.4),
+                    blurRadius: 18,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: ArtIcon(
+            ArtIcons.arrowRight,
+            key: ValueKey(last),
+            size: 22,
+            color: last ? p.onAccent : p.onInverse,
+          ),
+        ),
       ),
     );
   }

@@ -46,8 +46,6 @@ class Artwork {
 
   String get byline => '$artist · $year';
 
-  String get metadataLine => '$year · $medium · $dimensions · $museum, $city';
-
   String get semanticLabel => '$title by $artist';
 
   @override

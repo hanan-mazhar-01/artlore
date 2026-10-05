@@ -6,9 +6,15 @@ class MockProfileRepository implements ProfileRepository {
   @override
   Future<UserProfile> fetchProfile() async {
     return const UserProfile(
-      name: 'Hanan',
+      name: 'Art Visitor',
       memberSince: 'March 2026',
-      listeningTime: '3 h 12 min',
+      listeningTime: '0 min',
     );
   }
+
+  @override
+  Future<void> updateName(String name) async {}
+
+  @override
+  Future<void> deleteAccount() async {}
 }

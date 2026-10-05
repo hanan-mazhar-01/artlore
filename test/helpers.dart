@@ -5,6 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:artlore/features/collections/data/mock_collection_repository.dart';
+import 'package:artlore/features/history/data/mock_history_repository.dart';
+import 'package:artlore/features/paywall/data/mock_purchase_repository.dart';
+import 'package:artlore/features/profile/data/mock_profile_repository.dart';
+import 'package:artlore/features/scan/data/mock_recognition_repository.dart';
+
 /// A container wired like `main()`, backed by in-memory preferences.
 Future<ProviderContainer> makeContainer([
   Map<String, Object> prefs = const {},
@@ -12,7 +18,14 @@ Future<ProviderContainer> makeContainer([
   SharedPreferences.setMockInitialValues(prefs);
   final instance = await SharedPreferences.getInstance();
   return ProviderContainer(
-    overrides: [sharedPreferencesProvider.overrideWithValue(instance)],
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(instance),
+      historyRepositoryProvider.overrideWithValue(MockHistoryRepository()),
+      collectionRepositoryProvider.overrideWithValue(MockCollectionRepository()),
+      profileRepositoryProvider.overrideWithValue(const MockProfileRepository()),
+      recognitionRepositoryProvider.overrideWithValue(const MockRecognitionRepository()),
+      purchaseRepositoryProvider.overrideWithValue(MockPurchaseRepository()),
+    ],
   );
 }
 

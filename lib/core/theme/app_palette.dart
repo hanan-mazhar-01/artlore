@@ -119,9 +119,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     scrim: AppColors.scrimLight,
     glass: Color(0x99F7F3EC),
     shadow: Color(0x2E3A2C1A),
-    navPill: AppColors.stone,
-    navIcon: AppColors.umberMuted,
-    navLamp: AppColors.white,
+    navPill: AppColors.linenMuted,
+    navIcon: AppColors.stone,
+    navLamp: AppColors.brass,
   );
 
   @override

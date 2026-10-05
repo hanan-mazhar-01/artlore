@@ -19,11 +19,16 @@ class FloatingBottomNav extends StatefulWidget {
     required this.items,
     required this.selectedIndex,
     required this.onSelected,
+    required this.metrics,
   });
 
   final List<ArtNavItem> items;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+
+  /// Computed by the caller, so anything sharing its row (the scan button)
+  /// sizes off the exact same numbers — never recomputed in here.
+  final FloatingNavMetrics metrics;
 
   @override
   State<FloatingBottomNav> createState() => _FloatingBottomNavState();
@@ -72,10 +77,7 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final m = FloatingNavMetrics.forScreen(
-      MediaQuery.sizeOf(context).width,
-      widget.items.length,
-    );
+    final m = widget.metrics;
     return Semantics(
       container: true,
       explicitChildNodes: true,

@@ -7,6 +7,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/ambient_motion.dart';
 import '../../../../core/widgets/art_image.dart';
 import '../../../../core/widgets/design_stage.dart';
+import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/reveal_image.dart';
 import '../../../artwork/data/mock_catalog.dart';
 import 'onboarding_collages_more.dart';
@@ -41,6 +42,7 @@ class _MysteryCollage extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: AppRadius.css(131, 131, 6, 6),
+              border: Border.all(color: p.line(.16), width: 0.8),
               boxShadow: AppShadows.artwork(p),
             ),
             child: ClipRRect(
@@ -71,15 +73,21 @@ class _MysteryCollage extends StatelessWidget {
           left: 228,
           top: 430,
           width: 110,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: p.surface,
-              borderRadius: AppRadius.css(4, 22, 4, 22),
-            ),
-            child: Text(
-              'Who is she? No one knows.',
-              style: AppTypography.serif(15, italic: true, height: 1.25),
+          child: FadeSlideIn(
+            delay: const Duration(milliseconds: 250),
+            offset: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: p.surface,
+                borderRadius: AppRadius.css(4, 22, 4, 22),
+                border: Border.all(color: p.line(.12), width: 0.8),
+                boxShadow: AppShadows.card(p),
+              ),
+              child: Text(
+                'Who is she? No one knows.',
+                style: AppTypography.serif(15, italic: true, height: 1.25),
+              ),
             ),
           ),
         ),
@@ -119,8 +127,8 @@ class _ScanCollage extends StatelessWidget {
           child: CornerBrackets(
             color: p.accent,
             size: 34,
-            stroke: 1.5,
-            radius: 0,
+            stroke: 2.0,
+            radius: 6,
           ),
         ),
         const Positioned(
@@ -133,12 +141,37 @@ class _ScanCollage extends StatelessWidget {
         Positioned(
           left: 24,
           top: 440,
-          child: Text(
-            'IDENTIFIED · HOKUSAI, C. 1831',
-            style: AppTypography.sans(
-              10,
-              tracking: .24,
-            ).copyWith(color: p.accent),
+          child: FadeSlideIn(
+            delay: const Duration(milliseconds: 300),
+            offset: 8,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: p.accent,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: p.accentAlpha(.5),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'IDENTIFIED · HOKUSAI, C. 1831',
+                  style: AppTypography.sans(
+                    10,
+                    tracking: .24,
+                  ).copyWith(color: p.accent),
+                ),
+              ],
+            ),
           ),
         ),
       ],

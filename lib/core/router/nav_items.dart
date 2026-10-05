@@ -1,16 +1,12 @@
 import '../widgets/floating_nav/art_nav_item.dart';
 import '../widgets/icons/art_icons.dart';
-import 'app_routes.dart';
 
-/// The floating navigation, in order. Edit here to add, remove or reorder
-/// destinations; `branch` indexes match the shell branches in the router.
+/// The floating pill's tabs, in order. `branch` indexes match the shell
+/// branches in the router. Scan isn't one of these — it sits beside the
+/// pill as its own circular button (see `ScanFab`), so edit here only to
+/// add, remove or reorder the three destinations.
 const artNavItems = [
-  ArtNavItem.tab(icon: ArtIcons.house, label: 'Home', branch: 0),
-  ArtNavItem.action(
-    icon: ArtIcons.scanTab,
-    label: 'Scan an artwork',
-    route: AppRoutes.scan,
-  ),
-  ArtNavItem.tab(icon: ArtIcons.gallery, label: 'Collection', branch: 1),
-  ArtNavItem.tab(icon: ArtIcons.person, label: 'Profile', branch: 2),
+  ArtNavItem(icon: ArtIcons.house, label: 'Home', branch: 0),
+  ArtNavItem(icon: ArtIcons.gallery, label: 'Collection', branch: 1),
+  ArtNavItem(icon: ArtIcons.person, label: 'Profile', branch: 2),
 ];

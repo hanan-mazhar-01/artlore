@@ -8,6 +8,7 @@ import '../../../history/presentation/history_controller.dart';
 import '../../../paywall/presentation/premium_controller.dart';
 import '../../../settings/presentation/settings_controller.dart';
 import '../../domain/recognition.dart';
+import '../scan_controller.dart';
 
 /// The four quiet beats of "Reading the artwork…".
 const analysisSteps = [
@@ -19,7 +20,13 @@ const analysisSteps = [
 
 @immutable
 class AnalysisState {
-  const AnalysisState({this.step = 0, this.result, this.failed = false});
+  const AnalysisState({
+    this.step = 0,
+    this.result,
+    this.failed = false,
+    this.errorDetail,
+    this.unsupportedSubject,
+  });
 
   /// Index of the step in progress.
   final int step;
@@ -28,12 +35,27 @@ class AnalysisState {
   final Identification? result;
   final bool failed;
 
-  AnalysisState copyWith({int? step, Identification? result, bool? failed}) =>
-      AnalysisState(
-        step: step ?? this.step,
-        result: result ?? this.result,
-        failed: failed ?? this.failed,
-      );
+  /// Technical reason recognition failed — shown in small print for
+  /// diagnosis, e.g. "gemini-3.5-flash: HTTP 429 RESOURCE_EXHAUSTED".
+  final String? errorDetail;
+
+  /// Set instead of a generic failure when the photo clearly wasn't of an
+  /// artwork at all — e.g. "a person" — so the UI can say so plainly.
+  final String? unsupportedSubject;
+
+  AnalysisState copyWith({
+    int? step,
+    Identification? result,
+    bool? failed,
+    String? errorDetail,
+    String? unsupportedSubject,
+  }) => AnalysisState(
+    step: step ?? this.step,
+    result: result ?? this.result,
+    failed: failed ?? this.failed,
+    errorDetail: errorDetail ?? this.errorDetail,
+    unsupportedSubject: unsupportedSubject ?? this.unsupportedSubject,
+  );
 }
 
 final analysisControllerProvider = NotifierProvider.autoDispose
@@ -76,8 +98,9 @@ class AnalysisController extends Notifier<AnalysisState> {
   Future<void> _run(Future<void> ritual) async {
     try {
       final recognition = ref.read(recognitionRepositoryProvider);
+      final bytes = ref.read(pendingFrameBytesProvider);
       final results = await Future.wait([
-        recognition.identify(CapturedFrame(photoId: photoId)),
+        recognition.identify(CapturedFrame(bytes: bytes, photoId: photoId)),
         ritual,
       ]);
       if (!ref.mounted) return;
@@ -89,8 +112,19 @@ class AnalysisController extends Notifier<AnalysisState> {
             .recordScan(artworkId: id.artworkId, where: id.where);
       }
       if (ref.mounted) state = state.copyWith(result: id);
-    } catch (_) {
-      if (ref.mounted) state = state.copyWith(failed: true);
+    } on UnsupportedSubjectException catch (e) {
+      if (ref.mounted) {
+        state = state.copyWith(
+          failed: true,
+          unsupportedSubject: e.description?.isNotEmpty == true
+              ? e.description
+              : 'something else',
+        );
+      }
+    } catch (e) {
+      if (ref.mounted) {
+        state = state.copyWith(failed: true, errorDetail: e.toString());
+      }
     }
   }
 }

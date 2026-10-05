@@ -11,14 +11,20 @@ import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/round_buttons.dart';
 import '../../../../core/widgets/tappable.dart';
 
-/// Close button and the free-scan allowance pill.
+export 'scan_zoom_slider.dart';
+
+/// Close button and the flash toggle in the top bar.
 class ScanTopBar extends StatelessWidget {
-  const ScanTopBar({super.key, required this.onClose, required this.quota});
+  const ScanTopBar({
+    super.key,
+    required this.onClose,
+    required this.torchOn,
+    required this.onTorch,
+  });
 
   final VoidCallback onClose;
-
-  /// "3 free scans left" / "Unlimited scans".
-  final String quota;
+  final bool torchOn;
+  final VoidCallback onTorch;
 
   @override
   Widget build(BuildContext context) {
@@ -31,28 +37,38 @@ class ScanTopBar extends StatelessWidget {
           onTap: onClose,
           semanticLabel: 'Close scanner',
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            color: p.glass,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: p.accent,
-                  shape: BoxShape.circle,
-                ),
+        Tappable(
+          onTap: onTorch,
+          semanticLabel: torchOn ? 'Turn torch off' : 'Turn torch on',
+          pressedScale: .92,
+          child: AnimatedContainer(
+            duration: AppMotion.fast,
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: torchOn ? p.accent.withValues(alpha: .2) : p.glass,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: torchOn ? p.accent : p.line(.3),
+                width: 1.2,
               ),
-              const SizedBox(width: 8),
-              Text(
-                quota,
-                style: AppTypography.metadata.copyWith(color: p.muted),
-              ),
-            ],
+              boxShadow: torchOn
+                  ? [
+                      BoxShadow(
+                        color: p.accent.withValues(alpha: .35),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: ArtIcon(
+              ArtIcons.flash,
+              size: 19,
+              color: torchOn ? p.accent : p.ink,
+              strokeWidth: 1.6,
+            ),
           ),
         ),
       ],
@@ -60,21 +76,23 @@ class ScanTopBar extends StatelessWidget {
   }
 }
 
-/// Last capture, shutter, torch.
+/// Gallery picker, shutter, zoom reset button.
 class ScanControls extends StatelessWidget {
   const ScanControls({
     super.key,
     required this.locked,
     required this.onCapture,
-    required this.torchOn,
-    required this.onTorch,
+    required this.onGallery,
+    this.onResetZoom,
+    this.zoom = 1.0,
     this.lastCapture,
   });
 
   final bool locked;
   final VoidCallback onCapture;
-  final bool torchOn;
-  final VoidCallback onTorch;
+  final VoidCallback onGallery;
+  final VoidCallback? onResetZoom;
+  final double zoom;
   final ArtImageSource? lastCapture;
 
   @override
@@ -85,16 +103,32 @@ class ScanControls extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: p.line(.3)),
+          Tappable(
+            onTap: onGallery,
+            semanticLabel: 'Scan from photos',
+            pressedScale: .92,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: p.glass,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: p.line(.3)),
+              ),
+              child: lastCapture != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(13),
+                      child: ArtImage(lastCapture!),
+                    )
+                  : Center(
+                      child: ArtIcon(
+                        ArtIcons.photos,
+                        size: 22,
+                        color: p.ink,
+                        strokeWidth: 1.5,
+                      ),
+                    ),
             ),
-            child: lastCapture == null
-                ? null
-                : ArtImage(lastCapture!, radius: BorderRadius.circular(11)),
           ),
           Tappable(
             onTap: onCapture,
@@ -110,7 +144,7 @@ class ScanControls extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: locked ? p.accent : p.line(.7),
-                  width: 1.5,
+                  width: 1.8,
                 ),
               ),
               child: Container(
@@ -131,22 +165,28 @@ class ScanControls extends StatelessWidget {
             ),
           ),
           Tappable(
-            onTap: onTorch,
-            semanticLabel: torchOn ? 'Turn torch off' : 'Turn torch on',
-            pressedScale: .94,
-            child: Container(
-              width: 44,
-              height: 44,
+            onTap: onResetZoom,
+            semanticLabel: 'Reset zoom to 1x',
+            pressedScale: .92,
+            child: AnimatedContainer(
+              duration: AppMotion.fast,
+              width: 48,
+              height: 48,
               alignment: Alignment.center,
               decoration: BoxDecoration(
+                color: zoom > 1.05 ? p.accent.withValues(alpha: .2) : p.glass,
                 shape: BoxShape.circle,
-                border: Border.all(color: torchOn ? p.accent : p.line(.2)),
+                border: Border.all(
+                  color: zoom > 1.05 ? p.accent : p.line(.3),
+                  width: 1.2,
+                ),
               ),
-              child: ArtIcon(
-                ArtIcons.flash,
-                size: 18,
-                color: torchOn ? p.accent : p.ink,
-                strokeWidth: 1.5,
+              child: Text(
+                '1×',
+                style: AppTypography.metadata.copyWith(
+                  color: zoom > 1.05 ? p.accent : p.ink,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),

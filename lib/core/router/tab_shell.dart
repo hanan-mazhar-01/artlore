@@ -4,107 +4,101 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../extensions/context_x.dart';
-import '../theme/app_motion.dart';
+import '../widgets/floating_nav/art_nav_item.dart';
 import '../widgets/floating_nav/floating_bottom_nav.dart';
+import '../widgets/floating_nav/scan_fab.dart';
+import 'app_routes.dart';
 import 'nav_items.dart';
 
-/// Hosts the tab branches under the floating navigation and replays the
-/// design's soft fade-up when the visitor changes tab.
-class TabShell extends StatefulWidget {
+/// Exposes the active branch index to descendants in the shell tree.
+class ActiveTabScope extends InheritedWidget {
+  const ActiveTabScope({
+    super.key,
+    required this.currentIndex,
+    required super.child,
+  });
+
+  final int currentIndex;
+
+  static int of(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<ActiveTabScope>()
+            ?.currentIndex ??
+        0;
+  }
+
+  @override
+  bool updateShouldNotify(ActiveTabScope oldWidget) =>
+      currentIndex != oldWidget.currentIndex;
+}
+
+/// Hosts the tab branches under the floating navigation.
+/// Tabs switch instantly with zero transition.
+class TabShell extends StatelessWidget {
   const TabShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
 
-  @override
-  State<TabShell> createState() => _TabShellState();
-}
-
-class _TabShellState extends State<TabShell>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _fade = AnimationController(
-    vsync: this,
-    duration: AppMotion.page,
-    value: 1,
-  );
-  late final Animation<double> _t = CurvedAnimation(
-    parent: _fade,
-    curve: Curves.ease,
-  );
-
-  /// While a full-screen action (Scan) is open, the light rests on it.
-  int? _actionIndex;
-
-  @override
-  void didUpdateWidget(TabShell old) {
-    super.didUpdateWidget(old);
-    if (old.shell.currentIndex != widget.shell.currentIndex &&
-        !AppMotion.reduced(context)) {
-      _fade.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _fade.dispose();
-    super.dispose();
-  }
-
   int get _selected {
-    if (_actionIndex != null) return _actionIndex!;
     final i = artNavItems.indexWhere(
-      (item) => item.branch == widget.shell.currentIndex,
+      (item) => item.branch == shell.currentIndex,
     );
     return math.max(0, i);
   }
 
-  Future<void> _onSelected(int index) async {
-    final item = artNavItems[index];
-    final branch = item.branch;
-    if (branch != null) {
-      widget.shell.goBranch(
-        branch,
-        initialLocation: branch == widget.shell.currentIndex,
-      );
-      return;
-    }
-    // An action: light it, open it, and let the light glide home on return.
-    setState(() => _actionIndex = index);
-    await context.push(item.route!);
-    if (mounted) setState(() => _actionIndex = null);
+  void _onSelected(int index) {
+    final branch = artNavItems[index].branch;
+    shell.goBranch(
+      branch,
+      initialLocation: branch == shell.currentIndex,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = context.bottomInset;
     final gap = bottomInset > 0 ? math.max(12.0, bottomInset - 6) : 16.0;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _t,
-            child: widget.shell,
-            builder: (context, child) => Opacity(
-              opacity: _t.value,
-              child: Transform.translate(
-                offset: Offset(0, 10 * (1 - _t.value)),
-                child: child,
+    // Reserve room for the scan button + its gap so the pill shrinks to
+    // make space for it, rather than the pair crowding the screen edge.
+    const fabGap = 14.0;
+    const fabScale = 1.25; // a touch bigger than the pill it sits beside.
+    const fabMaxDiameter = 64.0 * fabScale;
+    final m = FloatingNavMetrics.forScreen(
+      MediaQuery.sizeOf(context).width,
+      artNavItems.length,
+      reservedWidth: fabGap + fabMaxDiameter,
+    );
+    final fabDiameter = m.height * fabScale;
+    return ActiveTabScope(
+      currentIndex: shell.currentIndex,
+      child: Stack(
+        children: [
+          Positioned.fill(child: shell),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: gap,
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingBottomNav(
+                    items: artNavItems,
+                    selectedIndex: _selected,
+                    onSelected: _onSelected,
+                    metrics: m,
+                  ),
+                  const SizedBox(width: fabGap),
+                  ScanFab(
+                    diameter: fabDiameter,
+                    onTap: () => context.push(AppRoutes.scan),
+                  ),
+                ],
               ),
             ),
           ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: gap,
-          child: Center(
-            child: FloatingBottomNav(
-              items: artNavItems,
-              selectedIndex: _selected,
-              onSelected: _onSelected,
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

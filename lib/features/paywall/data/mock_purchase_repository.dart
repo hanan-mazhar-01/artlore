@@ -52,4 +52,9 @@ class MockPurchaseRepository implements PurchaseRepository {
     if (_status.isPremium || _status.freeScansLeft == 0) return _status;
     return _status = _status.copyWith(freeScansLeft: _status.freeScansLeft - 1);
   }
+
+  @override
+  Future<void> grantAccountBonusIfEligible() async {
+    _status = _status.copyWith(freeScansLeft: _status.freeScansLeft + 3);
+  }
 }

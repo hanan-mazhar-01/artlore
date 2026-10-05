@@ -36,4 +36,12 @@ class PremiumController extends AsyncNotifier<PremiumStatus> {
   Future<void> consumeScan() async {
     state = AsyncData(await _repo.consumeScan());
   }
+
+  /// Re-reads entitlement from the repository — call after any sign-in,
+  /// sign-up or sign-out, since the active Firebase UID (and therefore the
+  /// entitlement doc behind it) just changed.
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = AsyncData(await _repo.fetchStatus());
+  }
 }

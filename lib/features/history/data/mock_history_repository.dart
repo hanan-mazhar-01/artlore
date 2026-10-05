@@ -23,7 +23,7 @@ class MockHistoryRepository implements HistoryRepository {
         artworkId: ArtworkIds.starryNight,
         at: now.subtract(const Duration(hours: 2)),
         where: 'Scanned at MoMA, New York',
-        activity: 'Listened 4 min · Explored 4 details',
+        activity: 'Deep Dive · Explored 4 details',
       ),
       HistoryEntry(
         id: 'h2',
@@ -44,7 +44,7 @@ class MockHistoryRepository implements HistoryRepository {
         artworkId: ArtworkIds.sunrise,
         at: now.subtract(const Duration(days: 7)),
         where: 'Discovered in recommendations',
-        activity: 'Compared with Van Gogh',
+        activity: 'Look Closer · Impressionism',
         scanned: false,
       ),
     ];

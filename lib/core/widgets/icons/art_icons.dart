@@ -29,6 +29,15 @@ abstract final class ArtIcons {
     'M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3'
         'M16 21h3a2 2 0 0 0 2-2v-3',
   ]);
+  static const brush = ArtIconData([
+    'M3 21c3-1 5-3 5-6l10-10a2 2 0 0 1 3 3l-10 10c-3 0-5 2-6 5z',
+    'M14 7l3 3',
+  ]);
+  static const feather = ArtIconData([
+    'M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z',
+    'M16 8L2 22',
+    'M17.5 15H9',
+  ]);
 
   static const _scanCorners =
       'M3 8V6a3 3 0 0 1 3-3h2M16 3h2a3 3 0 0 1 3 3v2M21 16v2a3 3 0 0 1-3 3h-2'

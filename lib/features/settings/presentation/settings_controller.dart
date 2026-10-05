@@ -62,8 +62,13 @@ class SettingsController extends Notifier<AppSettings> {
     }
   }
 
-  /// Mock sign-out: return the visitor to the welcome door.
-  void signOut() => _update(state.copyWith(onboardingComplete: false));
+  /// Sign-out: sign out from Firebase and return the visitor to the welcome door.
+  void signOut() {
+    try {
+      ref.read(authServiceProvider).signOut();
+    } catch (_) {}
+    _update(state.copyWith(onboardingComplete: false));
+  }
 
   static String _next(List<String> options, String current) {
     final i = options.indexOf(current);

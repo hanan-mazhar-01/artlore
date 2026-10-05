@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "547369793339",
+    "project_id": "artlore-d35cc",
+    "storage_bucket": "artlore-d35cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:547369793339:android:f15a28fb647b19987ca91e",
+        "android_client_info": {
+          "package_name": "com.veradostudio.artlore"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "547369793339-i2fu23jpepk8k4dthgk6mis3f1r0skt5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxi2Z3aj4sOfssowqd25WIRI8RpOuA6Cs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "547369793339-i2fu23jpepk8k4dthgk6mis3f1r0skt5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

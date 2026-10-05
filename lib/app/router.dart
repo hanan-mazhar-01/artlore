@@ -5,9 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/router/app_routes.dart';
 import '../core/router/page_transitions.dart';
 import '../core/router/tab_shell.dart';
-import '../features/artwork/presentation/compare/compare_screen.dart';
 import '../features/artwork/presentation/detective/detective_screen.dart';
-import '../features/artwork/presentation/listen/listen_screen.dart';
 import '../features/artwork/presentation/look_closer/look_closer_screen.dart';
 import '../features/artwork/presentation/result/artwork_result_screen.dart';
 import '../features/artwork/presentation/story/story_screen.dart';
@@ -15,9 +13,11 @@ import '../features/collections/presentation/collection_screen.dart';
 import '../features/history/presentation/history_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/journey/presentation/personality_screen.dart';
+import '../features/onboarding/presentation/email_auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/onboarding/presentation/splash_screen.dart';
 import '../features/onboarding/presentation/welcome_screen.dart';
+import '../features/paywall/presentation/account_wall_screen.dart';
 import '../features/paywall/presentation/paywall_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/scan/presentation/analysis/analysis_screen.dart';
@@ -35,6 +35,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       _route(AppRoutes.splash, (_) => const SplashScreen(), ArtTransition.fade),
       _route(AppRoutes.onboarding, (_) => const OnboardingScreen()),
       _route(AppRoutes.welcome, (_) => const WelcomeScreen()),
+      _route(AppRoutes.emailAuth, (_) => const EmailAuthScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => TabShell(shell: shell),
         branches: [
@@ -42,7 +43,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                pageBuilder: (c, s) => artPage(s, const HomeScreen()),
+                pageBuilder: (c, s) =>
+                    const NoTransitionPage(child: HomeScreen()),
               ),
             ],
           ),
@@ -50,7 +52,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.collection,
-                pageBuilder: (c, s) => artPage(s, const CollectionScreen()),
+                pageBuilder: (c, s) =>
+                    const NoTransitionPage(child: CollectionScreen()),
               ),
             ],
           ),
@@ -58,13 +61,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.profile,
-                pageBuilder: (c, s) => artPage(s, const ProfileScreen()),
+                pageBuilder: (c, s) =>
+                    const NoTransitionPage(child: ProfileScreen()),
               ),
             ],
           ),
         ],
       ),
-      _route(AppRoutes.scan, (_) => const ScanScreen(), ArtTransition.fade),
+      _route(AppRoutes.scan, (_) => const ScanScreen(), ArtTransition.cardZoom),
       _route(
         AppRoutes.reading,
         (s) => AnalysisScreen(photoId: s.uri.queryParameters['photo']),
@@ -76,36 +80,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (c, s) => artPage(
           s,
           ArtworkResultScreen(artworkId: s.pathParameters['id']!),
-          transition: ArtTransition.fade,
-          duration: const Duration(milliseconds: 800),
+          transition: ArtTransition.cardZoom,
+          duration: const Duration(milliseconds: 440),
         ),
         routes: [
           GoRoute(
             path: 'story',
-            pageBuilder: (c, s) =>
-                artPage(s, StoryScreen(artworkId: s.pathParameters['id']!)),
+            pageBuilder: (c, s) => artPage(
+              s,
+              StoryScreen(artworkId: s.pathParameters['id']!),
+              transition: ArtTransition.cardZoom,
+            ),
           ),
           GoRoute(
             path: 'look-closer',
             pageBuilder: (c, s) => artPage(
               s,
               LookCloserScreen(artworkId: s.pathParameters['id']!),
-              transition: ArtTransition.fade,
-            ),
-          ),
-          GoRoute(
-            path: 'listen',
-            pageBuilder: (c, s) => artPage(
-              s,
-              ListenScreen(artworkId: s.pathParameters['id']!),
-              transition: ArtTransition.fade,
-            ),
-          ),
-          GoRoute(
-            path: 'compare',
-            pageBuilder: (c, s) => artPage(
-              s,
-              CompareScreen(artworkId: s.pathParameters['id']!),
               transition: ArtTransition.fade,
             ),
           ),
@@ -117,6 +108,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       _route(
         AppRoutes.paywall,
         (_) => const PaywallScreen(),
+        ArtTransition.fade,
+      ),
+      _route(
+        AppRoutes.accountWall,
+        (_) => const AccountWallScreen(),
         ArtTransition.fade,
       ),
       _route(AppRoutes.settings, (_) => const SettingsScreen()),

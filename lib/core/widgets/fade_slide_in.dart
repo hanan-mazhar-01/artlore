@@ -38,7 +38,8 @@ class _FadeSlideInState extends State<FadeSlideIn>
   );
   late final Animation<double> _t = CurvedAnimation(
     parent: _c,
-    curve: widget.curve,
+    curve: widget.curve, 
+
   );
   Timer? _delay;
 
@@ -67,6 +68,7 @@ class _FadeSlideInState extends State<FadeSlideIn>
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
+      
       animation: _t,
       child: widget.child,
       builder: (context, child) => Opacity(

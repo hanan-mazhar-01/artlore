@@ -4,30 +4,22 @@ import 'package:flutter/foundation.dart';
 
 import '../icons/art_icons.dart';
 
-/// One destination in the floating navigation.
-///
-/// Give either a [branch] (a tab of the shell, which keeps its own stack)
-/// or a [route] (pushed full-screen over the tabs, e.g. the scanner).
+/// One tab of the floating pill — a branch of the shell, which keeps its
+/// own navigation stack. The scan action lives beside the pill instead,
+/// as its own circular button — see `ScanFab`.
 @immutable
 class ArtNavItem {
-  const ArtNavItem.tab({
+  const ArtNavItem({
     required this.icon,
     required this.label,
-    required int this.branch,
-  }) : route = null;
-
-  const ArtNavItem.action({
-    required this.icon,
-    required this.label,
-    required String this.route,
-  }) : branch = null;
+    required this.branch,
+  });
 
   final ArtIconData icon;
 
   /// Spoken by screen readers; never drawn (the design has no labels).
   final String label;
-  final int? branch;
-  final String? route;
+  final int branch;
 }
 
 /// Proportions measured from the reference (a 540 × 104 pill), expressed
@@ -40,10 +32,17 @@ class FloatingNavMetrics {
     required this.count,
   });
 
-  /// Sizes the pill for a screen [screenWidth] wide.
-  factory FloatingNavMetrics.forScreen(double screenWidth, int count) {
+  /// Sizes the pill for a screen [screenWidth] wide, leaving the usual
+  /// 24pt gutter on each side. Pass [reservedWidth] for anything sharing
+  /// that row beside the pill (e.g. the separate scan button + its gap),
+  /// so the two together still clear the edge rather than the pill alone.
+  factory FloatingNavMetrics.forScreen(
+    double screenWidth,
+    int count, {
+    double reservedWidth = 0,
+  }) {
     final width = math.min(
-      screenWidth - 48,
+      screenWidth - 48 - reservedWidth,
       (screenWidth * .78).clamp(272.0, 340.0),
     );
     final height = (width / 5.2).clamp(52.0, 64.0);

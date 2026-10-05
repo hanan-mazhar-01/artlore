@@ -38,13 +38,13 @@ class MockCollectionRepository implements CollectionRepository {
   }
 
   @override
-  Future<Gallery> createGallery(String name) async {
-    final slug = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-    final gallery = Gallery(
-      id: '$slug-${DateTime.now().microsecondsSinceEpoch}',
-      name: name,
-    );
+  Future<void> createGallery(Gallery gallery) async {
     _galleries.add(gallery);
-    return gallery;
+  }
+
+  @override
+  Future<void> deleteGallery(String galleryId) async {
+    _galleries.removeWhere((g) => g.id == galleryId);
+    _saved.removeWhere((s) => s.galleryId == galleryId);
   }
 }

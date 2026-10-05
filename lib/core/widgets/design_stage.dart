@@ -43,6 +43,7 @@ class CornerBrackets extends StatelessWidget {
     this.size = 30,
     this.stroke = 2,
     this.radius = 10,
+    this.topLeftBlink,
   });
 
   final Color color;
@@ -50,11 +51,16 @@ class CornerBrackets extends StatelessWidget {
   final double stroke;
   final double radius;
 
+  /// When set, the top-left corner's opacity follows this animation
+  /// (0 = dim, 1 = full) instead of staying static — a quiet "tap here" cue.
+  /// The other three corners are unaffected.
+  final Animation<double>? topLeftBlink;
+
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: CustomPaint(
-        painter: _BracketPainter(color, size, stroke, radius),
+        painter: _BracketPainter(color, size, stroke, radius, topLeftBlink),
         child: const SizedBox.expand(),
       ),
     );
@@ -62,17 +68,23 @@ class CornerBrackets extends StatelessWidget {
 }
 
 class _BracketPainter extends CustomPainter {
-  _BracketPainter(this.color, this.len, this.stroke, this.radius);
+  _BracketPainter(
+    this.color,
+    this.len,
+    this.stroke,
+    this.radius,
+    this.topLeftBlink,
+  ) : super(repaint: topLeftBlink);
 
   final Color color;
   final double len;
   final double stroke;
   final double radius;
+  final Animation<double>? topLeftBlink;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke;
     final h = stroke / 2;
@@ -96,8 +108,12 @@ class _BracketPainter extends CustomPainter {
         ..translateByDouble(w, hgt, 0, 1)
         ..scaleByDouble(-1, -1, 1, 1),
     ];
-    for (final m in flips) {
-      canvas.drawPath(corner.transform(m.storage), paint);
+    for (var i = 0; i < flips.length; i++) {
+      final blink = i == 0 ? topLeftBlink?.value : null;
+      paint.color = blink == null
+          ? color
+          : color.withValues(alpha: color.a * (.25 + .75 * blink));
+      canvas.drawPath(corner.transform(flips[i].storage), paint);
     }
   }
 
@@ -106,5 +122,6 @@ class _BracketPainter extends CustomPainter {
       old.color != color ||
       old.len != len ||
       old.stroke != stroke ||
-      old.radius != radius;
+      old.radius != radius ||
+      old.topLeftBlink != topLeftBlink;
 }

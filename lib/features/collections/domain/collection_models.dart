@@ -57,5 +57,13 @@ abstract interface class CollectionRepository {
   /// Hangs [artworkId] in [galleryId], moving it if already saved.
   Future<void> save(String artworkId, String galleryId);
   Future<void> remove(String artworkId);
-  Future<Gallery> createGallery(String name);
+
+  /// Persists a gallery whose id/name the caller has already decided —
+  /// the controller generates it synchronously so the UI can select the new
+  /// gallery immediately, without waiting on this (network) call.
+  Future<void> createGallery(Gallery gallery);
+  Future<void> deleteGallery(String galleryId);
 }
+
+/// Maximum number of custom user galleries allowed (excluding default Favorites).
+const int maxCustomGalleries = 10;

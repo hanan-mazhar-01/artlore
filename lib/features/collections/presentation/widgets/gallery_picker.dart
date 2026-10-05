@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/art_toast.dart';
 import '../../../../core/widgets/icons/art_icon.dart';
 import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/tappable.dart';
@@ -52,6 +53,10 @@ class _GalleryPickerState extends State<GalleryPicker> {
     final rule = BoxDecoration(
       border: Border(top: BorderSide(color: p.line(.1))),
     );
+    final customCount =
+        widget.galleries.where((g) => g.id != 'favorites').length;
+    final isLimitReached = customCount >= maxCustomGalleries;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -103,11 +108,24 @@ class _GalleryPickerState extends State<GalleryPicker> {
                   ),
                 )
               : Tappable(
-                  onTap: () => setState(() => _naming = true),
+                  onTap: () {
+                    if (isLimitReached) {
+                      ArtToast.show(
+                        context,
+                        'Custom gallery limit reached (max $maxCustomGalleries)',
+                      );
+                      return;
+                    }
+                    setState(() => _naming = true);
+                  },
                   semanticLabel: 'New gallery',
                   child: Text(
-                    '+ New gallery',
-                    style: AppTypography.sans(14).copyWith(color: p.accent),
+                    isLimitReached
+                        ? '+ New gallery (Limit reached $maxCustomGalleries/$maxCustomGalleries)'
+                        : '+ New gallery',
+                    style: AppTypography.sans(14).copyWith(
+                      color: isLimitReached ? p.muted : p.accent,
+                    ),
                   ),
                 ),
         ),

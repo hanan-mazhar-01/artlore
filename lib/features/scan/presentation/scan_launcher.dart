@@ -19,9 +19,24 @@ abstract final class ScanLauncher {
       child: const PhotoPickerSheet(),
     );
     if (photoId == null || !context.mounted) return;
+    await _gateAndReadPhoto(context, ref, photoId);
+  }
+
+  static Future<void> _gateAndReadPhoto(
+    BuildContext context,
+    WidgetRef ref,
+    String photoId,
+  ) async {
     final status = await ref.read(premiumProvider.future);
     if (!context.mounted) return;
     if (!status.canScan) {
+      if (status.requiresAccount) {
+        final unlocked = await context.push<bool>(AppRoutes.accountWall);
+        if (unlocked == true && context.mounted) {
+          await _gateAndReadPhoto(context, ref, photoId);
+        }
+        return;
+      }
       context.push(AppRoutes.paywall);
       return;
     }

@@ -104,12 +104,17 @@ class InitialsAvatar extends StatelessWidget {
     this.size = 36,
     this.style,
     this.ringOpacity = .5,
+    this.elevated = false,
   });
 
   final String initials;
   final double size;
   final TextStyle? style;
   final double ringOpacity;
+
+  /// A soft drop shadow, for when the disc is itself the button (as in the
+  /// Home header) rather than a decorative portrait (as in Profile).
+  final bool elevated;
 
   @override
   Widget build(BuildContext context) {
@@ -122,6 +127,15 @@ class InitialsAvatar extends StatelessWidget {
         shape: BoxShape.circle,
         color: p.surface,
         border: Border.all(color: p.accentAlpha(ringOpacity)),
+        boxShadow: elevated
+            ? [
+                BoxShadow(
+                  color: p.shadow.withValues(alpha: p.shadow.a * .55),
+                  offset: const Offset(0, 3),
+                  blurRadius: 10,
+                ),
+              ]
+            : null,
       ),
       child: Text(initials, style: style?.copyWith(color: p.accent)),
     );

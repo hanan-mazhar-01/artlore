@@ -9,8 +9,8 @@ import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/tappable.dart';
 import '../../domain/artwork_content.dart';
 
-/// The numbered ways into a work — Look Closer, Listen, Detective, Deep Dive.
-/// Rows appear only when there is content behind them.
+/// The two ways to go deeper on a work — Look Closer and Deep Dive. Rows
+/// appear only when there is content behind them.
 class ResultActions extends StatelessWidget {
   const ResultActions({
     super.key,
@@ -32,13 +32,6 @@ class ResultActions extends StatelessWidget {
           '${numberWord(details, capitalize: true)} details worth a second look',
           AppRoutes.lookCloser(artworkId),
         ),
-      if (content.narration != null)
-        (
-          'Listen',
-          'The story, narrated · 1–10 min',
-          AppRoutes.listen(artworkId),
-        ),
-      ('Art Detective', 'Find what most visitors miss', AppRoutes.detective),
       if (content.story.isNotEmpty)
         (
           'Deep Dive',

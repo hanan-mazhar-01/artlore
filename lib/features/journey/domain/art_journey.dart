@@ -8,11 +8,13 @@ class JourneyStats {
   const JourneyStats({
     required this.artworks,
     required this.artists,
-    required this.movements,
+    this.collections = 0,
+    this.movements = 0,
   });
 
   final int artworks;
   final int artists;
+  final int collections;
   final int movements;
 }
 

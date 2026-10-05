@@ -8,6 +8,7 @@ import '../../../../core/theme/app_shadows.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/art_image.dart';
 import '../../../../core/widgets/design_stage.dart';
+import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../artwork/data/mock_catalog.dart';
 import 'onboarding_collages.dart';
 
@@ -46,9 +47,14 @@ class CloserCollage extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: p.accentAlpha(.7)),
+              border: Border.all(color: p.accentAlpha(.8), width: 1.5),
               boxShadow: [
                 BoxShadow(color: p.ground(.6), spreadRadius: 8),
+                BoxShadow(
+                  color: p.accentAlpha(.25),
+                  blurRadius: 28,
+                  spreadRadius: 2,
+                ),
                 BoxShadow(
                   color: p.shadow,
                   offset: const Offset(0, 30),
@@ -75,16 +81,30 @@ class CloserCollage extends StatelessWidget {
         Positioned(
           left: 240,
           top: 390,
-          width: 1,
+          width: 1.5,
           height: 46,
-          child: ColoredBox(color: p.accent),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: p.accent,
+              boxShadow: [
+                BoxShadow(
+                  color: p.accentAlpha(.4),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+          ),
         ),
         Positioned(
           left: 180,
           top: 446,
-          child: Text(
-            '01 — The cypress',
-            style: AppTypography.serif(17, italic: true),
+          child: FadeSlideIn(
+            delay: const Duration(milliseconds: 250),
+            offset: 8,
+            child: Text(
+              '01 — The cypress',
+              style: AppTypography.serif(17, italic: true),
+            ),
           ),
         ),
       ],
@@ -135,25 +155,39 @@ class GalleryCollage extends StatelessWidget {
         Positioned(
           left: 40,
           top: 400,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: p.surface,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: p.accent,
-                    shape: BoxShape.circle,
+          child: FadeSlideIn(
+            delay: const Duration(milliseconds: 300),
+            offset: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: p.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: p.line(.12), width: 0.8),
+                boxShadow: AppShadows.card(p),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: p.accent,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: p.accentAlpha(.5),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text('Night Skies · 5 works', style: AppTypography.sans(11)),
-              ],
+                  const SizedBox(width: 8),
+                  Text('Night Skies · 5 works', style: AppTypography.sans(11)),
+                ],
+              ),
             ),
           ),
         ),

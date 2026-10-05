@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Per-visitor data (profile, saved works, galleries, scan history).
+    // Anonymous (guest) sessions are authenticated users too, so this
+    // covers both guest and signed-in accounts transparently.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      match /galleries/{galleryId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+      match /saved_works/{workId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+      match /history/{entryId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Free-scan allowance + premium status, one doc per Firebase UID.
+    // Only the server (via the client acting as the signed-in owner) ever
+    // writes this; it's deleted when the account is deleted.
+    match /entitlements/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // One-time per-device free-trial marker. Deliberately NOT keyed by uid
+    // and NEVER deleted on account deletion — it's what stops a visitor
+    // from deleting an account (or dropping back to guest mode) to re-claim
+    // free scans on the same device. Any authenticated session (including
+    // guest) may read or claim it, but it only ever flips false -> true in
+    // practice because the client never resets it.
+    match /deviceTrials/{deviceId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

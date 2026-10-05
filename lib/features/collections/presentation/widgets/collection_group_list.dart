@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/router/app_routes.dart';
-import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/art_image.dart';
@@ -10,20 +9,21 @@ import '../../../../core/widgets/fade_slide_in.dart';
 import '../../../../core/widgets/tappable.dart';
 import '../collection_views.dart';
 
-/// Ruled rows for Artists, Movements and Museums.
+/// Ruled rows for Artists, Movements and Museums with staggered entrance motion.
 class CollectionGroupList extends StatelessWidget {
   const CollectionGroupList({
     super.key,
     required this.groups,
     required this.grouping,
+    this.startDelay = Duration.zero,
   });
 
   final List<CollectionGroup> groups;
   final CollectionGrouping grouping;
+  final Duration startDelay;
 
   BorderRadius get _thumb => switch (grouping) {
     CollectionGrouping.artists => BorderRadius.circular(26),
-    CollectionGrouping.movements => AppRadius.css(4, 18, 4, 18),
     CollectionGrouping.museums => AppRadius.css(26, 26, 3, 3),
   };
 
@@ -37,7 +37,10 @@ class CollectionGroupList extends StatelessWidget {
         itemBuilder: (context, i) {
           final g = groups[i];
           return FadeSlideIn(
-            duration: AppMotion.medium,
+            duration: const Duration(milliseconds: 420),
+            delay: startDelay + Duration(milliseconds: 32 * (i % 8)),
+            offset: 20,
+            curve: const Cubic(0.16, 1.0, 0.3, 1.0),
             child: Tappable(
               onTap: () => context.openArtwork(g.cover.id),
               semanticLabel: '${g.name}, ${g.count} saved',

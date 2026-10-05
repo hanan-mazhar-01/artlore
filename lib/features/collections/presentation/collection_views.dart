@@ -5,9 +5,9 @@ import '../../artwork/domain/artwork.dart';
 import '../../artwork/presentation/artwork_providers.dart';
 import 'collection_controller.dart';
 
-enum CollectionGrouping { artists, movements, museums }
+enum CollectionGrouping { artists, museums }
 
-/// A row in the Artists / Movements / Museums views.
+/// A row in the Artists / Museums views.
 @immutable
 class CollectionGroup {
   const CollectionGroup({
@@ -27,6 +27,21 @@ class CollectionGroup {
 final savedArtworksProvider = FutureProvider.autoDispose<List<Artwork>>((ref) {
   final ids = ref.watch(
     collectionProvider.select((c) => c.value?.savedIds ?? const <String>[]),
+  );
+  return ref.watch(artworksProvider(ArtworkIdList(ids)).future);
+});
+
+/// Artworks saved in a specific gallery.
+final galleryArtworksProvider = FutureProvider.autoDispose
+    .family<List<Artwork>, String>((ref, galleryId) {
+  final ids = ref.watch(
+    collectionProvider.select((c) {
+      final saved = c.value?.saved ?? const [];
+      return [
+        for (final s in saved)
+          if (s.galleryId == galleryId) s.artworkId,
+      ];
+    }),
   );
   return ref.watch(artworksProvider(ArtworkIdList(ids)).future);
 });
@@ -52,7 +67,6 @@ List<CollectionGroup> groupArtworks(
   for (final a in artworks) {
     final key = switch (by) {
       CollectionGrouping.artists => a.artist,
-      CollectionGrouping.movements => a.movement,
       CollectionGrouping.museums => a.museum,
     };
     (groups[key] ??= []).add(a);
@@ -66,9 +80,6 @@ List<CollectionGroup> groupArtworks(
         subtitle: switch (by) {
           CollectionGrouping.artists =>
             '${works.first.movement} · ${works.first.artistLife}',
-          CollectionGrouping.movements => {
-            for (final w in works) w.artistShort,
-          }.join(', '),
           CollectionGrouping.museums => works.first.city,
         },
       ),

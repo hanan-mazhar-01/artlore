@@ -6,6 +6,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/art_scaffold.dart';
 import '../../../core/widgets/async_view.dart';
+import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/round_buttons.dart';
 import 'history_controller.dart';
 import 'widgets/history_timeline_item.dart';
@@ -36,37 +37,52 @@ class HistoryScreen extends ConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
               sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        'Your history',
-                        style: AppTypography.pageTitle,
+                child: FadeSlideIn(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          'Your history',
+                          style: AppTypography.pageTitle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Every painting you\'ve stood before, and what you '
-                      'found.',
-                      style: AppTypography.sans(13).copyWith(color: p.muted),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Every painting you\'ve stood before, and what you '
+                        'found.',
+                        style: AppTypography.sans(13).copyWith(color: p.muted),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 10, 24, 60),
-              sliver: SliverList.builder(
-                itemCount: entries.length,
-                itemBuilder: (context, i) => HistoryTimelineItem(
-                  entry: entries[i],
-                  isFirst: i == 0,
-                  shapeIndex: i,
+            if (entries.isEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 40, 24, 60),
+                sliver: SliverToBoxAdapter(
+                  child: Text(
+                    'No artworks explored yet. Tap the scanner to capture and uncover your first masterpiece.',
+                    style: AppTypography.sans(14, height: 1.5)
+                        .copyWith(color: p.muted),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 10, 24, 60),
+                sliver: SliverList.builder(
+                  itemCount: entries.length,
+                  itemBuilder: (context, i) => HistoryTimelineItem(
+                    entry: entries[i],
+                    isFirst: i == 0,
+                    isLast: i == entries.length - 1,
+                    shapeIndex: i,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

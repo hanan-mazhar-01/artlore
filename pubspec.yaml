@@ -8,10 +8,22 @@ environment:
   sdk: ^3.13.1
 
 dependencies:
+  camera: ^0.12.1
+  cloud_firestore: ^6.10.0
+  crypto: ^3.0.7
+  device_info_plus: ^13.3.0
+  firebase_auth: ^6.7.0
+  firebase_core: ^4.15.0
+  firebase_remote_config: ^6.7.0
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.4.3
   go_router: ^18.0.2
+  google_sign_in: ^6.2.2
+  http: ^1.6.0
+  image: ^4.10.1
+  image_picker: ^1.2.3
+  in_app_purchase: ^3.3.1
   shared_preferences: ^2.5.5
 
 dev_dependencies:

@@ -11,13 +11,12 @@ import '../../domain/premium_models.dart';
 const premiumPerks = [
   'Unlimited artwork scans',
   'Look Closer',
-  'AI-narrated stories',
   'Deep Dive',
   'Art Detective',
-  'Compare artworks',
   'Personal recommendations',
   'Art Personality',
   'Unlimited collection',
+  'High-resolution imagery',
 ];
 
 /// Two columns of perks, each led by a short gold rule.

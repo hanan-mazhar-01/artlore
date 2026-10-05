@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/router/app_routes.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/art_image.dart';
 import '../../../../core/widgets/art_scaffold.dart';
 import '../../../../core/widgets/async_view.dart';
@@ -18,8 +17,9 @@ import '../../domain/artwork.dart';
 import '../../domain/artwork_content.dart';
 import '../artwork_providers.dart';
 import '../widgets/artwork_metadata.dart';
+import '../widgets/info_chips_row.dart';
+import '../widgets/story_section.dart';
 import 'result_actions.dart';
-import 'result_footer.dart';
 import 'result_hero.dart';
 
 /// Identification result — the artwork dominates, the label follows.
@@ -84,7 +84,6 @@ class _ResultBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = context.palette;
     final saved = ref.watch(isSavedProvider(artwork.id));
-    final comparison = content.comparison;
     return SingleChildScrollView(
       controller: scroll,
       child: Stack(
@@ -110,7 +109,13 @@ class _ResultBody extends ConsumerWidget {
           OverlapLayout(
             backdropHeight: 470,
             overlap: 44,
-            backdrop: ParallaxHero(artwork: artwork, scroll: scroll),
+            // No soft fade here — the rounded sheet below does the whole
+            // transition, so its corner cuts cleanly across the painting.
+            backdrop: ParallaxHero(
+              artwork: artwork,
+              scroll: scroll,
+              fadeHeight: 0,
+            ),
             foreground: [
               Positioned(
                 top: context.topInset,
@@ -138,34 +143,36 @@ class _ResultBody extends ConsumerWidget {
                 ),
               ),
             ],
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 60),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ArtworkMetadata(artwork: artwork),
-                  const SizedBox(height: 30),
-                  Text(
-                    'Discover the story',
-                    style: AppTypography.serif(
-                      21,
-                      italic: true,
-                    ).copyWith(color: p.accent),
+            // A rounded sheet rising over the painting — its top edge is
+            // exactly where the content begins, nothing fades in between.
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: p.background,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: p.shadow.withValues(alpha: p.shadow.a * .6),
+                    offset: const Offset(0, -6),
+                    blurRadius: 20,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    artwork.summary,
-                    style: AppTypography.body.copyWith(color: p.muted),
-                  ),
-                  const SizedBox(height: 30),
-                  ResultActions(artworkId: artwork.id, content: content),
-                  if (comparison != null) ...[
-                    const SizedBox(height: 22),
-                    CompareEntry(artwork: artwork, comparison: comparison),
-                  ],
-                  const SizedBox(height: 36),
-                  const ScanAnotherButton(),
                 ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 60),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ArtworkMetadata(artwork: artwork),
+                    const SizedBox(height: 20),
+                    InfoChipsRow(artwork: artwork),
+                    const SizedBox(height: 28),
+                    StorySection(summary: artwork.summary),
+                    const SizedBox(height: 22),
+                    ResultActions(artworkId: artwork.id, content: content),
+                  ],
+                ),
               ),
             ),
           ),

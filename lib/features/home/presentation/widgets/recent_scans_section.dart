@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/date_labels.dart';
@@ -15,12 +16,9 @@ import '../../../artwork/presentation/artwork_providers.dart';
 import '../../../history/domain/history_entry.dart';
 import '../home_providers.dart';
 
-/// Frames cycled along the rail so neighbours never match.
-const _rhythm = [
-  (width: 132.0, height: 172.0, shape: ArtShape.arch),
-  (width: 168.0, height: 128.0, shape: ArtShape.soft),
-  (width: 140.0, height: 152.0, shape: ArtShape.leaf),
-];
+/// Every card along the rail shares one size and one soft rounded frame.
+const _cardWidth = 150.0;
+const _cardHeight = 170.0;
 
 /// "Recent scans" — the visitor's latest identifications, newest first.
 class RecentScansSection extends ConsumerWidget {
@@ -32,6 +30,7 @@ class RecentScansSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scans = ref.watch(recentScansProvider);
     final caption = MediaQuery.textScalerOf(context).scale(76);
+    final seenIds = <String>{};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -45,26 +44,34 @@ class RecentScansSection extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         if (scans == null)
-          SizedBox(height: 172 + caption)
+          SizedBox(height: _cardHeight + caption)
         else if (scans.isEmpty)
           _EmptyScans(onScan: onScan)
         else
           SizedBox(
-            height: 172 + caption,
+            height: _cardHeight + caption,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 24),
               itemCount: scans.length,
               separatorBuilder: (_, _) => const SizedBox(width: 14),
-              itemBuilder: (context, i) => FadeSlideIn(
-                axis: Axis.horizontal,
-                offset: 24,
-                delay: Duration(milliseconds: 70 * i.clamp(0, 5)),
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: RecentArtworkCard(entry: scans[i], index: i),
-                ),
-              ),
+              itemBuilder: (context, i) {
+                final entry = scans[i];
+                final isFirst = seenIds.add(entry.artworkId);
+                return FadeSlideIn(
+                  axis: Axis.horizontal,
+                  offset: 24,
+                  delay: Duration(milliseconds: 70 * i.clamp(0, 5)),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: RecentArtworkCard(
+                      entry: entry,
+                      heroTag:
+                          isFirst ? 'artwork-hero-${entry.artworkId}' : null,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
       ],
@@ -77,20 +84,49 @@ class RecentArtworkCard extends ConsumerWidget {
   const RecentArtworkCard({
     super.key,
     required this.entry,
-    required this.index,
+    this.heroTag,
   });
 
   final HistoryEntry entry;
-  final int index;
+  final String? heroTag;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = context.palette;
-    final spec = _rhythm[index % _rhythm.length];
     final artwork = ref.watch(artworkProvider(entry.artworkId)).value;
-    if (artwork == null) return SizedBox(width: spec.width);
+    if (artwork == null) return const SizedBox(width: _cardWidth);
+
+    Widget image = ArtImage(
+      artwork.image,
+      radius: AppRadius.round,
+      alignment: artwork.heroFocus,
+    );
+    if (heroTag != null) {
+      image = Hero(
+        tag: heroTag!,
+        createRectTween: (begin, end) => AppMotion.rectTween(begin, end),
+        flightShuttleBuilder: (
+          flightContext,
+          animation,
+          flightDirection,
+          fromHeroContext,
+          toHeroContext,
+        ) {
+          return AppMotion.heroShuttle(
+            animation: animation,
+            flightDirection: flightDirection,
+            fromHeroContext: fromHeroContext,
+            toHeroContext: toHeroContext,
+            startRadius: AppRadius.round,
+            endRadius: BorderRadius.zero,
+          );
+        },
+        child: image,
+      );
+    }
+
     return SizedBox(
-      width: spec.width,
+      width: _cardWidth,
       child: Tappable(
         onTap: () => context.openArtwork(artwork.id),
         semanticLabel:
@@ -101,13 +137,9 @@ class RecentArtworkCard extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              height: spec.height,
+              height: _cardHeight,
               width: double.infinity,
-              child: ArtImage(
-                artwork.image,
-                radius: spec.shape.radius,
-                alignment: artwork.heroFocus,
-              ),
+              child: image,
             ),
             const SizedBox(height: 10),
             GoldLabel(DateLabels.ago(entry.at), tracking: .2, maxLines: 1),

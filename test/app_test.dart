@@ -30,7 +30,7 @@ void main() {
     await t.tap(find.text('Skip'));
     await _settle(t);
     await _settle(t);
-    expect(find.text('Continue with Apple'), findsOneWidget);
+    expect(find.text('Continue with email'), findsOneWidget);
 
     await t.tap(find.text('Look around first'));
     await _settle(t);
@@ -74,7 +74,8 @@ void main() {
     await _settle(t, 3600);
     await _settle(t);
 
-    BuildContext ctx() => t.element(find.text('What will you discover today?'));
+    BuildContext ctx() =>
+        t.element(find.text('Recent scans', skipOffstage: false));
     expect(
       Theme.of(ctx()).extension<AppPalette>()!.background,
       AppPalette.dark.background,

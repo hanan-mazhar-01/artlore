@@ -38,4 +38,25 @@ void main() {
     expect(small.width, lessThanOrEqualTo(320 - 48));
     expect(small.slot, greaterThanOrEqualTo(44));
   });
+
+  group('reservedWidth (the scan button sharing the pill\'s row)', () {
+    // The exact numbers TabShell reserves for the scan button + its gap —
+    // the fab is deliberately a touch bigger than the pill it sits beside.
+    const fabGap = 14.0, fabScale = 1.25, fabMaxDiameter = 64.0 * fabScale;
+    const reserved = fabGap + fabMaxDiameter;
+
+    for (final width in [320.0, 390.0, 430.0]) {
+      test('pill + gap + fab clears the $width-wide screen', () {
+        final m = FloatingNavMetrics.forScreen(
+          width,
+          3,
+          reservedWidth: reserved,
+        );
+        final fabDiameter = m.height * fabScale;
+        final rowWidth = m.width + fabGap + fabDiameter;
+        expect(rowWidth, lessThanOrEqualTo(width - 48));
+        expect(m.slot, greaterThanOrEqualTo(44)); // still a real touch target
+      });
+    }
+  });
 }

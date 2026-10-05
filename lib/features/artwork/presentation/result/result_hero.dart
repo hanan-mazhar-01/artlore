@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../../../core/extensions/context_x.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/widgets/art_image.dart';
 import '../../domain/artwork.dart';
 
@@ -28,11 +29,15 @@ class ParallaxHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final image = RepaintBoundary(
-      child: ArtImage(
-        artwork.image,
-        alignment: alignment ?? artwork.heroFocus,
-        semanticLabel: artwork.semanticLabel,
-        decodeScale: 1.1,
+      child: Hero(
+        tag: 'artwork-hero-${artwork.id}',
+        createRectTween: (begin, end) => AppMotion.rectTween(begin, end),
+        child: ArtImage(
+          artwork.image,
+          alignment: alignment ?? artwork.heroFocus,
+          semanticLabel: artwork.semanticLabel,
+          decodeScale: 1.1,
+        ),
       ),
     );
     return ClipRect(

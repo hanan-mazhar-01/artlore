@@ -22,8 +22,21 @@ class UserProfile {
     final parts = name.trim().split(RegExp(r'\s+'));
     return parts.take(2).map((p) => p.isEmpty ? '' : p[0]).join().toUpperCase();
   }
+
+  UserProfile copyWith({
+    String? name,
+    String? memberSince,
+    String? listeningTime,
+  }) =>
+      UserProfile(
+        name: name ?? this.name,
+        memberSince: memberSince ?? this.memberSince,
+        listeningTime: listeningTime ?? this.listeningTime,
+      );
 }
 
 abstract interface class ProfileRepository {
   Future<UserProfile> fetchProfile();
+  Future<void> updateName(String name);
+  Future<void> deleteAccount();
 }

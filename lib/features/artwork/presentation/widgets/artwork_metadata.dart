@@ -5,7 +5,8 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/editorial_text.dart';
 import '../../domain/artwork.dart';
 
-/// "— IDENTIFIED", title, artist and the museum label line.
+/// "— IDENTIFIED", title, artist and a "year · movement · city" line.
+/// The museum, dimensions and medium live in [InfoChipsRow] instead.
 class ArtworkMetadata extends StatelessWidget {
   const ArtworkMetadata({
     super.key,
@@ -42,11 +43,7 @@ class ArtworkMetadata extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          artwork.metadataLine,
-          style: AppTypography.caption.copyWith(color: p.muted),
-        ),
-        Text(
-          artwork.movement,
+          '${artwork.year} · ${artwork.movement} · ${artwork.city}',
           style: AppTypography.caption.copyWith(color: p.muted),
         ),
       ],

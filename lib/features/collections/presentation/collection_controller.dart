@@ -1,7 +1,9 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
-import '../../artwork/data/mock_catalog.dart';
 import '../domain/collection_models.dart';
 
 /// The visitor's galleries and saved works.
@@ -52,15 +54,42 @@ class CollectionController extends AsyncNotifier<CollectionSnapshot> {
     await _repo.remove(artworkId);
   }
 
+  /// Generates and selects the gallery immediately — persistence to the
+  /// repository (a network call) happens in the background, so the visitor
+  /// can select and save into it right away instead of racing a save
+  /// against the gallery not existing yet in local state.
   Future<Gallery> createGallery(String name) async {
-    final gallery = await _repo.createGallery(name);
     final current = state.value;
+    final customCount = current?.galleries.where((g) => g.id != 'favorites').length ?? 0;
+    if (customCount >= maxCustomGalleries) {
+      throw StateError('Maximum $maxCustomGalleries custom galleries allowed.');
+    }
+    final slug = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    final gallery = Gallery(id: '$slug-${DateTime.now().microsecondsSinceEpoch}', name: name);
     if (current != null) {
       state = AsyncData(
         current.copyWith(galleries: [...current.galleries, gallery]),
       );
     }
+    unawaited(
+      _repo.createGallery(gallery).catchError((Object e) {
+        debugPrint('createGallery persistence error: $e');
+      }),
+    );
     return gallery;
+  }
+
+  Future<void> deleteGallery(String galleryId) async {
+    final current = state.value;
+    if (current != null) {
+      state = AsyncData(
+        current.copyWith(
+          galleries: current.galleries.where((g) => g.id != galleryId).toList(),
+          saved: current.saved.where((s) => s.galleryId != galleryId).toList(),
+        ),
+      );
+    }
+    await _repo.deleteGallery(galleryId);
   }
 }
 
@@ -71,23 +100,28 @@ final recentlyViewedProvider =
     );
 
 class RecentlyViewedController extends Notifier<List<String>> {
+  static const _prefKey = 'artlore.recently_viewed';
   static const _limit = 24;
 
   @override
-  List<String> build() => const [
-    ArtworkIds.starryNight,
-    ArtworkIds.greatWave,
-    ArtworkIds.pearlEarring,
-    ArtworkIds.sunrise,
-    ArtworkIds.grandeJatte,
-    ArtworkIds.temeraire,
-  ];
+  List<String> build() {
+    try {
+      final prefs = ref.watch(sharedPreferencesProvider);
+      return prefs.getStringList(_prefKey) ?? const [];
+    } catch (_) {
+      return const [];
+    }
+  }
 
   void markViewed(String artworkId) {
     if (state.isNotEmpty && state.first == artworkId) return;
-    state = [
+    final updated = [
       artworkId,
       ...state.where((id) => id != artworkId),
     ].take(_limit).toList(growable: false);
+    state = updated;
+    try {
+      ref.read(sharedPreferencesProvider).setStringList(_prefKey, updated);
+    } catch (_) {}
   }
 }

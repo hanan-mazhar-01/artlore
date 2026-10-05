@@ -20,8 +20,6 @@ void main() {
     AppRoutes.artwork(ArtworkIds.kiss),
     AppRoutes.story(starry),
     AppRoutes.lookCloser(starry),
-    AppRoutes.listen(starry),
-    AppRoutes.compare(starry),
     AppRoutes.detective,
     AppRoutes.history,
     AppRoutes.personality,

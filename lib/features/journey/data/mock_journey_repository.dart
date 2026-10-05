@@ -11,7 +11,7 @@ class MockJourneyRepository implements JourneyRepository {
       habitNote: 'Mostly at night, mostly under dramatic skies.',
       personaLead: 'The Night',
       personaEmphasis: 'Romantic',
-      basis: 'Drawn from 24 artworks and 3 hours of listening',
+      basis: 'Drawn from 24 artworks explored',
       traits: const [
         TasteTrait('Atmospheric', 82),
         TasteTrait('Emotional', 74),

@@ -1,10 +1,12 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_x.dart';
+import '../../../../core/media/art_image_source.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_shadows.dart';
@@ -17,6 +19,7 @@ import '../../../../core/widgets/buttons.dart';
 import '../../../../core/widgets/design_stage.dart';
 import '../../../../core/widgets/reveal_image.dart';
 import '../../../artwork/data/mock_catalog.dart';
+import '../scan_controller.dart';
 import 'analysis_controller.dart';
 import 'analysis_widgets.dart';
 
@@ -38,9 +41,11 @@ class AnalysisScreen extends ConsumerWidget {
     });
     final p = context.palette;
     final state = ref.watch(provider);
-    // The frame being read: the picked photo, or the scanner's painting.
-    final capture =
-        (mockCatalog[photoId] ?? mockCatalog[ArtworkIds.starryNight]!).image;
+    final pendingBytes = ref.watch(pendingFrameBytesProvider);
+    // The frame being read: the real camera capture/gallery upload, or picked photo.
+    final capture = pendingBytes != null
+        ? ArtImageSource.memory(pendingBytes)
+        : (mockCatalog[photoId] ?? mockCatalog[ArtworkIds.starryNight]!).image;
     return ArtScaffold(
       swipeBack: false,
       body: Stack(
@@ -103,7 +108,11 @@ class AnalysisScreen extends ConsumerWidget {
                   math.max(28.0, context.bottomInset + 12),
                 ),
                 child: state.failed
-                    ? _Failed(onRetry: () => context.backOr())
+                    ? _Failed(
+                        onRetry: () => context.backOr(),
+                        detail: state.errorDetail,
+                        unsupportedSubject: state.unsupportedSubject,
+                      )
                     : AnalysisStepList(step: state.step),
               ),
             ],
@@ -115,19 +124,44 @@ class AnalysisScreen extends ConsumerWidget {
 }
 
 class _Failed extends StatelessWidget {
-  const _Failed({required this.onRetry});
+  const _Failed({
+    required this.onRetry,
+    this.detail,
+    this.unsupportedSubject,
+  });
 
   final VoidCallback onRetry;
+  final String? detail;
+  final String? unsupportedSubject;
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
+    final subject = unsupportedSubject;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'This one keeps its secrets.',
+          subject != null
+              ? "That doesn't look like an artwork."
+              : 'This one keeps its secrets.',
           style: AppTypography.serif(26, italic: true),
         ),
+        if (subject != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            'ArtLore identifies paintings and tells their stories — this '
+            'looks like $subject.',
+            style: AppTypography.bodySmall.copyWith(color: p.muted),
+          ),
+        ],
+        if (kDebugMode && detail != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            detail!,
+            style: AppTypography.caption.copyWith(color: p.muted),
+          ),
+        ],
         const SizedBox(height: 18),
         PillButton(label: 'Try again', onTap: onRetry, trailingArrow: true),
       ],

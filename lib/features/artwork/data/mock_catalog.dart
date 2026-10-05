@@ -2,6 +2,8 @@ import 'package:flutter/painting.dart';
 
 import '../../../core/media/art_image_source.dart';
 import '../domain/artwork.dart';
+import '../domain/artwork_content.dart';
+import 'dynamic_artwork_storage.dart';
 
 /// Stable ids for the mock catalogue.
 abstract final class ArtworkIds {
@@ -204,3 +206,25 @@ const mockCatalog = <String, Artwork>{
     image: ArtImageSource.asset('$_dir/grande_jatte.jpg', aspect: 1.502),
   ),
 };
+
+final Map<String, Artwork> _dynamicCatalog = {};
+final Map<String, ArtworkContent> _dynamicContent = {};
+
+void registerDynamicArtwork(Artwork artwork, {bool persist = true}) {
+  _dynamicCatalog[artwork.id] = artwork;
+  if (persist) DynamicArtworkStorage.saveArtwork(artwork);
+}
+
+void registerDynamicContent(
+  String id,
+  ArtworkContent content, {
+  bool persist = true,
+}) {
+  _dynamicContent[id] = content;
+  if (persist) DynamicArtworkStorage.saveContent(id, content);
+}
+
+Artwork? getArtwork(String id) => _dynamicCatalog[id] ?? mockCatalog[id];
+ArtworkContent? getDynamicContent(String id) => _dynamicContent[id];
+bool hasArtwork(String id) =>
+    _dynamicCatalog.containsKey(id) || mockCatalog.containsKey(id);

@@ -28,3 +28,30 @@ class Identification {
 abstract interface class RecognitionRepository {
   Future<Identification> identify(CapturedFrame frame);
 }
+
+/// Thrown when recognition fails or artwork cannot be identified.
+class RecognitionFailedException implements Exception {
+  const RecognitionFailedException([
+    this.message = 'Artwork could not be recognized.',
+  ]);
+
+  final String message;
+
+  @override
+  String toString() => 'RecognitionFailedException: $message';
+}
+
+/// Thrown when the photo clearly isn't of a painting or artwork at all —
+/// ArtLore only identifies artworks and tells their stories, so this is
+/// surfaced to the visitor as a distinct, friendlier message rather than a
+/// generic recognition failure.
+class UnsupportedSubjectException implements Exception {
+  const UnsupportedSubjectException([this.description]);
+
+  /// What the photo actually appears to show, e.g. "a person" or "a coffee
+  /// mug" — may be empty if the model didn't say.
+  final String? description;
+
+  @override
+  String toString() => 'UnsupportedSubjectException: $description';
+}

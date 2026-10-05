@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../../../core/extensions/context_x.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/art_image.dart';
 import '../../../../core/widgets/editorial_text.dart';
@@ -24,6 +25,7 @@ class ArtworkCard extends StatelessWidget {
     this.titleSize = 17,
     this.titleGap = 10,
     this.subtitleSize = 11,
+    this.heroTag,
   });
 
   final Artwork artwork;
@@ -42,9 +44,18 @@ class ArtworkCard extends StatelessWidget {
   final double titleGap;
   final double subtitleSize;
 
+  /// Override hero tag if multiple instances of the same artwork exist.
+  final String? heroTag;
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final image = ArtImage(
+      artwork.image,
+      radius: radius,
+      alignment: artwork.heroFocus,
+      semanticLabel: artwork.semanticLabel,
+    );
     final card = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -52,12 +63,30 @@ class ArtworkCard extends StatelessWidget {
         SizedBox(
           height: imageHeight,
           width: double.infinity,
-          child: ArtImage(
-            artwork.image,
-            radius: radius,
-            alignment: artwork.heroFocus,
-            semanticLabel: artwork.semanticLabel,
-          ),
+          child: heroTag == null
+              ? image
+              : Hero(
+                  tag: heroTag!,
+                  createRectTween: (begin, end) =>
+                      AppMotion.rectTween(begin, end),
+                  flightShuttleBuilder: (
+                    flightContext,
+                    animation,
+                    flightDirection,
+                    fromHeroContext,
+                    toHeroContext,
+                  ) {
+                    return AppMotion.heroShuttle(
+                      animation: animation,
+                      flightDirection: flightDirection,
+                      fromHeroContext: fromHeroContext,
+                      toHeroContext: toHeroContext,
+                      startRadius: radius,
+                      endRadius: BorderRadius.zero,
+                    );
+                  },
+                  child: image,
+                ),
         ),
         SizedBox(height: kicker == null ? titleGap : 12),
         if (kicker != null) ...[

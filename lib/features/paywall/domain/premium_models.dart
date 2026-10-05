@@ -34,11 +34,17 @@ class PremiumStatus {
   const PremiumStatus({
     required this.isPremium,
     required this.freeScansLeft,
+    this.requiresAccount = false,
     this.planId,
   });
 
   final bool isPremium;
   final int freeScansLeft;
+
+  /// True once a guest (anonymous) visitor has used their free scans and
+  /// must create an account or sign in to keep exploring — shown before the
+  /// paywall, not instead of it.
+  final bool requiresAccount;
   final String? planId;
 
   bool get canScan => isPremium || freeScansLeft > 0;
@@ -46,11 +52,13 @@ class PremiumStatus {
   PremiumStatus copyWith({
     bool? isPremium,
     int? freeScansLeft,
+    bool? requiresAccount,
     String? planId,
   }) {
     return PremiumStatus(
       isPremium: isPremium ?? this.isPremium,
       freeScansLeft: freeScansLeft ?? this.freeScansLeft,
+      requiresAccount: requiresAccount ?? this.requiresAccount,
       planId: planId ?? this.planId,
     );
   }
@@ -65,4 +73,9 @@ abstract interface class PurchaseRepository {
 
   /// Records one identification against the free allowance.
   Future<PremiumStatus> consumeScan();
+
+  /// Call right after a guest account is upgraded to a real one (linked,
+  /// not replaced) to grant the one-time bonus scans for signing up.
+  /// A no-op if the bonus was already granted or there's no guest history.
+  Future<void> grantAccountBonusIfEligible();
 }
