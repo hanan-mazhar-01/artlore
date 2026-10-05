@@ -105,4 +105,10 @@ class FirestoreHistoryRepository implements HistoryRepository {
       debugPrint('FirestoreHistoryRepository add error: $e');
     }
   }
+
+  @override
+  Future<void> clearLocalCache() async {
+    _fallbackEntries.clear();
+  }
 }
+

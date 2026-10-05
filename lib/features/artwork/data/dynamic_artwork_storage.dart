@@ -190,4 +190,27 @@ abstract final class DynamicArtworkStorage {
       return _hashIndex = {};
     }
   }
+
+  /// Purges all locally saved dynamic artworks, images, and hash indexes.
+  static Future<void> clearAll() async {
+    final prefs = _prefs;
+    _hashIndex = {};
+    if (prefs != null) {
+      final keys = prefs.getStringList(_keysPref) ?? const [];
+      for (final id in keys) {
+        await prefs.remove('artlore.dynamic_artwork.$id');
+        await prefs.remove('artlore.dynamic_content.$id');
+      }
+      await prefs.remove(_keysPref);
+      await prefs.remove(_hashIndexPref);
+      final allKeys = prefs.getKeys().toList();
+      for (final k in allKeys) {
+        if (k.startsWith('artlore.dynamic_')) {
+          await prefs.remove(k);
+        }
+      }
+    }
+    clearDynamicCatalog();
+  }
 }
+

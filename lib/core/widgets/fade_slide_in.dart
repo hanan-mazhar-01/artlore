@@ -18,8 +18,11 @@ class FadeSlideIn extends StatefulWidget {
   });
 
   final Widget child;
+
   final Duration duration;
+
   final Duration delay;
+  
   final double offset;
   final Curve curve;
 

@@ -30,4 +30,6 @@ abstract interface class HistoryRepository {
   /// Newest first.
   Future<List<HistoryEntry>> fetchHistory();
   Future<void> add(HistoryEntry entry);
+  Future<void> clearLocalCache();
 }
+

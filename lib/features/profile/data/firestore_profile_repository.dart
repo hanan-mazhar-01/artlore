@@ -2,8 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../artwork/data/dynamic_artwork_storage.dart';
 import '../domain/user_profile.dart';
+
 
 /// Cloud Firestore implementation of [ProfileRepository] with offline fallback.
 class FirestoreProfileRepository implements ProfileRepository {
@@ -36,10 +39,36 @@ class FirestoreProfileRepository implements ProfileRepository {
     listeningTime: '0 min',
   );
 
+  static Future<String?> _resolvePhoto(User? user) async {
+    if (user == null) return null;
+    final direct = user.photoURL?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    for (final info in user.providerData) {
+      final pPhoto = info.photoURL?.trim();
+      if (pPhoto != null && pPhoto.isNotEmpty) return pPhoto;
+    }
+    try {
+      var gUser = GoogleSignIn().currentUser;
+      gUser ??= await GoogleSignIn().signInSilently();
+      final gPhoto = gUser?.photoUrl?.trim();
+      if (gPhoto != null && gPhoto.isNotEmpty) return gPhoto;
+    } catch (_) {}
+    return null;
+  }
+
+
   static String _resolveInitialName(User? user) {
     if (user == null) return 'Art Visitor';
     final display = user.displayName?.trim();
     if (display != null && display.isNotEmpty) return display;
+    for (final info in user.providerData) {
+      final pDisplay = info.displayName?.trim();
+      if (pDisplay != null && pDisplay.isNotEmpty) return pDisplay;
+    }
+    try {
+      final gName = GoogleSignIn().currentUser?.displayName?.trim();
+      if (gName != null && gName.isNotEmpty) return gName;
+    } catch (_) {}
     final email = user.email;
     if (email != null && email.contains('@')) {
       final handle = email.split('@').first;
@@ -67,31 +96,79 @@ class FirestoreProfileRepository implements ProfileRepository {
       return _defaultProfile;
     }
 
+    final userPhoto = await _resolvePhoto(user);
+    final initialName = _resolveInitialName(user);
+
     try {
       final doc = await firestore.collection('users').doc(user.uid).get();
+
+
+
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
+        final storedName = (data['name'] as String?)?.trim();
+        final storedPhoto = (data['photoUrl'] as String?)?.trim();
+
+        // If stored name is missing, generic placeholder, or raw email handle prefix,
+        // and Google provides a real display name, heal with the real name.
+        final emailHandle = (user.email != null && user.email!.contains('@'))
+            ? user.email!.split('@').first
+            : null;
+        final isEmailHandle = emailHandle != null &&
+            (storedName?.toLowerCase() == emailHandle.toLowerCase());
+
+        final isPlaceholder = storedName == null ||
+            storedName.isEmpty ||
+            storedName == 'Art Visitor' ||
+            storedName == 'Guest Collector' ||
+            isEmailHandle;
+
+        final resolvedName =
+            (isPlaceholder && initialName != 'Art Visitor' && initialName != 'Guest Collector')
+                ? initialName
+                : (storedName != null && storedName.isNotEmpty ? storedName : initialName);
+
+        final resolvedPhoto = (storedPhoto != null && storedPhoto.isNotEmpty)
+            ? storedPhoto
+            : userPhoto;
+
+
+        if (storedName != resolvedName || storedPhoto != resolvedPhoto) {
+          await firestore.collection('users').doc(user.uid).set({
+            'name': resolvedName,
+            if (resolvedPhoto != null && resolvedPhoto.isNotEmpty)
+              'photoUrl': resolvedPhoto,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+
         return UserProfile(
-          name: data['name'] as String? ??
-              _resolveInitialName(user),
+          name: resolvedName,
           memberSince:
               data['memberSince'] as String? ?? _formatMemberSince(user),
           listeningTime: data['listeningTime'] as String? ??
               _defaultProfile.listeningTime,
+          photoUrl: resolvedPhoto,
         );
       } else {
-        final initialName = _resolveInitialName(user);
         final profile = UserProfile(
           name: initialName,
           memberSince: _formatMemberSince(user),
           listeningTime: '0 min',
+          photoUrl: userPhoto,
         );
         await saveProfile(profile);
         return profile;
       }
     } catch (e) {
       debugPrint('FirestoreProfileRepository error: $e');
-      return _defaultProfile;
+      return UserProfile(
+        name: _resolveInitialName(user),
+        memberSince: _formatMemberSince(user),
+        listeningTime: '0 min',
+        photoUrl: userPhoto,
+      );
+
     }
   }
 
@@ -105,6 +182,7 @@ class FirestoreProfileRepository implements ProfileRepository {
         'name': profile.name,
         'memberSince': profile.memberSince,
         'listeningTime': profile.listeningTime,
+        if (profile.photoUrl != null) 'photoUrl': profile.photoUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
@@ -161,12 +239,48 @@ class FirestoreProfileRepository implements ProfileRepository {
         debugPrint('FirestoreProfileRepository deleteAccount data error: $e');
       }
     }
+    try {
+      await DynamicArtworkStorage.clearAll();
+    } catch (e) {
+      debugPrint('FirestoreProfileRepository deleteAccount storage clear error: $e');
+    }
     if (user != null) {
       try {
         await user.delete();
+        debugPrint('FirestoreProfileRepository: user deleted successfully from FirebaseAuth');
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'requires-recent-login') {
+          debugPrint('FirestoreProfileRepository: requires-recent-login detected, attempting reauthentication');
+          final isGoogle = user.providerData.any((p) => p.providerId == 'google.com');
+          if (isGoogle) {
+            try {
+              final googleSignIn = GoogleSignIn();
+              GoogleSignInAccount? gUser;
+              try {
+                gUser = await googleSignIn.signInSilently(reAuthenticate: true);
+              } catch (_) {}
+              gUser ??= await googleSignIn.signIn();
+              if (gUser != null) {
+                final auth = await gUser.authentication;
+                final cred = GoogleAuthProvider.credential(
+                  accessToken: auth.accessToken,
+                  idToken: auth.idToken,
+                );
+                await user.reauthenticateWithCredential(cred);
+                await user.delete();
+                debugPrint('FirestoreProfileRepository: user successfully reauthenticated and deleted');
+                return;
+              }
+            } catch (reauthErr) {
+              debugPrint('FirestoreProfileRepository: Google re-authentication failed: $reauthErr');
+            }
+          }
+          debugPrint('FirestoreProfileRepository: FirebaseAuth user delete skipped; data already purged.');
+        } else {
+          debugPrint('FirestoreProfileRepository delete user FirebaseAuthException: $e');
+        }
       } catch (e) {
-        debugPrint('FirestoreProfileRepository delete user error: $e');
-        rethrow;
+        debugPrint('FirestoreProfileRepository delete user unexpected error: $e');
       }
     }
   }

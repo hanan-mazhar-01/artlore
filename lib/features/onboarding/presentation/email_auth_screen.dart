@@ -10,7 +10,11 @@ import '../../../core/widgets/art_scaffold.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/editorial_text.dart';
 import '../../../core/widgets/round_buttons.dart';
+import '../../collections/presentation/collection_controller.dart';
+import '../../history/presentation/history_controller.dart';
+import '../../journey/presentation/journey_providers.dart';
 import '../../paywall/presentation/premium_controller.dart';
+import '../../profile/presentation/profile_providers.dart';
 import '../../settings/presentation/settings_controller.dart';
 
 /// Email + password sign-in / registration, backed by Firebase Auth.
@@ -57,6 +61,15 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
       } else {
         await auth.signInWithEmail(email, password);
       }
+      await ref.read(historyRepositoryProvider).clearLocalCache();
+      await ref.read(collectionRepositoryProvider).clearLocalCache();
+      ref.invalidate(recentlyViewedProvider);
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(collectionProvider);
+      ref.invalidate(historyProvider);
+      ref.invalidate(artJourneyProvider);
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
       await ref.read(premiumProvider.notifier).refresh();
       if (!mounted) return;
       if (ref.read(settingsProvider).onboardingComplete) {

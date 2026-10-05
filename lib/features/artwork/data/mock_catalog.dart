@@ -228,3 +228,9 @@ Artwork? getArtwork(String id) => _dynamicCatalog[id] ?? mockCatalog[id];
 ArtworkContent? getDynamicContent(String id) => _dynamicContent[id];
 bool hasArtwork(String id) =>
     _dynamicCatalog.containsKey(id) || mockCatalog.containsKey(id);
+
+void clearDynamicCatalog() {
+  _dynamicCatalog.clear();
+  _dynamicContent.clear();
+}
+

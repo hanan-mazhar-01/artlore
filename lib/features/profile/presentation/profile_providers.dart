@@ -10,8 +10,10 @@ final userProfileProvider =
 
 class UserProfileController extends AsyncNotifier<UserProfile> {
   @override
-  Future<UserProfile> build() =>
-      ref.watch(profileRepositoryProvider).fetchProfile();
+  Future<UserProfile> build() async {
+    ref.watch(authStateProvider);
+    return ref.watch(profileRepositoryProvider).fetchProfile();
+  }
 
   Future<void> updateName(String newName) async {
     final trimmed = newName.trim();

@@ -9,6 +9,10 @@ import '../../../core/widgets/art_scaffold.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/editorial_text.dart';
 import '../../../core/widgets/round_buttons.dart';
+import '../../collections/presentation/collection_controller.dart';
+import '../../history/presentation/history_controller.dart';
+import '../../journey/presentation/journey_providers.dart';
+import '../../profile/presentation/profile_providers.dart';
 import 'premium_controller.dart';
 
 /// Shown when a guest has used their free scans — asks them to create an
@@ -32,6 +36,15 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
       if (wasGuest) {
         await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
       }
+      await ref.read(historyRepositoryProvider).clearLocalCache();
+      await ref.read(collectionRepositoryProvider).clearLocalCache();
+      ref.invalidate(recentlyViewedProvider);
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(collectionProvider);
+      ref.invalidate(historyProvider);
+      ref.invalidate(artJourneyProvider);
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
       await ref.read(premiumProvider.notifier).refresh();
       if (mounted) context.pop(true);
     } catch (_) {

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -47,18 +48,54 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
       final current = auth.currentUser;
+      UserCredential credentialResult;
       if (current != null && current.isAnonymous) {
         try {
-          return await current.linkWithCredential(credential);
+          credentialResult = await current.linkWithCredential(credential);
         } on FirebaseAuthException catch (e) {
           if (e.code == 'credential-already-in-use' ||
               e.code == 'email-already-in-use') {
-            return await auth.signInWithCredential(credential);
+            credentialResult = await auth.signInWithCredential(credential);
+          } else {
+            rethrow;
           }
-          rethrow;
+        }
+      } else {
+        credentialResult = await auth.signInWithCredential(credential);
+      }
+
+      // Sync name & photo from Google to Firebase Auth user AND Firestore
+      final loggedInUser = credentialResult.user ?? auth.currentUser;
+      if (loggedInUser != null) {
+        final gName = googleUser.displayName;
+        final gPhoto = googleUser.photoUrl;
+        if (gName != null && gName.isNotEmpty) {
+          try {
+            await loggedInUser.updateDisplayName(gName);
+          } catch (_) {}
+        }
+        if (gPhoto != null && gPhoto.isNotEmpty) {
+          try {
+            await loggedInUser.updatePhotoURL(gPhoto);
+          } catch (_) {}
+        }
+        if (Firebase.apps.isNotEmpty) {
+          try {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(loggedInUser.uid)
+                .set({
+              if (gName != null && gName.isNotEmpty) 'name': gName,
+              if (gPhoto != null && gPhoto.isNotEmpty) 'photoUrl': gPhoto,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          } catch (e) {
+            debugPrint('AuthService: error saving google profile to firestore: $e');
+          }
         }
       }
-      return await auth.signInWithCredential(credential);
+
+      return credentialResult;
     } catch (e) {
       debugPrint('AuthService: Google sign-in failed: $e');
       rethrow;

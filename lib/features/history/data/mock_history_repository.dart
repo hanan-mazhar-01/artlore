@@ -16,6 +16,10 @@ class MockHistoryRepository implements HistoryRepository {
   @override
   Future<void> add(HistoryEntry entry) async => _entries.insert(0, entry);
 
+  @override
+  Future<void> clearLocalCache() async => _entries.clear();
+
+
   static List<HistoryEntry> _seed(DateTime now) {
     return [
       HistoryEntry(

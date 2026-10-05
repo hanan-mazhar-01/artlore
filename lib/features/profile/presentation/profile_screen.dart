@@ -7,8 +7,10 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/art_scaffold.dart';
-import '../../../core/widgets/art_toast.dart';
+import '../../artwork/data/dynamic_artwork_storage.dart';
 import '../../collections/presentation/collection_controller.dart';
+
+
 import '../../history/presentation/history_controller.dart';
 import '../../journey/presentation/journey_providers.dart';
 import '../../paywall/presentation/premium_controller.dart';
@@ -165,31 +167,38 @@ class ProfileScreen extends ConsumerWidget {
               try {
                 await ref.read(authServiceProvider).signOut();
               } catch (_) {}
+              await ref.read(historyRepositoryProvider).clearLocalCache();
+              await ref.read(collectionRepositoryProvider).clearLocalCache();
+              await ref.read(recentlyViewedProvider.notifier).clear();
+              await DynamicArtworkStorage.clearAll();
+              PaintingBinding.instance.imageCache.clear();
+              PaintingBinding.instance.imageCache.clearLiveImages();
               ref.invalidate(premiumProvider);
               ref.invalidate(collectionProvider);
               ref.invalidate(historyProvider);
               ref.invalidate(userProfileProvider);
+              ref.invalidate(recentlyViewedProvider);
               ref.invalidate(artJourneyProvider);
               ref.read(settingsProvider.notifier).signOut();
               if (context.mounted) context.go(AppRoutes.welcome);
             },
             child: Text('Sign Out', style: TextStyle(color: p.danger)),
           ),
+
         ],
       ),
     );
   }
 
-  void _confirmDeleteAccount(BuildContext context, WidgetRef ref) {
+  Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
     final p = context.palette;
     final textController = TextEditingController();
-    bool isDeleting = false;
 
-    showDialog<void>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) {
+      barrierDismissible: true,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
           final isConfirmed =
               textController.text.trim().toLowerCase() == 'delete';
 
@@ -223,7 +232,6 @@ class ProfileScreen extends ConsumerWidget {
                   TextField(
                     controller: textController,
                     autofocus: true,
-                    enabled: !isDeleting,
                     onChanged: (_) => setDialogState(() {}),
                     style: AppTypography.sans(14).copyWith(color: p.ink),
                     decoration: InputDecoration(
@@ -249,82 +257,22 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (isDeleting) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: p.danger,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Deleting your account...',
-                          style: AppTypography.sans(12).copyWith(color: p.muted),
-                        ),
-                      ],
-                    ),
-                  ],
                 ],
               ),
             ),
             actions: [
               TextButton(
-                onPressed: isDeleting
-                    ? null
-                    : () {
-                        textController.dispose();
-                        Navigator.of(dialogContext).pop();
-                      },
+                onPressed: () => Navigator.of(ctx).pop(false),
                 child: Text('Cancel', style: TextStyle(color: p.muted)),
               ),
               TextButton(
-                onPressed: (!isConfirmed || isDeleting)
-                    ? null
-                    : () async {
-                        setDialogState(() => isDeleting = true);
-                        try {
-                          await ref
-                              .read(userProfileProvider.notifier)
-                              .deleteAccount();
-                        } catch (e) {
-                          debugPrint('Error deleting account: $e');
-                          if (dialogContext.mounted) {
-                            setDialogState(() => isDeleting = false);
-                          }
-                          if (context.mounted) {
-                            ArtToast.show(
-                              context,
-                              'Security check: Please log in again to delete.',
-                            );
-                          }
-                          return;
-                        }
-                        try {
-                          await ref.read(authServiceProvider).signOut();
-                        } catch (_) {}
-                        ref.invalidate(premiumProvider);
-                        ref.invalidate(collectionProvider);
-                        ref.invalidate(historyProvider);
-                        ref.invalidate(userProfileProvider);
-                        ref.invalidate(artJourneyProvider);
-                        ref.read(settingsProvider.notifier).signOut();
-                        textController.dispose();
-                        if (dialogContext.mounted) {
-                          Navigator.of(dialogContext).pop();
-                        }
-                        if (context.mounted) {
-                          context.go(AppRoutes.welcome);
-                        }
-                      },
+                onPressed: isConfirmed
+                    ? () => Navigator.of(ctx).pop(true)
+                    : null,
                 child: Text(
                   'Delete Account',
                   style: TextStyle(
-                    color: isConfirmed && !isDeleting
+                    color: isConfirmed
                         ? p.danger
                         : p.muted.withValues(alpha: 0.35),
                   ),
@@ -335,5 +283,36 @@ class ProfileScreen extends ConsumerWidget {
         },
       ),
     );
+
+    textController.dispose();
+
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(userProfileProvider.notifier).deleteAccount();
+    } catch (e) {
+      debugPrint('Error deleting account: $e');
+    } finally {
+      try {
+        await ref.read(authServiceProvider).signOut();
+      } catch (_) {}
+      await ref.read(historyRepositoryProvider).clearLocalCache();
+      await ref.read(collectionRepositoryProvider).clearLocalCache();
+      await ref.read(recentlyViewedProvider.notifier).clear();
+      await DynamicArtworkStorage.clearAll();
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+      ref.invalidate(premiumProvider);
+      ref.invalidate(collectionProvider);
+      ref.invalidate(historyProvider);
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(recentlyViewedProvider);
+      ref.invalidate(artJourneyProvider);
+      ref.read(settingsProvider.notifier).signOut();
+
+      if (context.mounted) {
+        context.go(AppRoutes.welcome);
+      }
+    }
   }
 }

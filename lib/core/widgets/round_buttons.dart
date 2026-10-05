@@ -96,11 +96,12 @@ class OutlineIconButton extends StatelessWidget {
   }
 }
 
-/// Initials in a gold-ringed disc (header avatar, profile).
+/// Initials or Photo in a gold-ringed disc (header avatar, profile).
 class InitialsAvatar extends StatelessWidget {
   const InitialsAvatar({
     super.key,
     required this.initials,
+    this.imageUrl,
     this.size = 36,
     this.style,
     this.ringOpacity = .5,
@@ -108,6 +109,7 @@ class InitialsAvatar extends StatelessWidget {
   });
 
   final String initials;
+  final String? imageUrl;
   final double size;
   final TextStyle? style;
   final double ringOpacity;
@@ -119,6 +121,8 @@ class InitialsAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final hasImage = imageUrl != null && imageUrl!.trim().isNotEmpty;
+
     return Container(
       width: size,
       height: size,
@@ -137,7 +141,30 @@ class InitialsAvatar extends StatelessWidget {
               ]
             : null,
       ),
-      child: Text(initials, style: style?.copyWith(color: p.accent)),
+      child: ClipOval(
+        child: hasImage
+            ? Image.network(
+                imageUrl!,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Center(
+                    child: Text(initials, style: style?.copyWith(color: p.accent)),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('InitialsAvatar image load error ($imageUrl): $error');
+                  return Center(
+                    child: Text(initials, style: style?.copyWith(color: p.accent)),
+                  );
+                },
+              )
+            : Center(
+                child: Text(initials, style: style?.copyWith(color: p.accent)),
+              ),
+      ),
     );
   }
 }

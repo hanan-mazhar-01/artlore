@@ -18,7 +18,7 @@ class HomeHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = context.palette;
     final profile = ref.watch(userProfileProvider).value;
-    final name = profile?.firstName;
+    final firstName = _resolveFirstName(profile);
     return Padding(
       padding: EdgeInsets.fromLTRB(24, context.topInset, 24, 0),
       child: Row(
@@ -29,8 +29,8 @@ class HomeHeader extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 EditorialHeading(
-                  lead: name == null ? 'Hi' : 'Hi,',
-                  emphasis: name,
+                  lead: firstName == null ? 'Hi' : 'Hi,',
+                  emphasis: firstName,
                   breakLine: false,
                   style: AppTypography.serif(
                     34,
@@ -38,6 +38,7 @@ class HomeHeader extends ConsumerWidget {
                     height: 1.05,
                   ),
                 ),
+
                 const SizedBox(height: 8),
                 Text(
                   'What will you discover today?',
@@ -57,6 +58,7 @@ class HomeHeader extends ConsumerWidget {
               padding: const EdgeInsets.all(4),
               child: InitialsAvatar(
                 initials: profile?.initials ?? '',
+                imageUrl: profile?.photoUrl,
                 style: AppTypography.sans(12, weight: FontWeight.w600),
                 elevated: true,
               ),
@@ -66,4 +68,20 @@ class HomeHeader extends ConsumerWidget {
       ),
     );
   }
+
+  String? _resolveFirstName(dynamic profile) {
+    if (profile == null) return null;
+    final String raw = profile.firstName?.trim() ?? '';
+    if (raw.isEmpty ||
+        raw == 'Visitor' ||
+        raw == 'Art Visitor' ||
+        raw == 'Guest Collector') {
+      return null;
+    }
+    final words = raw.split(RegExp(r'[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+'));
+    if (words.isEmpty) return null;
+    final first = words.first.trim();
+    return first.isEmpty ? null : first;
+  }
 }
+

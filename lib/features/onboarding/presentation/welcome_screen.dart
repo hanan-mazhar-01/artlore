@@ -16,7 +16,11 @@ import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/icons/art_icon.dart';
 import '../../../core/widgets/icons/art_icons.dart';
 import '../../artwork/data/mock_catalog.dart';
+import '../../collections/presentation/collection_controller.dart';
+import '../../history/presentation/history_controller.dart';
+import '../../journey/presentation/journey_providers.dart';
 import '../../paywall/presentation/premium_controller.dart';
+import '../../profile/presentation/profile_providers.dart';
 import '../../settings/presentation/settings_controller.dart';
 
 /// The door into the museum: Turner's sunset and three ways in.
@@ -40,6 +44,15 @@ class WelcomeScreen extends ConsumerWidget {
           await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
         }
       } catch (_) {}
+      await ref.read(historyRepositoryProvider).clearLocalCache();
+      await ref.read(collectionRepositoryProvider).clearLocalCache();
+      ref.invalidate(recentlyViewedProvider);
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(collectionProvider);
+      ref.invalidate(historyProvider);
+      ref.invalidate(artJourneyProvider);
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
       await ref.read(premiumProvider.notifier).refresh();
       enter();
     }
@@ -48,6 +61,15 @@ class WelcomeScreen extends ConsumerWidget {
       try {
         await ref.read(authServiceProvider).signInAnonymously();
       } catch (_) {}
+      await ref.read(historyRepositoryProvider).clearLocalCache();
+      await ref.read(collectionRepositoryProvider).clearLocalCache();
+      ref.invalidate(recentlyViewedProvider);
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(collectionProvider);
+      ref.invalidate(historyProvider);
+      ref.invalidate(artJourneyProvider);
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
       await ref.read(premiumProvider.notifier).refresh();
       enter();
     }

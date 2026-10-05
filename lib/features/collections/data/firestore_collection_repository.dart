@@ -174,4 +174,13 @@ class FirestoreCollectionRepository implements CollectionRepository {
       debugPrint('FirestoreCollectionRepository deleteGallery error: $e');
     }
   }
+
+  @override
+  Future<void> clearLocalCache() async {
+    _fallbackGalleries
+      ..clear()
+      ..add(const Gallery(id: 'favorites', name: 'Favorites'));
+    _fallbackSaved.clear();
+  }
 }
+

@@ -11,8 +11,10 @@ final historyProvider =
 
 class HistoryController extends AsyncNotifier<List<HistoryEntry>> {
   @override
-  Future<List<HistoryEntry>> build() =>
-      ref.watch(historyRepositoryProvider).fetchHistory();
+  Future<List<HistoryEntry>> build() {
+    ref.watch(authStateProvider);
+    return ref.watch(historyRepositoryProvider).fetchHistory();
+  }
 
   /// Records a fresh identification at the top of the timeline.
   Future<void> recordScan({

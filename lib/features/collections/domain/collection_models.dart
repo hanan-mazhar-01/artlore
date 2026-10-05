@@ -63,7 +63,9 @@ abstract interface class CollectionRepository {
   /// gallery immediately, without waiting on this (network) call.
   Future<void> createGallery(Gallery gallery);
   Future<void> deleteGallery(String galleryId);
+  Future<void> clearLocalCache();
 }
+
 
 /// Maximum number of custom user galleries allowed (excluding default Favorites).
 const int maxCustomGalleries = 10;

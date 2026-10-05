@@ -47,4 +47,13 @@ class MockCollectionRepository implements CollectionRepository {
     _galleries.removeWhere((g) => g.id == galleryId);
     _saved.removeWhere((s) => s.galleryId == galleryId);
   }
+
+  @override
+  Future<void> clearLocalCache() async {
+    _galleries
+      ..clear()
+      ..add(const Gallery(id: 'favorites', name: 'Favorites'));
+    _saved.clear();
+  }
 }
+

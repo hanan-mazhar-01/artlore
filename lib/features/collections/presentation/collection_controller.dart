@@ -23,8 +23,10 @@ class CollectionController extends AsyncNotifier<CollectionSnapshot> {
   CollectionRepository get _repo => ref.read(collectionRepositoryProvider);
 
   @override
-  Future<CollectionSnapshot> build() =>
-      ref.watch(collectionRepositoryProvider).load();
+  Future<CollectionSnapshot> build() {
+    ref.watch(authStateProvider);
+    return ref.watch(collectionRepositoryProvider).load();
+  }
 
   /// Optimistically hangs the work, then syncs with the repository.
   Future<void> save(String artworkId, String galleryId) async {
@@ -100,14 +102,23 @@ final recentlyViewedProvider =
     );
 
 class RecentlyViewedController extends Notifier<List<String>> {
-  static const _prefKey = 'artlore.recently_viewed';
+  static const _baseKey = 'artlore.recently_viewed';
   static const _limit = 24;
+
+  String get _currentKey {
+    final user = ref.read(authServiceProvider).currentUser;
+    if (user != null && user.uid.isNotEmpty) {
+      return '$_baseKey.${user.uid}';
+    }
+    return '$_baseKey.guest';
+  }
 
   @override
   List<String> build() {
+    ref.watch(authStateProvider);
     try {
       final prefs = ref.watch(sharedPreferencesProvider);
-      return prefs.getStringList(_prefKey) ?? const [];
+      return prefs.getStringList(_currentKey) ?? const [];
     } catch (_) {
       return const [];
     }
@@ -121,7 +132,23 @@ class RecentlyViewedController extends Notifier<List<String>> {
     ].take(_limit).toList(growable: false);
     state = updated;
     try {
-      ref.read(sharedPreferencesProvider).setStringList(_prefKey, updated);
+      ref.read(sharedPreferencesProvider).setStringList(_currentKey, updated);
+    } catch (_) {}
+  }
+
+  Future<void> clear() async {
+    state = const [];
+    try {
+      final prefs = ref.read(sharedPreferencesProvider);
+      await prefs.remove(_currentKey);
+      await prefs.remove('$_baseKey.guest');
+      await prefs.remove(_baseKey);
+      for (final k in prefs.getKeys()) {
+        if (k.startsWith(_baseKey)) {
+          await prefs.remove(k);
+        }
+      }
     } catch (_) {}
   }
 }
+

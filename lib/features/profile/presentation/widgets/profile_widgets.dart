@@ -28,6 +28,7 @@ class ProfileHeader extends StatelessWidget {
       children: [
         InitialsAvatar(
           initials: profile.initials,
+          imageUrl: profile.photoUrl,
           size: 72,
           ringOpacity: 1,
           style: AppTypography.serif(28),
