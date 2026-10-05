@@ -16,7 +16,7 @@ import '../features/history/data/firestore_history_repository.dart';
 import '../features/history/domain/history_entry.dart';
 import '../features/journey/data/mock_journey_repository.dart';
 import '../features/journey/domain/art_journey.dart';
-import '../features/paywall/data/in_app_purchase_repository.dart';
+import '../features/paywall/data/revenue_cat_purchase_repository.dart';
 import '../features/paywall/domain/premium_models.dart';
 import '../features/profile/data/firestore_profile_repository.dart';
 import '../features/profile/domain/user_profile.dart';
@@ -82,7 +82,7 @@ final deviceIdServiceProvider = Provider<DeviceIdService>(
 );
 
 final purchaseRepositoryProvider = Provider<PurchaseRepository>(
-  (ref) => InAppPurchaseRepository(
+  (ref) => RevenueCatPurchaseRepository(
     deviceIdService: ref.watch(deviceIdServiceProvider),
   ),
 );

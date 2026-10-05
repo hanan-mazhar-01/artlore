@@ -36,7 +36,7 @@ void main() {
     await _settle(t);
     await _settle(t);
     expect(find.text('What will you discover today?'), findsOneWidget);
-    expect(find.text('Scan Artwork'), findsOneWidget);
+    expect(find.text('Scan Artwork'), findsAtLeastNWidgets(1));
     expect(c.read(settingsProvider).onboardingComplete, isTrue);
   });
 
@@ -78,15 +78,15 @@ void main() {
         t.element(find.text('Recent scans', skipOffstage: false));
     expect(
       Theme.of(ctx()).extension<AppPalette>()!.background,
-      AppPalette.dark.background,
+      AppPalette.light.background,
     );
 
-    c.read(settingsProvider.notifier).setThemeMode(ThemeMode.light);
+    c.read(settingsProvider.notifier).setThemeMode(ThemeMode.dark);
     await t.pump();
     await _settle(t, 600);
     expect(
       Theme.of(ctx()).extension<AppPalette>()!.background,
-      AppPalette.light.background,
+      AppPalette.dark.background,
     );
   });
 

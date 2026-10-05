@@ -57,6 +57,27 @@ class WelcomeScreen extends ConsumerWidget {
       enter();
     }
 
+    Future<void> signInApple() async {
+      final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+      try {
+        await ref.read(authServiceProvider).signInWithApple();
+        if (wasGuest) {
+          await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+        }
+      } catch (_) {}
+      await ref.read(historyRepositoryProvider).clearLocalCache();
+      await ref.read(collectionRepositoryProvider).clearLocalCache();
+      ref.invalidate(recentlyViewedProvider);
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(collectionProvider);
+      ref.invalidate(historyProvider);
+      ref.invalidate(artJourneyProvider);
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+      await ref.read(premiumProvider.notifier).refresh();
+      enter();
+    }
+
     Future<void> signInGuest() async {
       try {
         await ref.read(authServiceProvider).signInAnonymously();
@@ -121,6 +142,7 @@ class WelcomeScreen extends ConsumerWidget {
                           child: _WelcomeCopy(
                             onEnter: enter,
                             onGoogle: signInGoogle,
+                            onApple: signInApple,
                             onGuest: signInGuest,
                             onEmail: goToEmailAuth,
                           ),
@@ -142,12 +164,14 @@ class _WelcomeCopy extends StatelessWidget {
   const _WelcomeCopy({
     required this.onEnter,
     required this.onGoogle,
+    required this.onApple,
     required this.onGuest,
     required this.onEmail,
   });
 
   final VoidCallback onEnter;
   final VoidCallback onGoogle;
+  final VoidCallback onApple;
   final VoidCallback onGuest;
   final VoidCallback onEmail;
 
@@ -180,7 +204,7 @@ class _WelcomeCopy extends StatelessWidget {
           const SizedBox(height: 10),
           PillButton(
             label: 'Continue with Apple',
-            onTap: onEnter,
+            onTap: onApple,
             style: PillStyle.outline,
             leading: ArtIcon(ArtIcons.apple, size: 16, color: p.onInverse),
           ),

@@ -9,6 +9,8 @@ class SubscriptionPlan {
     required this.period,
     required this.renewalNote,
     this.badge,
+    this.hasTrial = false,
+    this.trialDays = 0,
   });
 
   final String id;
@@ -25,8 +27,14 @@ class SubscriptionPlan {
   /// "Then $9.99/month · cancel anytime".
   final String renewalNote;
 
-  /// "Save 33%".
+  /// "3 days free" / "Save 33%".
   final String? badge;
+
+  /// True if plan comes with a free trial.
+  final bool hasTrial;
+
+  /// Free trial length in days (e.g. 3).
+  final int trialDays;
 }
 
 @immutable

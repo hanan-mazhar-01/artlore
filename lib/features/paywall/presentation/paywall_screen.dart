@@ -123,7 +123,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                         PremiumButton(
                           label: isPremium
                               ? 'You\'re a member — explore'
-                              : 'Begin 7 days free',
+                              : (plan != null && plan.hasTrial && plan.trialDays > 0)
+                                  ? 'Begin ${plan.trialDays} days free'
+                                  : (plan != null
+                                      ? 'Subscribe (${plan.price}${plan.period})'
+                                      : 'Start Subscription'),
                           busy: _busy,
                           onTap: isPremium || plan == null
                               ? () => context.go(AppRoutes.home)

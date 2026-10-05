@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 @immutable
 class AppSettings {
   const AppSettings({
-    this.themeMode = ThemeMode.dark,
+    this.themeMode = ThemeMode.light,
     this.voice = 'The Curator',
     this.language = 'English',
     this.narrationLength = 1,
@@ -16,7 +16,7 @@ class AppSettings {
     this.onboardingComplete = false,
   });
 
-  /// ArtLore is a midnight gallery first — dark by default.
+  /// Light by default.
   final ThemeMode themeMode;
   final String voice;
   final String language;

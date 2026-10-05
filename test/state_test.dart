@@ -53,20 +53,20 @@ void main() {
   group('Settings', () {
     test('theme mode persists across launches', () async {
       final first = await makeContainer();
-      first.read(settingsProvider.notifier).setThemeMode(ThemeMode.light);
+      first.read(settingsProvider.notifier).setThemeMode(ThemeMode.dark);
       await Future<void>.delayed(Duration.zero);
       first.dispose();
 
-      final prefs = <String, Object>{'artlore.settings.theme': 'light'};
+      final prefs = <String, Object>{'artlore.settings.theme': 'dark'};
       final second = await makeContainer(prefs);
       addTearDown(second.dispose);
-      expect(second.read(themeModeProvider), ThemeMode.light);
+      expect(second.read(themeModeProvider), ThemeMode.dark);
     });
 
-    test('defaults to the midnight gallery', () async {
+    test('defaults to light theme', () async {
       final c = await makeContainer();
       addTearDown(c.dispose);
-      expect(c.read(themeModeProvider), ThemeMode.dark);
+      expect(c.read(themeModeProvider), ThemeMode.light);
     });
   });
 

@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/media/art_image_source.dart';
@@ -86,6 +86,7 @@ class ScanControls extends StatelessWidget {
     this.onResetZoom,
     this.zoom = 1.0,
     this.lastCapture,
+    this.busy = false,
   });
 
   final bool locked;
@@ -94,6 +95,7 @@ class ScanControls extends StatelessWidget {
   final VoidCallback? onResetZoom;
   final double zoom;
   final ArtImageSource? lastCapture;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +106,7 @@ class ScanControls extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Tappable(
-            onTap: onGallery,
+            onTap: busy ? null : onGallery,
             semanticLabel: 'Scan from photos',
             pressedScale: .92,
             child: Container(
@@ -131,7 +133,7 @@ class ScanControls extends StatelessWidget {
             ),
           ),
           Tappable(
-            onTap: onCapture,
+            onTap: busy ? null : onCapture,
             semanticLabel: 'Capture artwork',
             haptic: HapticKind.medium,
             pressedScale: .92,
@@ -143,7 +145,7 @@ class ScanControls extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: locked ? p.accent : p.line(.7),
+                  color: (locked || busy) ? p.accent : p.line(.7),
                   width: 1.8,
                 ),
               ),
@@ -155,12 +157,21 @@ class ScanControls extends StatelessWidget {
                   color: p.inverse,
                   shape: BoxShape.circle,
                 ),
-                child: ArtIcon(
-                  ArtIcons.scan,
-                  size: 26,
-                  color: p.onInverse,
-                  strokeWidth: 1.5,
-                ),
+                child: busy
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: p.onInverse,
+                        ),
+                      )
+                    : ArtIcon(
+                        ArtIcons.scan,
+                        size: 26,
+                        color: p.onInverse,
+                        strokeWidth: 1.5,
+                      ),
               ),
             ),
           ),

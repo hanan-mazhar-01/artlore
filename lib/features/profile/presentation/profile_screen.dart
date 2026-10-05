@@ -28,12 +28,12 @@ class ProfileScreen extends ConsumerWidget {
     final journey = ref.watch(artJourneyProvider).value;
     final collection = ref.watch(
       collectionProvider.select((c) {
-        final v = c.value;
+        final v = c.asData?.value ?? c.value;
         return v == null ? null : (v.saved.length, v.galleries.length);
       }),
     );
     final premium = ref.watch(
-      premiumProvider.select((s) => s.value?.isPremium ?? false),
+      premiumProvider.select((s) => s.asData?.value.isPremium ?? s.value?.isPremium ?? false),
     );
     return ArtScaffold(
       body: ListView(
@@ -54,9 +54,9 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 6),
           ProfileRow(
             title: 'My Collection',
-            subtitle: collection == null
-                ? 'Your galleries'
-                : '${collection.$1} works in ${collection.$2} galleries',
+            subtitle: (collection == null || collection.$1 == 0)
+                ? 'No saved artworks yet'
+                : '${collection.$1} ${collection.$1 == 1 ? 'work' : 'works'} in ${collection.$2} ${collection.$2 == 1 ? 'gallery' : 'galleries'}',
             onTap: () => context.go(AppRoutes.collection),
           ),
           ProfileRow(
@@ -170,9 +170,7 @@ class ProfileScreen extends ConsumerWidget {
               await ref.read(historyRepositoryProvider).clearLocalCache();
               await ref.read(collectionRepositoryProvider).clearLocalCache();
               await ref.read(recentlyViewedProvider.notifier).clear();
-              await DynamicArtworkStorage.clearAll();
               PaintingBinding.instance.imageCache.clear();
-              PaintingBinding.instance.imageCache.clearLiveImages();
               ref.invalidate(premiumProvider);
               ref.invalidate(collectionProvider);
               ref.invalidate(historyProvider);
@@ -286,33 +284,72 @@ class ProfileScreen extends ConsumerWidget {
 
     textController.dispose();
 
-    if (confirmed != true) return;
+    if (confirmed != true || !context.mounted) return;
+
+    // Show non-dismissible loading indicator
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (loadingCtx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: p.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: p.line(.1)),
+          ),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    color: p.accent,
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Text(
+                    'Deleting account…',
+                    style: AppTypography.sans(14, weight: FontWeight.w500).copyWith(color: p.ink),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
 
     try {
       await ref.read(userProfileProvider.notifier).deleteAccount();
     } catch (e) {
       debugPrint('Error deleting account: $e');
-    } finally {
-      try {
-        await ref.read(authServiceProvider).signOut();
-      } catch (_) {}
-      await ref.read(historyRepositoryProvider).clearLocalCache();
-      await ref.read(collectionRepositoryProvider).clearLocalCache();
-      await ref.read(recentlyViewedProvider.notifier).clear();
-      await DynamicArtworkStorage.clearAll();
-      PaintingBinding.instance.imageCache.clear();
-      PaintingBinding.instance.imageCache.clearLiveImages();
-      ref.invalidate(premiumProvider);
-      ref.invalidate(collectionProvider);
-      ref.invalidate(historyProvider);
-      ref.invalidate(userProfileProvider);
-      ref.invalidate(recentlyViewedProvider);
-      ref.invalidate(artJourneyProvider);
-      ref.read(settingsProvider.notifier).signOut();
+    }
 
-      if (context.mounted) {
-        context.go(AppRoutes.welcome);
-      }
+    try {
+      await ref.read(authServiceProvider).signOut();
+    } catch (_) {}
+    await ref.read(historyRepositoryProvider).clearLocalCache();
+    await ref.read(collectionRepositoryProvider).clearLocalCache();
+    await ref.read(recentlyViewedProvider.notifier).clear();
+    await DynamicArtworkStorage.clearAll();
+    PaintingBinding.instance.imageCache.clear();
+
+    ref.invalidate(premiumProvider);
+    ref.invalidate(collectionProvider);
+    ref.invalidate(historyProvider);
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(recentlyViewedProvider);
+    ref.invalidate(artJourneyProvider);
+    ref.read(settingsProvider.notifier).signOut();
+
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+      context.go(AppRoutes.welcome);
     }
   }
 }

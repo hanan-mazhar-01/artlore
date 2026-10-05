@@ -230,6 +230,10 @@ class FirestoreProfileRepository implements ProfileRepository {
         for (final doc in history.docs) {
           await doc.reference.delete();
         }
+        final dynamicArtworks = await userDoc.collection('dynamic_artworks').get();
+        for (final doc in dynamicArtworks.docs) {
+          await doc.reference.delete();
+        }
         await userDoc.delete();
         // `deviceTrials/{deviceId}` is deliberately NOT touched here — it's
         // the one-time per-device free-trial record and must survive

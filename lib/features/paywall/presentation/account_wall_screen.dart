@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +9,8 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/art_scaffold.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/editorial_text.dart';
+import '../../../core/widgets/icons/art_icon.dart';
+import '../../../core/widgets/icons/art_icons.dart';
 import '../../../core/widgets/round_buttons.dart';
 import '../../collections/presentation/collection_controller.dart';
 import '../../history/presentation/history_controller.dart';
@@ -33,6 +36,30 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
     final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
     try {
       await ref.read(authServiceProvider).signInWithGoogle();
+      if (wasGuest) {
+        await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+      }
+      await ref.read(historyRepositoryProvider).clearLocalCache();
+      await ref.read(collectionRepositoryProvider).clearLocalCache();
+      ref.invalidate(recentlyViewedProvider);
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(collectionProvider);
+      ref.invalidate(historyProvider);
+      ref.invalidate(artJourneyProvider);
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+      await ref.read(premiumProvider.notifier).refresh();
+      if (mounted) context.pop(true);
+    } catch (_) {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _signInApple() async {
+    setState(() => _busy = true);
+    final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+    try {
+      await ref.read(authServiceProvider).signInWithApple();
       if (wasGuest) {
         await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
       }
@@ -89,6 +116,15 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
                 onTap: _busy ? null : _signInGoogle,
                 style: PillStyle.inverse,
               ),
+              if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                const SizedBox(height: 10),
+                PillButton(
+                  label: 'Continue with Apple',
+                  onTap: _busy ? null : _signInApple,
+                  style: PillStyle.outline,
+                  leading: ArtIcon(ArtIcons.apple, size: 16, color: p.onInverse),
+                ),
+              ],
               const SizedBox(height: 10),
               PillButton(
                 label: 'Continue with email',

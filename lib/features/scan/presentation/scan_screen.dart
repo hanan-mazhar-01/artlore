@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/extensions/context_x.dart';
 import '../../../core/media/image_crop.dart';
 import '../../../core/router/app_routes.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/art_scaffold.dart';
 import '../../artwork/data/dynamic_artwork_storage.dart';
 import '../../artwork/presentation/artwork_providers.dart';
@@ -46,7 +47,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       );
       final ctrl = CameraController(
         backCamera,
-        ResolutionPreset.high,
+        ResolutionPreset.medium,
         enableAudio: false,
       );
       await ctrl.initialize();
@@ -67,17 +68,30 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   bool _busy = false;
+  bool _showFlash = false;
   String? _capturedPhotoId;
 
   Future<void> _capture() async {
     if (_busy) return;
-    _busy = true;
-    // Freeze the viewfinder the instant the shutter is tapped — taking and
-    // cropping the photo below takes real time, and the live feed should
-    // not look like it's still running while that happens.
+    setState(() {
+      _busy = true;
+      _showFlash = true;
+    });
+    Haptics.play(HapticKind.success);
+
+    // Trigger shutter flash
+    Future.delayed(const Duration(milliseconds: 140), () {
+      if (mounted) setState(() => _showFlash = false);
+    });
+
     ref.read(scanControllerProvider.notifier).beginCapturing();
 
     if (_cameraController != null && _cameraController!.value.isInitialized) {
+      try {
+        // Freeze preview immediately so live recording stops
+        await _cameraController!.pausePreview();
+      } catch (_) {}
+
       try {
         final xFile = await _cameraController!.takePicture();
         final rawBytes = await xFile.readAsBytes();
@@ -86,16 +100,15 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
           ScanViewfinder.aspectRatio,
         );
         ref.read(pendingFrameBytesProvider.notifier).state = bytes;
-        // Content-derived, not a constant — otherwise every live capture
-        // would share the same analysisControllerProvider family entry and
-        // a later scan could surface an earlier one's cached result.
         _capturedPhotoId = 'camera-${DynamicArtworkStorage.hashOf(bytes)}';
       } catch (_) {
         _capturedPhotoId = null;
       }
     }
     await _resolveCapture();
-    _busy = false;
+    if (mounted) {
+      setState(() => _busy = false);
+    }
   }
 
   Future<void> _resolveCapture() async {
@@ -104,19 +117,38 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     switch (outcome) {
       case CaptureOutcome.proceed:
         final id = _capturedPhotoId;
-        context.pushReplacement(
-          id == null ? AppRoutes.reading : AppRoutes.readingPhoto(id),
-        );
+        if (mounted) {
+          context.pushReplacement(
+            id == null ? AppRoutes.reading : AppRoutes.readingPhoto(id),
+          );
+        }
       case CaptureOutcome.needsAccount:
+        try {
+          await _cameraController?.resumePreview();
+        } catch (_) {}
         ref.read(scanControllerProvider.notifier).resetToDetected();
+        if (!mounted) return;
         final unlocked = await context.push<bool>(AppRoutes.accountWall);
         if (unlocked == true && mounted) {
           ref.read(scanControllerProvider.notifier).beginCapturing();
           await _resolveCapture();
+        } else if (mounted) {
+          try {
+            await _cameraController?.resumePreview();
+          } catch (_) {}
         }
       case CaptureOutcome.needsPremium:
+        try {
+          await _cameraController?.resumePreview();
+        } catch (_) {}
         ref.read(scanControllerProvider.notifier).resetToDetected();
-        context.push(AppRoutes.paywall);
+        if (!mounted) return;
+        await context.push(AppRoutes.paywall);
+        if (mounted) {
+          try {
+            await _cameraController?.resumePreview();
+          } catch (_) {}
+        }
       case CaptureOutcome.busy:
         break;
     }
@@ -196,6 +228,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               const SizedBox(height: 12),
               ScanControls(
                 locked: phase != ScanPhase.ready,
+                busy: _busy || phase == ScanPhase.capturing,
                 onCapture: _capture,
                 onGallery: () => ScanLauncher.fromPhotos(context, ref),
                 onResetZoom: () async {
@@ -212,6 +245,18 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               ),
               SizedBox(height: math.max(28.0, context.bottomInset + 14)),
             ],
+          ),
+          // White shutter flash overlay
+          IgnorePointer(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              opacity: _showFlash ? 0.85 : 0.0,
+              child: const ColoredBox(
+                color: Colors.white,
+                child: SizedBox.expand(),
+              ),
+            ),
           ),
         ],
       ),

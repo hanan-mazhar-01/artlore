@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/media/art_image_source.dart';
+import '../../artwork/data/mock_catalog.dart';
+import '../../artwork/domain/artwork.dart';
 import '../domain/history_entry.dart';
 
 /// Cloud Firestore implementation of [HistoryRepository] with offline fallback.
@@ -41,6 +46,46 @@ class FirestoreHistoryRepository implements HistoryRepository {
     }
 
     try {
+      // 1. Sync any dynamic artworks saved in user's cloud history
+      try {
+        final dynamicSnap = await firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('dynamic_artworks')
+            .get();
+        for (final doc in dynamicSnap.docs) {
+          final map = doc.data();
+          final id = doc.id;
+          if (getArtwork(id) == null) {
+            final b64 = map['imageBase64'] as String?;
+            final art = Artwork(
+              id: id,
+              title: map['title'] as String? ?? 'Discovered Artwork',
+              artist: map['artist'] as String? ?? 'Artist',
+              artistShort: map['artistShort'] as String? ?? '',
+              artistLife: map['artistLife'] as String? ?? '',
+              year: map['year'] as String? ?? '',
+              medium: map['medium'] as String? ?? 'Fine Art',
+              dimensions: map['dimensions'] as String? ?? '',
+              museum: map['museum'] as String? ?? 'Private Collection',
+              city: map['city'] as String? ?? 'Global',
+              movement: map['movement'] as String? ?? 'Visual Expression',
+              summary: map['summary'] as String? ?? '',
+              image: b64 != null
+                  ? ArtImageSource.memory(base64Decode(b64))
+                  : const ArtImageSource.asset(
+                      'assets/artworks/starry_night.jpg',
+                      aspect: 1.0,
+                    ),
+            );
+            registerDynamicArtwork(art, persist: true);
+          }
+        }
+      } catch (e) {
+        debugPrint('FirestoreHistoryRepository: dynamic_artworks sync note: $e');
+      }
+
+      // 2. Fetch history entries
       final snap = await firestore
           .collection('users')
           .doc(user.uid)
@@ -101,6 +146,34 @@ class FirestoreHistoryRepository implements HistoryRepository {
         'activity': entry.activity,
         'scanned': entry.scanned,
       });
+
+      // Persist the artwork metadata to the cloud if dynamic
+      final art = getArtwork(entry.artworkId);
+      if (art != null) {
+        final bytes = art.image.bytes;
+        final b64 = bytes != null ? base64Encode(bytes) : null;
+        await firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('dynamic_artworks')
+            .doc(art.id)
+            .set({
+          'id': art.id,
+          'title': art.title,
+          'artist': art.artist,
+          'artistShort': art.artistShort,
+          'artistLife': art.artistLife,
+          'year': art.year,
+          'medium': art.medium,
+          'dimensions': art.dimensions,
+          'museum': art.museum,
+          'city': art.city,
+          'movement': art.movement,
+          'summary': art.summary,
+          'imageBase64': ?b64,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
     } catch (e) {
       debugPrint('FirestoreHistoryRepository add error: $e');
     }

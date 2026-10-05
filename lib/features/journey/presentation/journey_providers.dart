@@ -26,7 +26,7 @@ final artJourneyProvider = FutureProvider<ArtJourney>((ref) async {
   final stats = JourneyStats(
     artworks: artworks.length,
     artists: artists.length,
-    collections: collection.galleries.length,
+    collections: collection.saved.isEmpty ? 0 : collection.galleries.length,
     movements: movements.length,
   );
 

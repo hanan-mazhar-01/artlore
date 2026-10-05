@@ -1,7 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
@@ -23,6 +25,19 @@ Future<void> main() async {
     await RemoteConfigService().init();
   } catch (e) {
     debugPrint('Firebase initialization skipped or failed: $e');
+  }
+
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.android)) {
+    try {
+      await Purchases.setLogLevel(kDebugMode ? LogLevel.debug : LogLevel.info);
+      await Purchases.configure(
+        PurchasesConfiguration('appl_TiZYOjEBZKNpiOfggEmJPekJCHw'),
+      );
+    } catch (e) {
+      debugPrint('RevenueCat initialization failed: $e');
+    }
   }
 
   final prefs = await SharedPreferences.getInstance();

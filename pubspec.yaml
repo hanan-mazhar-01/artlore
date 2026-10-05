@@ -24,6 +24,7 @@ dependencies:
   image: ^4.10.1
   image_picker: ^1.2.3
   in_app_purchase: ^3.3.1
+  purchases_flutter: ^10.14.0
   shared_preferences: ^2.5.5
 
 dev_dependencies:
