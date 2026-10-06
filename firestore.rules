@@ -18,6 +18,12 @@ service cloud.firestore {
       match /history/{entryId} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
+      match /dynamic_artworks/{artworkId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+      match /{allSubcollections=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
     // Free-scan allowance + premium status, one doc per Firebase UID.

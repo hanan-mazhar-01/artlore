@@ -2,7 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../../app/providers.dart';
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/widgets/art_image.dart';
@@ -129,15 +131,27 @@ class _ResultBody extends ConsumerWidget {
                       onTap: () => context.backOr(),
                       semanticLabel: 'Back',
                     ),
-                    GlassIconButton(
-                      icon: ArtIcons.bookmark,
-                      iconSize: 17,
-                      filled: saved,
-                      color: saved ? p.accent : null,
-                      onTap: () => showSaveArtworkSheet(context, artwork),
-                      semanticLabel: saved
-                          ? 'Saved — change gallery'
-                          : 'Save artwork',
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GlassIconButton(
+                          icon: ArtIcons.share,
+                          iconSize: 17,
+                          onTap: () => _shareArtwork(context, ref, artwork),
+                          semanticLabel: 'Share artwork',
+                        ),
+                        const SizedBox(width: 10),
+                        GlassIconButton(
+                          icon: ArtIcons.bookmark,
+                          iconSize: 17,
+                          filled: saved,
+                          color: saved ? p.accent : null,
+                          onTap: () => showSaveArtworkSheet(context, artwork),
+                          semanticLabel: saved
+                              ? 'Saved — change gallery'
+                              : 'Save artwork',
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -177,6 +191,32 @@ class _ResultBody extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _shareArtwork(BuildContext context, WidgetRef ref, Artwork artwork) {
+    final remoteConfig = ref.read(remoteConfigServiceProvider);
+    final baseUrl =
+        remoteConfig.shareArtworkBaseUrl.replaceAll(RegExp(r'/+$'), '');
+    final webUrl = '$baseUrl/${artwork.id}';
+    final deepLink = 'artlore://artwork/${artwork.id}';
+
+    final text =
+        'Discover "${artwork.title}" by ${artwork.artist} on ArtLore!\n\n'
+        'Open in ArtLore: $deepLink\n'
+        'Explore online: $webUrl';
+
+    final box = context.findRenderObject() as RenderBox?;
+    final origin =
+        box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+
+    SharePlus.instance.share(
+      ShareParams(
+        text: text,
+        subject: 'Explore ${artwork.title} on ArtLore',
+        title: artwork.title,
+        sharePositionOrigin: origin,
       ),
     );
   }

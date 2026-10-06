@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
@@ -24,89 +24,130 @@ import '../../profile/presentation/profile_providers.dart';
 import '../../settings/presentation/settings_controller.dart';
 
 /// The door into the museum: Turner's sunset and three ways in.
-class WelcomeScreen extends ConsumerWidget {
+class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
+  bool _busy = false;
+  String? _loadingMessage;
+
+  void _enter() {
+    ref.read(settingsProvider.notifier).completeOnboarding();
+    context.go(AppRoutes.home);
+  }
+
+  Future<void> _signInGoogle() async {
+    setState(() {
+      _busy = true;
+      _loadingMessage = 'Connecting to Google…';
+    });
+    final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+    try {
+      final cred = await ref.read(authServiceProvider).signInWithGoogle();
+      if (cred == null) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      if (mounted) {
+        setState(() => _loadingMessage = 'Preparing your gallery…');
+      }
+      if (wasGuest) {
+        await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+      }
+    } catch (e) {
+      debugPrint('WelcomeScreen signInGoogle error: $e');
+      if (mounted) setState(() => _busy = false);
+      return;
+    }
+    await ref.read(historyRepositoryProvider).clearLocalCache();
+    await ref.read(collectionRepositoryProvider).clearLocalCache();
+    ref.invalidate(recentlyViewedProvider);
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(collectionProvider);
+    ref.invalidate(historyProvider);
+    ref.invalidate(artJourneyProvider);
+    PaintingBinding.instance.imageCache.clear();
+    await ref.read(premiumProvider.notifier).refresh();
+    if (mounted) _enter();
+  }
+
+  Future<void> _signInApple() async {
+    setState(() {
+      _busy = true;
+      _loadingMessage = 'Connecting to Apple…';
+    });
+    final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+    try {
+      final cred = await ref.read(authServiceProvider).signInWithApple();
+      if (cred == null) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      if (mounted) {
+        setState(() => _loadingMessage = 'Preparing your gallery…');
+      }
+      if (wasGuest) {
+        await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+      }
+    } catch (e) {
+      debugPrint('WelcomeScreen signInApple error: $e');
+      if (mounted) setState(() => _busy = false);
+      return;
+    }
+    await ref.read(historyRepositoryProvider).clearLocalCache();
+    await ref.read(collectionRepositoryProvider).clearLocalCache();
+    ref.invalidate(recentlyViewedProvider);
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(collectionProvider);
+    ref.invalidate(historyProvider);
+    ref.invalidate(artJourneyProvider);
+    PaintingBinding.instance.imageCache.clear();
+    await ref.read(premiumProvider.notifier).refresh();
+    if (mounted) _enter();
+  }
+
+  Future<void> _signInGuest() async {
+    setState(() {
+      _busy = true;
+      _loadingMessage = 'Entering museum…';
+    });
+    try {
+      await ref.read(authServiceProvider).signInAnonymously();
+    } catch (_) {}
+    await ref.read(historyRepositoryProvider).clearLocalCache();
+    await ref.read(collectionRepositoryProvider).clearLocalCache();
+    ref.invalidate(recentlyViewedProvider);
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(collectionProvider);
+    ref.invalidate(historyProvider);
+    ref.invalidate(artJourneyProvider);
+    PaintingBinding.instance.imageCache.clear();
+    await ref.read(premiumProvider.notifier).refresh();
+    if (mounted) _enter();
+  }
+
+  void _goToEmailAuth() => context.push(AppRoutes.emailAuth);
+
+  @override
+  Widget build(BuildContext context) {
     final p = context.palette;
     final temeraire = mockCatalog[ArtworkIds.temeraire]!;
-    void enter() {
-      ref.read(settingsProvider.notifier).completeOnboarding();
-      context.go(AppRoutes.home);
-    }
-
-    Future<void> signInGoogle() async {
-      final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
-      try {
-        await ref.read(authServiceProvider).signInWithGoogle();
-        if (wasGuest) {
-          await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
-        }
-      } catch (_) {}
-      await ref.read(historyRepositoryProvider).clearLocalCache();
-      await ref.read(collectionRepositoryProvider).clearLocalCache();
-      ref.invalidate(recentlyViewedProvider);
-      ref.invalidate(userProfileProvider);
-      ref.invalidate(collectionProvider);
-      ref.invalidate(historyProvider);
-      ref.invalidate(artJourneyProvider);
-      PaintingBinding.instance.imageCache.clear();
-      PaintingBinding.instance.imageCache.clearLiveImages();
-      await ref.read(premiumProvider.notifier).refresh();
-      enter();
-    }
-
-    Future<void> signInApple() async {
-      final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
-      try {
-        await ref.read(authServiceProvider).signInWithApple();
-        if (wasGuest) {
-          await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
-        }
-      } catch (_) {}
-      await ref.read(historyRepositoryProvider).clearLocalCache();
-      await ref.read(collectionRepositoryProvider).clearLocalCache();
-      ref.invalidate(recentlyViewedProvider);
-      ref.invalidate(userProfileProvider);
-      ref.invalidate(collectionProvider);
-      ref.invalidate(historyProvider);
-      ref.invalidate(artJourneyProvider);
-      PaintingBinding.instance.imageCache.clear();
-      PaintingBinding.instance.imageCache.clearLiveImages();
-      await ref.read(premiumProvider.notifier).refresh();
-      enter();
-    }
-
-    Future<void> signInGuest() async {
-      try {
-        await ref.read(authServiceProvider).signInAnonymously();
-      } catch (_) {}
-      await ref.read(historyRepositoryProvider).clearLocalCache();
-      await ref.read(collectionRepositoryProvider).clearLocalCache();
-      ref.invalidate(recentlyViewedProvider);
-      ref.invalidate(userProfileProvider);
-      ref.invalidate(collectionProvider);
-      ref.invalidate(historyProvider);
-      ref.invalidate(artJourneyProvider);
-      PaintingBinding.instance.imageCache.clear();
-      PaintingBinding.instance.imageCache.clearLiveImages();
-      await ref.read(premiumProvider.notifier).refresh();
-      enter();
-    }
-
-    void goToEmailAuth() => context.push(AppRoutes.emailAuth);
+    final isDark = context.isDark;
 
     return ArtScaffold(
       swipeBack: false,
-      forceLightStatusBar: true,
+      forceLightStatusBar: isDark,
       body: Stack(
         children: [
           Positioned(
             left: 0,
             right: 0,
             top: 0,
-            height: 560,
+            height: 520,
             child: DriftImage(temeraire.image),
           ),
           Positioned.fill(
@@ -115,8 +156,13 @@ class WelcomeScreen extends ConsumerWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [p.ground(.1), p.ground(.3), p.background],
-                  stops: const [0, .4, .68],
+                  colors: [
+                    p.ground(.02),
+                    p.ground(.35),
+                    p.background,
+                    p.background,
+                  ],
+                  stops: const [0.0, 0.28, 0.52, 1.0],
                 ),
               ),
             ),
@@ -140,11 +186,12 @@ class WelcomeScreen extends ConsumerWidget {
                         FadeSlideIn(
                           duration: const Duration(seconds: 1),
                           child: _WelcomeCopy(
-                            onEnter: enter,
-                            onGoogle: signInGoogle,
-                            onApple: signInApple,
-                            onGuest: signInGuest,
-                            onEmail: goToEmailAuth,
+                            onEnter: _enter,
+                            onGoogle: _signInGoogle,
+                            onApple: _signInApple,
+                            onGuest: _signInGuest,
+                            onEmail: _goToEmailAuth,
+                            busy: _busy,
                           ),
                         ),
                       ],
@@ -154,6 +201,51 @@ class WelcomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+          if (_busy)
+            Positioned.fill(
+              child: Container(
+                color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.65),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+                    decoration: BoxDecoration(
+                      color: p.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: p.line(.2)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.6,
+                            color: p.accent,
+                          ),
+                        ),
+                        if (_loadingMessage != null) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            _loadingMessage!,
+                            style: AppTypography.sans(14, weight: FontWeight.w500).copyWith(
+                              color: p.ink,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -167,6 +259,7 @@ class _WelcomeCopy extends StatelessWidget {
     required this.onApple,
     required this.onGuest,
     required this.onEmail,
+    this.busy = false,
   });
 
   final VoidCallback onEnter;
@@ -174,15 +267,59 @@ class _WelcomeCopy extends StatelessWidget {
   final VoidCallback onApple;
   final VoidCallback onGuest;
   final VoidCallback onEmail;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final isDark = context.isDark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const GoldLabel('Welcome to ArtLore', tracking: .28),
-        const SizedBox(height: 14),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? p.accent.withValues(alpha: 0.16)
+                    : const Color(0xFFE8DFCD),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark
+                      ? p.accent.withValues(alpha: 0.4)
+                      : const Color(0xFFB8934E),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: isDark ? p.accent : const Color(0xFF8B641D),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'WELCOME TO ARTLORE',
+                    style: AppTypography.sans(
+                      11.5,
+                      weight: FontWeight.w700,
+                      tracking: .22,
+                    ).copyWith(
+                      color: isDark ? p.accent : const Color(0xFF674812),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         EditorialHeading(
           lead: 'Your private',
           emphasis: 'museum companion.',
@@ -192,27 +329,29 @@ class _WelcomeCopy extends StatelessWidget {
         Text(
           'Stand before any painting. We\'ll tell you what it\'s been waiting '
           'to say.',
-          style: AppTypography.bodySmall.copyWith(color: p.muted),
+          style: AppTypography.bodySmall.copyWith(
+            color: isDark ? p.muted : const Color(0xFF4A443C),
+          ),
         ),
         const SizedBox(height: 24),
         PillButton(
           label: 'Continue with Google',
-          onTap: onGoogle,
+          onTap: busy ? null : onGoogle,
           style: PillStyle.inverse,
         ),
         if (defaultTargetPlatform == TargetPlatform.iOS) ...[
           const SizedBox(height: 10),
           PillButton(
             label: 'Continue with Apple',
-            onTap: onApple,
+            onTap: busy ? null : onApple,
             style: PillStyle.outline,
-            leading: ArtIcon(ArtIcons.apple, size: 16, color: p.onInverse),
+            leading: ArtIcon(ArtIcons.apple, size: 16, color: p.ink),
           ),
         ],
         const SizedBox(height: 10),
         PillButton(
           label: 'Continue with email',
-          onTap: onEmail,
+          onTap: busy ? null : onEmail,
           style: PillStyle.outline,
           weight: FontWeight.w500,
         ),
@@ -220,7 +359,7 @@ class _WelcomeCopy extends StatelessWidget {
         Center(
           child: TextAction(
             label: 'Look around first',
-            onTap: onGuest,
+            onTap: busy ? null : onGuest,
             padding: const EdgeInsets.all(10),
           ),
         ),

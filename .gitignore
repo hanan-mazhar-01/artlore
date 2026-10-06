@@ -49,3 +49,7 @@ app.*.map.json
 
 # Stray local backups
 *.zip
+
+# Build directories and caches
+ios/build/
+**/xcshareddata/swiftpm/

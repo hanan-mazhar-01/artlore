@@ -32,9 +32,35 @@ class ProfileScreen extends ConsumerWidget {
         return v == null ? null : (v.saved.length, v.galleries.length);
       }),
     );
-    final premium = ref.watch(
-      premiumProvider.select((s) => s.asData?.value.isPremium ?? s.value?.isPremium ?? false),
+    final premiumStatus = ref.watch(
+      premiumProvider.select((s) => s.asData?.value ?? s.value),
     );
+    final premium = premiumStatus?.isPremium ?? false;
+    final isTrial = premiumStatus?.isTrial ?? false;
+    final planId = premiumStatus?.planId?.toLowerCase();
+    final freeScans = premiumStatus?.freeScansLeft ?? 0;
+    final planLabel = planId == null
+        ? null
+        : (planId.contains('yearly') || planId.contains('annual')
+            ? 'Yearly Plan'
+            : (planId.contains('monthly') ? 'Monthly Plan' : null));
+
+    final String statusLabel;
+    if (premium) {
+      if (isTrial) {
+        statusLabel = 'Trial Active';
+      } else if (planId != null &&
+          (planId.contains('yearly') || planId.contains('annual'))) {
+        statusLabel = 'Yearly Subscription Active';
+      } else if (planId != null && planId.contains('monthly')) {
+        statusLabel = 'Monthly Subscription Active';
+      } else {
+        statusLabel = 'Subscription Active';
+      }
+    } else {
+      statusLabel = '$freeScans ${freeScans == 1 ? 'scan' : 'scans'} left';
+    }
+
     return ArtScaffold(
       body: ListView(
         padding: EdgeInsets.fromLTRB(
@@ -48,6 +74,8 @@ class ProfileScreen extends ConsumerWidget {
             ProfileHeader(
               profile: profile,
               onEdit: () => _editName(context, ref, profile.name),
+              subscriptionLabel: statusLabel,
+              isPremium: premium,
             ),
           const SizedBox(height: 34),
           if (journey != null) ArtWorldStats(stats: journey.stats),
@@ -72,7 +100,11 @@ class ProfileScreen extends ConsumerWidget {
           ProfileRow(
             title: 'Premium',
             subtitle: premium
-                ? 'Active — thank you for supporting ArtLore'
+                ? (isTrial
+                    ? 'Free Trial · Active'
+                    : (planLabel != null
+                        ? '$planLabel · Active'
+                        : 'Active — thank you for supporting ArtLore'))
                 : 'See beyond the painting',
             highlight: true,
             onTap: () => context.push(AppRoutes.paywall),
@@ -189,102 +221,15 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
-    final p = context.palette;
-    final textController = TextEditingController();
-
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (ctx, setDialogState) {
-          final isConfirmed =
-              textController.text.trim().toLowerCase() == 'delete';
-
-          return AlertDialog(
-            backgroundColor: p.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: p.line(.1)),
-            ),
-            title: Text(
-              'Delete Account',
-              style: AppTypography.serif(22).copyWith(color: p.danger),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'This will permanently delete your profile, saved collections, and exploration history. This action cannot be undone.',
-                    style: AppTypography.sans(14, height: 1.4).copyWith(color: p.muted),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'To confirm, type "delete" below:',
-                    style: AppTypography.sans(13, weight: FontWeight.w600).copyWith(
-                      color: p.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: textController,
-                    autofocus: true,
-                    onChanged: (_) => setDialogState(() {}),
-                    style: AppTypography.sans(14).copyWith(color: p.ink),
-                    decoration: InputDecoration(
-                      hintText: 'delete',
-                      hintStyle: AppTypography.sans(14).copyWith(
-                        color: p.muted.withValues(alpha: 0.5),
-                      ),
-                      filled: true,
-                      fillColor: p.surfaceAlt,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: p.line(.2)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: isConfirmed ? p.danger : p.accent,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text('Cancel', style: TextStyle(color: p.muted)),
-              ),
-              TextButton(
-                onPressed: isConfirmed
-                    ? () => Navigator.of(ctx).pop(true)
-                    : null,
-                child: Text(
-                  'Delete Account',
-                  style: TextStyle(
-                    color: isConfirmed
-                        ? p.danger
-                        : p.muted.withValues(alpha: 0.35),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+      builder: (_) => const _DeleteAccountDialog(),
     );
 
-    textController.dispose();
-
     if (confirmed != true || !context.mounted) return;
+
+    final p = context.palette;
 
     // Show non-dismissible loading indicator
     showDialog<void>(
@@ -348,8 +293,124 @@ class ProfileScreen extends ConsumerWidget {
     ref.read(settingsProvider.notifier).signOut();
 
     if (context.mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
+      if (Navigator.of(context, rootNavigator: true).canPop()) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
       context.go(AppRoutes.welcome);
     }
+  }
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  late final TextEditingController _controller;
+  bool _isConfirmed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String val) {
+    final matches = val.trim().toLowerCase() == 'delete';
+    if (_isConfirmed != matches) {
+      setState(() => _isConfirmed = matches);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return AlertDialog(
+      backgroundColor: p.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: p.line(.1)),
+      ),
+      title: Text(
+        'Delete Account',
+        style: AppTypography.serif(22).copyWith(color: p.danger),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will permanently delete your profile, saved collections, and exploration history. This action cannot be undone.',
+              style: AppTypography.sans(14, height: 1.4).copyWith(color: p.muted),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'To confirm, type "delete" below:',
+              style: AppTypography.sans(13, weight: FontWeight.w600).copyWith(
+                color: p.ink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              onChanged: _onChanged,
+              style: AppTypography.sans(14).copyWith(color: p.ink),
+              decoration: InputDecoration(
+                hintText: 'delete',
+                hintStyle: AppTypography.sans(14).copyWith(
+                  color: p.muted.withValues(alpha: 0.5),
+                ),
+                filled: true,
+                fillColor: p.surfaceAlt,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: p.line(.2)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: _isConfirmed ? p.danger : p.accent,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text('Cancel', style: TextStyle(color: p.muted)),
+        ),
+        TextButton(
+          onPressed: _isConfirmed
+              ? () => Navigator.of(context).pop(true)
+              : null,
+          child: Text(
+            'Delete Account',
+            style: TextStyle(
+              color: _isConfirmed
+                  ? p.danger
+                  : p.muted.withValues(alpha: 0.35),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -126,7 +126,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         try {
           await _cameraController?.resumePreview();
         } catch (_) {}
-        ref.read(scanControllerProvider.notifier).resetToDetected();
+        ref.read(scanControllerProvider.notifier).resetToReady();
         if (!mounted) return;
         final unlocked = await context.push<bool>(AppRoutes.accountWall);
         if (unlocked == true && mounted) {
@@ -141,7 +141,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         try {
           await _cameraController?.resumePreview();
         } catch (_) {}
-        ref.read(scanControllerProvider.notifier).resetToDetected();
+        ref.read(scanControllerProvider.notifier).resetToReady();
         if (!mounted) return;
         await context.push(AppRoutes.paywall);
         if (mounted) {
@@ -204,7 +204,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   child: Center(
                     child: ScanViewfinder(
                       cameraController: _cameraController,
-                      detected: phase != ScanPhase.ready,
+                      detected: phase == ScanPhase.detected,
                       scanning: phase == ScanPhase.capturing,
                       zoom: _zoom,
                     ),
@@ -227,7 +227,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               ),
               const SizedBox(height: 12),
               ScanControls(
-                locked: phase != ScanPhase.ready,
+                locked: phase == ScanPhase.detected || phase == ScanPhase.capturing,
                 busy: _busy || phase == ScanPhase.capturing,
                 onCapture: _capture,
                 onGallery: () => ScanLauncher.fromPhotos(context, ref),

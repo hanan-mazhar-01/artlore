@@ -22,16 +22,39 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.547369793339-699bhnh9luu389f2j6ero3o28ucr205o</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.veradostudio.artlore</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>artlore</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>547369793339-699bhnh9luu389f2j6ero3o28ucr205o.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>ArtLore uses your camera to scan and identify artworks in front of you.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>ArtLore needs access to your photos so you can scan artworks saved in your camera roll.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>ArtLore can save scanned artwork images to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ArtLore needs access to your photos so you can scan artworks saved in your camera roll.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

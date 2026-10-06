@@ -36,18 +36,10 @@ final scanControllerProvider =
     NotifierProvider.autoDispose<ScanController, ScanPhase>(ScanController.new);
 
 class ScanController extends Notifier<ScanPhase> {
-  static const detectAfter = Duration(milliseconds: 1200);
   static const captureHold = Duration(milliseconds: 600);
 
   @override
-  ScanPhase build() {
-    // Mock detection: a real camera pipeline would emit this from frames.
-    final timer = Timer(detectAfter, () {
-      if (state == ScanPhase.ready) state = ScanPhase.detected;
-    });
-    ref.onDispose(timer.cancel);
-    return ScanPhase.ready;
-  }
+  ScanPhase build() => ScanPhase.ready;
 
   /// Freezes the viewfinder immediately on shutter press, before the (slower)
   /// photo capture and crop work runs — so the UI responds the instant the
@@ -58,9 +50,11 @@ class ScanController extends Notifier<ScanPhase> {
   /// Reverts the freeze if the gate below sends the visitor elsewhere (e.g.
   /// the account wall or paywall), so returning to this screen shows the
   /// live preview again rather than a stale frozen frame.
-  void resetToDetected() {
-    if (state == ScanPhase.capturing) state = ScanPhase.detected;
+  void resetToReady() {
+    if (state == ScanPhase.capturing) state = ScanPhase.ready;
   }
+
+  void resetToDetected() => resetToReady();
 
   /// Resolves once the UI should move on to recognition. Assumes
   /// [beginCapturing] was already called to freeze the viewfinder.

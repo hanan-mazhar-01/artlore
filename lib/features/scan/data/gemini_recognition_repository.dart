@@ -25,8 +25,8 @@ class GeminiRecognitionRepository implements RecognitionRepository {
   final http.Client _client;
 
   static const _models = [
+    'gemini-3.1-flash-lite',
     'gemini-3.8-flash',
-    'gemini-3.5-flash-lite',
     'gemini-flash-latest',
   ];
 
@@ -51,7 +51,6 @@ class GeminiRecognitionRepository implements RecognitionRepository {
       final apiKey = remoteConfig.geminiApiKey;
       if (apiKey.isEmpty) {
         debugPrint('Gemini vision identification error: no API key from Remote Config.');
-        cloudinaryService.uploadImageBytes(bytes).catchError((_) => null);
         throw const RecognitionFailedException('No Gemini API key configured.');
       }
 
@@ -59,18 +58,15 @@ class GeminiRecognitionRepository implements RecognitionRepository {
       try {
         final result = await _recognizeWithGemini(bytes, apiKey, hash, failures);
         if (result != null) {
-          cloudinaryService.uploadImageBytes(bytes).catchError((_) => null);
           return result;
         }
       } on UnsupportedSubjectException {
-        cloudinaryService.uploadImageBytes(bytes).catchError((_) => null);
         rethrow;
       } catch (e) {
         debugPrint('Gemini vision identification error: $e');
         failures.add(e.toString());
       }
 
-      cloudinaryService.uploadImageBytes(bytes).catchError((_) => null);
       throw RecognitionFailedException(
         failures.isEmpty ? 'Artwork could not be recognized.' : failures.join(' | '),
       );
@@ -181,7 +177,7 @@ Catalog IDs: 'starry-night', 'fighting-temeraire', 'great-wave', 'pearl-earring'
           url,
           headers: {'Content-Type': 'application/json'},
           body: body,
-        ).timeout(const Duration(seconds: 30));
+        ).timeout(const Duration(seconds: 15));
 
         if (res.statusCode != 200) {
           final reason = '$model: HTTP ${res.statusCode} ${_shorten(res.body)}';

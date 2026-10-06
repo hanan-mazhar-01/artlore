@@ -22,7 +22,14 @@ class AuthService {
     return null;
   }
 
-  GoogleSignIn get _googleSignIn => _customGoogleSignIn ?? GoogleSignIn();
+  GoogleSignIn get _googleSignIn =>
+      _customGoogleSignIn ??
+      GoogleSignIn(
+        clientId: (defaultTargetPlatform == TargetPlatform.iOS ||
+                defaultTargetPlatform == TargetPlatform.macOS)
+            ? '547369793339-699bhnh9luu389f2j6ero3o28ucr205o.apps.googleusercontent.com'
+            : null,
+      );
 
   User? get currentUser => _auth?.currentUser;
 
@@ -209,8 +216,9 @@ class AuthService {
   /// takes over.
   Future<UserCredential?> registerWithEmail(
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? name,
+  }) async {
     final auth = _auth;
     if (auth == null) return null;
     final current = auth.currentUser;
@@ -239,8 +247,29 @@ class AuthService {
         password: password,
       );
     }
-    if (cred.user != null) {
-      _syncRevenueCatUser(cred.user!.uid);
+    final loggedInUser = cred.user;
+    if (loggedInUser != null) {
+      _syncRevenueCatUser(loggedInUser.uid);
+      final trimmedName = name?.trim();
+      if (trimmedName != null && trimmedName.isNotEmpty) {
+        try {
+          await loggedInUser.updateDisplayName(trimmedName);
+        } catch (_) {}
+      }
+      if (Firebase.apps.isNotEmpty) {
+        try {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(loggedInUser.uid)
+              .set({
+            if (trimmedName != null && trimmedName.isNotEmpty) 'name': trimmedName,
+            'email': email.trim(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('AuthService: error saving registered user profile: $e');
+        }
+      }
     }
     return cred;
   }

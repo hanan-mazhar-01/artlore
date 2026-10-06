@@ -65,14 +65,17 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
     required bool isAnonymous,
     required bool isRevenueCatPremium,
     String? planId,
+    bool isTrial = false,
   }) {
     final scansUsed = (data?['scansUsed'] as num?)?.toInt() ?? 0;
     final accountBonusGranted = data?['accountBonusGranted'] as bool? ?? false;
     final deviceBlocked = data?['deviceBlocked'] as bool? ?? false;
     final firestorePremium = data?['isPremium'] as bool? ?? false;
+    final firestoreTrial = data?['isTrial'] as bool? ?? false;
 
     final isPremium = isRevenueCatPremium || firestorePremium;
     final activePlanId = planId ?? data?['planId'] as String?;
+    final activeTrial = isTrial || firestoreTrial;
 
     final allowance = deviceBlocked
         ? 0
@@ -86,6 +89,7 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
       freeScansLeft: freeScansLeft,
       requiresAccount: requiresAccount,
       planId: activePlanId,
+      isTrial: activeTrial,
     );
   }
 
@@ -122,20 +126,29 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
     return fresh;
   }
 
-  Future<bool> _checkRevenueCatPremium() async {
-    if (kIsWeb) return false;
+  Future<({bool isPremium, String? planId, bool isTrial})> _checkRevenueCatPremium() async {
+    if (kIsWeb) return (isPremium: false, planId: null, isTrial: false);
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all[entitlementId]?.isActive == true;
+      final ent = customerInfo.entitlements.all[entitlementId];
+      final isPremium = ent?.isActive == true;
+      final planId = isPremium ? ent?.productIdentifier : null;
+      final isTrial = isPremium &&
+          (ent?.periodType == PeriodType.trial ||
+              ent?.periodType == PeriodType.intro);
+      return (isPremium: isPremium, planId: planId, isTrial: isTrial);
     } catch (e) {
       debugPrint('RevenueCat: check premium error: $e');
-      return false;
+      return (isPremium: false, planId: null, isTrial: false);
     }
   }
 
   @override
   Future<PremiumStatus> fetchStatus() async {
-    final isRcPremium = await _checkRevenueCatPremium();
+    final rcInfo = await _checkRevenueCatPremium();
+    final isRcPremium = rcInfo.isPremium;
+    final rcPlanId = rcInfo.planId;
+    final rcIsTrial = rcInfo.isTrial;
 
     final auth = _auth;
     final firestore = _firestore;
@@ -145,13 +158,19 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
       return PremiumStatus(
         isPremium: isRcPremium,
         freeScansLeft: isRcPremium ? 0 : guestAllowance,
+        planId: rcPlanId,
+        isTrial: rcIsTrial,
       );
     }
 
     final data = await _ensureEntitlementDoc(firestore, user.uid);
     if (isRcPremium && (data['isPremium'] as bool? ?? false) == false) {
       try {
-        await _entitlementDoc(firestore, user.uid).update({'isPremium': true});
+        await _entitlementDoc(firestore, user.uid).update({
+          'isPremium': true,
+          'planId': ?rcPlanId,
+          'isTrial': rcIsTrial,
+        });
       } catch (_) {}
     }
 
@@ -159,6 +178,8 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
       data,
       isAnonymous: user.isAnonymous,
       isRevenueCatPremium: isRcPremium,
+      planId: rcPlanId,
+      isTrial: rcIsTrial,
     );
   }
 
@@ -303,8 +324,9 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
     if (!kIsWeb) {
       try {
         final customerInfo = await Purchases.restorePurchases();
-        final isPremium =
-            customerInfo.entitlements.all[entitlementId]?.isActive == true;
+        final ent = customerInfo.entitlements.all[entitlementId];
+        final isPremium = ent?.isActive == true;
+        final planId = isPremium ? ent?.productIdentifier : null;
 
         final auth = _auth;
         final firestore = _firestore;
@@ -313,6 +335,7 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
         if (isPremium && firestore != null && user != null) {
           await _entitlementDoc(firestore, user.uid).set({
             'isPremium': true,
+            'planId': ?planId,
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
@@ -326,9 +349,14 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
 
   @override
   Future<PremiumStatus> consumeScan() async {
-    final isRcPremium = await _checkRevenueCatPremium();
-    if (isRcPremium) {
-      return const PremiumStatus(isPremium: true, freeScansLeft: 0);
+    final rcInfo = await _checkRevenueCatPremium();
+    if (rcInfo.isPremium) {
+      return PremiumStatus(
+        isPremium: true,
+        freeScansLeft: 0,
+        planId: rcInfo.planId,
+        isTrial: rcInfo.isTrial,
+      );
     }
 
     final auth = _auth;

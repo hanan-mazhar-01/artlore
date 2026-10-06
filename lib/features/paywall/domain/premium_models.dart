@@ -44,6 +44,7 @@ class PremiumStatus {
     required this.freeScansLeft,
     this.requiresAccount = false,
     this.planId,
+    this.isTrial = false,
   });
 
   final bool isPremium;
@@ -54,6 +55,7 @@ class PremiumStatus {
   /// paywall, not instead of it.
   final bool requiresAccount;
   final String? planId;
+  final bool isTrial;
 
   bool get canScan => isPremium || freeScansLeft > 0;
 
@@ -62,12 +64,14 @@ class PremiumStatus {
     int? freeScansLeft,
     bool? requiresAccount,
     String? planId,
+    bool? isTrial,
   }) {
     return PremiumStatus(
       isPremium: isPremium ?? this.isPremium,
       freeScansLeft: freeScansLeft ?? this.freeScansLeft,
       requiresAccount: requiresAccount ?? this.requiresAccount,
       planId: planId ?? this.planId,
+      isTrial: isTrial ?? this.isTrial,
     );
   }
 }

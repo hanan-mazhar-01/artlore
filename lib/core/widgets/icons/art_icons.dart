@@ -25,6 +25,11 @@ abstract final class ArtIcons {
   static const bookmark = ArtIconData([
     'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
   ]);
+  static const share = ArtIconData([
+    'M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7',
+    'M16 6l-4-4-4 4',
+    'M12 2v13',
+  ]);
   static const expand = ArtIconData([
     'M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3'
         'M16 21h3a2 2 0 0 0 2-2v-3',

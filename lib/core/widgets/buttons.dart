@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../extensions/context_x.dart';
 import '../theme/app_typography.dart';
@@ -30,6 +30,7 @@ class PillButton extends StatelessWidget {
     this.fontSize = 15,
     this.weight = FontWeight.w600,
     this.haptic = HapticKind.light,
+    this.loading = false,
   });
 
   final String label;
@@ -42,6 +43,7 @@ class PillButton extends StatelessWidget {
   final double fontSize;
   final FontWeight weight;
   final HapticKind haptic;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +59,7 @@ class PillButton extends StatelessWidget {
     );
     final spread = trailingArrow || trailing != null;
     return Tappable(
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       haptic: haptic,
       semanticLabel: label,
       child: Container(
@@ -73,10 +75,23 @@ class PillButton extends StatelessWidget {
               ? MainAxisAlignment.spaceBetween
               : MainAxisAlignment.center,
           children: [
-            if (leading != null) ...[leading!, const SizedBox(width: 8)],
+            if (loading) ...[
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: fg,
+                ),
+              ),
+              const SizedBox(width: 10),
+            ] else if (leading != null) ...[
+              leading!,
+              const SizedBox(width: 8),
+            ],
             Flexible(child: text),
             ?trailing,
-            if (trailingArrow)
+            if (trailingArrow && !loading)
               ArtIcon(
                 ArtIcons.arrowRight,
                 size: 16,

@@ -2,7 +2,7 @@ name: artlore
 description: "ArtLore — a private museum companion. Scan, discover and look closer at the world's great artworks."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+6
 
 environment:
   sdk: ^3.13.1
@@ -25,7 +25,9 @@ dependencies:
   image_picker: ^1.2.3
   in_app_purchase: ^3.3.1
   purchases_flutter: ^10.14.0
+  share_plus: ^13.3.1
   shared_preferences: ^2.5.5
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

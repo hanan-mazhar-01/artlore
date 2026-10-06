@@ -216,49 +216,95 @@ class FirestoreProfileRepository implements ProfileRepository {
     final firestore = _firestore;
     final user = _auth?.currentUser;
     if (firestore != null && user != null) {
+      final userDoc = firestore.collection('users').doc(user.uid);
+
+      // 1. Delete galleries subcollection
       try {
-        final userDoc = firestore.collection('users').doc(user.uid);
         final galleries = await userDoc.collection('galleries').get();
         for (final doc in galleries.docs) {
           await doc.reference.delete();
         }
+      } catch (e) {
+        debugPrint('FirestoreProfileRepository delete galleries error: $e');
+      }
+
+      // 2. Delete saved_works subcollection
+      try {
         final saved = await userDoc.collection('saved_works').get();
         for (final doc in saved.docs) {
           await doc.reference.delete();
         }
+      } catch (e) {
+        debugPrint('FirestoreProfileRepository delete saved_works error: $e');
+      }
+
+      // 3. Delete history subcollection
+      try {
         final history = await userDoc.collection('history').get();
         for (final doc in history.docs) {
           await doc.reference.delete();
         }
-        final dynamicArtworks = await userDoc.collection('dynamic_artworks').get();
+      } catch (e) {
+        debugPrint('FirestoreProfileRepository delete history error: $e');
+      }
+
+      // 4. Delete dynamic_artworks subcollection
+      try {
+        final dynamicArtworks =
+            await userDoc.collection('dynamic_artworks').get();
         for (final doc in dynamicArtworks.docs) {
           await doc.reference.delete();
         }
+      } catch (e) {
+        debugPrint('FirestoreProfileRepository delete dynamic_artworks error: $e');
+      }
+
+      // 5. Delete root user document
+      try {
         await userDoc.delete();
-        // `deviceTrials/{deviceId}` is deliberately NOT touched here — it's
-        // the one-time per-device free-trial record and must survive
-        // account deletion so a new account on this device can't re-claim it.
+      } catch (e) {
+        debugPrint('FirestoreProfileRepository delete userDoc error: $e');
+      }
+
+      // 6. Delete entitlements record
+      // Note: `deviceTrials/{deviceId}` is deliberately kept to prevent
+      // deleting and recreating accounts to claim free scans indefinitely.
+      try {
         await firestore.collection('entitlements').doc(user.uid).delete();
       } catch (e) {
-        debugPrint('FirestoreProfileRepository deleteAccount data error: $e');
+        debugPrint('FirestoreProfileRepository delete entitlements error: $e');
       }
     }
+
     try {
       await DynamicArtworkStorage.clearAll();
     } catch (e) {
-      debugPrint('FirestoreProfileRepository deleteAccount storage clear error: $e');
+      debugPrint(
+          'FirestoreProfileRepository deleteAccount storage clear error: $e');
     }
+
     if (user != null) {
       try {
         await user.delete();
-        debugPrint('FirestoreProfileRepository: user deleted successfully from FirebaseAuth');
+        debugPrint(
+            'FirestoreProfileRepository: user deleted successfully from FirebaseAuth');
       } on FirebaseAuthException catch (e) {
         if (e.code == 'requires-recent-login') {
-          debugPrint('FirestoreProfileRepository: requires-recent-login detected, attempting reauthentication');
-          final isGoogle = user.providerData.any((p) => p.providerId == 'google.com');
+          debugPrint(
+              'FirestoreProfileRepository: requires-recent-login detected, attempting reauthentication');
+          final isGoogle =
+              user.providerData.any((p) => p.providerId == 'google.com');
+          final isApple =
+              user.providerData.any((p) => p.providerId == 'apple.com');
+
           if (isGoogle) {
             try {
-              final googleSignIn = GoogleSignIn();
+              final googleSignIn = GoogleSignIn(
+                clientId: (defaultTargetPlatform == TargetPlatform.iOS ||
+                        defaultTargetPlatform == TargetPlatform.macOS)
+                    ? '547369793339-699bhnh9luu389f2j6ero3o28ucr205o.apps.googleusercontent.com'
+                    : null,
+              );
               GoogleSignInAccount? gUser;
               try {
                 gUser = await googleSignIn.signInSilently(reAuthenticate: true);
@@ -272,19 +318,36 @@ class FirestoreProfileRepository implements ProfileRepository {
                 );
                 await user.reauthenticateWithCredential(cred);
                 await user.delete();
-                debugPrint('FirestoreProfileRepository: user successfully reauthenticated and deleted');
+                debugPrint(
+                    'FirestoreProfileRepository: user successfully reauthenticated with Google and deleted');
                 return;
               }
             } catch (reauthErr) {
-              debugPrint('FirestoreProfileRepository: Google re-authentication failed: $reauthErr');
+              debugPrint(
+                  'FirestoreProfileRepository: Google re-authentication failed: $reauthErr');
+            }
+          } else if (isApple) {
+            try {
+              final appleProvider = AppleAuthProvider();
+              await user.reauthenticateWithProvider(appleProvider);
+              await user.delete();
+              debugPrint(
+                  'FirestoreProfileRepository: user successfully reauthenticated with Apple and deleted');
+              return;
+            } catch (reauthErr) {
+              debugPrint(
+                  'FirestoreProfileRepository: Apple re-authentication failed: $reauthErr');
             }
           }
-          debugPrint('FirestoreProfileRepository: FirebaseAuth user delete skipped; data already purged.');
+          debugPrint(
+              'FirestoreProfileRepository: FirebaseAuth user delete skipped; data already purged.');
         } else {
-          debugPrint('FirestoreProfileRepository delete user FirebaseAuthException: $e');
+          debugPrint(
+              'FirestoreProfileRepository delete user FirebaseAuthException: $e');
         }
       } catch (e) {
-        debugPrint('FirestoreProfileRepository delete user unexpected error: $e');
+        debugPrint(
+            'FirestoreProfileRepository delete user unexpected error: $e');
       }
     }
   }

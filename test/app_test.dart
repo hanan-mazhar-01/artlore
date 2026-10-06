@@ -102,8 +102,6 @@ void main() {
     await t.tap(find.bySemanticsLabel('Scan an artwork').first);
     await _settle(t, 800);
     expect(find.text('Align the artwork'), findsOneWidget);
-    await _settle(t, 1200);
-    expect(find.text('Artwork detected'), findsOneWidget);
 
     await t.tap(find.bySemanticsLabel('Capture artwork'));
     await _settle(t, 700);

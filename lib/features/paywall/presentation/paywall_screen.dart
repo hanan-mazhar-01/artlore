@@ -2,7 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/providers.dart';
 import '../../../core/extensions/context_x.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_typography.dart';
@@ -36,6 +38,13 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     setState(() => _busy = false);
     ArtToast.show(context, ok ? success : 'No previous purchase found');
     if (ok) context.go(AppRoutes.home);
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -122,19 +131,21 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                         const SizedBox(height: 14),
                         PremiumButton(
                           label: isPremium
-                              ? 'You\'re a member — explore'
+                              ? 'Manage Subscription'
                               : (plan != null && plan.hasTrial && plan.trialDays > 0)
                                   ? 'Begin ${plan.trialDays} days free'
                                   : (plan != null
                                       ? 'Subscribe (${plan.price}${plan.period})'
                                       : 'Start Subscription'),
                           busy: _busy,
-                          onTap: isPremium || plan == null
-                              ? () => context.go(AppRoutes.home)
-                              : () => _run(
-                                  () => premium.purchase(plan.id),
-                                  'Welcome to ArtLore Premium',
-                                ),
+                          onTap: isPremium
+                              ? () => _openUrl('https://apps.apple.com/account/subscriptions')
+                              : (plan == null
+                                  ? () => context.go(AppRoutes.home)
+                                  : () => _run(
+                                      () => premium.purchase(plan.id),
+                                      'Welcome to ArtLore Premium',
+                                    )),
                         ),
                         const SizedBox(height: 4),
                         Row(
@@ -152,6 +163,35 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                                       premium.restore,
                                       'Your membership is restored',
                                     ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextAction(
+                              label: 'Terms of Use',
+                              fontSize: 11,
+                              onTap: () => _openUrl(
+                                ref
+                                    .read(remoteConfigServiceProvider)
+                                    .termsOfServiceUrl,
+                              ),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text('•', style: note),
+                            ),
+                            TextAction(
+                              label: 'Privacy Policy',
+                              fontSize: 11,
+                              onTap: () => _openUrl(
+                                ref
+                                    .read(remoteConfigServiceProvider)
+                                    .privacyPolicyUrl,
+                              ),
                             ),
                           ],
                         ),

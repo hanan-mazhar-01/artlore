@@ -10,16 +10,20 @@ import '../../../../core/widgets/tappable.dart';
 import '../../../journey/domain/art_journey.dart';
 import '../../domain/user_profile.dart';
 
-/// Avatar, name and "Visitor since".
+/// Avatar, name, "Visitor since", and subscription / scans status.
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
     super.key,
     required this.profile,
     this.onEdit,
+    this.subscriptionLabel,
+    this.isPremium = false,
   });
 
   final UserProfile profile;
   final VoidCallback? onEdit;
+  final String? subscriptionLabel;
+  final bool isPremium;
 
   @override
   Widget build(BuildContext context) {
@@ -66,11 +70,49 @@ class ProfileHeader extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 5),
               Text(
                 'Visitor since ${profile.memberSince}',
                 style: AppTypography.caption.copyWith(color: p.muted),
               ),
+              if (subscriptionLabel != null) ...[
+                const SizedBox(height: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: isPremium
+                        ? p.accent.withValues(alpha: 0.12)
+                        : p.surfaceAlt,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isPremium
+                          ? p.accent.withValues(alpha: 0.28)
+                          : p.line(0.12),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isPremium ? p.accent : p.muted,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        subscriptionLabel!,
+                        style: AppTypography.sans(11, weight: FontWeight.w600).copyWith(
+                          color: isPremium ? p.accent : p.ink,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

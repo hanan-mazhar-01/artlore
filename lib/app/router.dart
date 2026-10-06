@@ -31,6 +31,31 @@ final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     navigatorKey: _rootKey,
     initialLocation: AppRoutes.splash,
+    redirect: (context, state) {
+      final uri = state.uri;
+      if (uri.scheme == 'artlore') {
+        if (uri.host == 'artwork') {
+          return '/artwork${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}';
+        }
+        if (uri.path.startsWith('/artwork/')) {
+          return '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}';
+        }
+      } else if (uri.scheme == 'https' || uri.scheme == 'http') {
+        if (uri.path.startsWith('/artwork/')) {
+          return '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}';
+        }
+      }
+      return null;
+    },
+    errorBuilder: (context, state) {
+      final raw = state.uri.toString();
+      final match = RegExp(r'/artwork/([a-zA-Z0-9_\-]+)').firstMatch(raw);
+      if (match != null) {
+        final id = match.group(1)!;
+        return ArtworkResultScreen(artworkId: id);
+      }
+      return const HomeScreen();
+    },
     routes: [
       _route(AppRoutes.splash, (_) => const SplashScreen(), ArtTransition.fade),
       _route(AppRoutes.onboarding, (_) => const OnboardingScreen()),

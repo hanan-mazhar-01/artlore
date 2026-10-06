@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/providers.dart';
 import '../../../core/extensions/context_x.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_typography.dart';
@@ -21,9 +23,16 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(settingsProvider);
     final ctl = ref.read(settingsProvider.notifier);
-    final premium = ref.watch(
-      premiumProvider.select((v) => v.value?.isPremium ?? false),
+    final premiumStatus = ref.watch(
+      premiumProvider.select((v) => v.value),
     );
+    final premium = premiumStatus?.isPremium ?? false;
+    final planId = premiumStatus?.planId?.toLowerCase();
+    final planLabel = planId == null
+        ? null
+        : (planId.contains('yearly') || planId.contains('annual')
+            ? 'Yearly Plan'
+            : (planId.contains('monthly') ? 'Monthly Plan' : null));
     return ArtScaffold(
       body: ListView(
         padding: EdgeInsets.only(top: context.topInset, bottom: 60),
@@ -57,17 +66,6 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           SettingsGroup(
-            title: 'Language',
-            rows: [
-              SettingRow.value(
-                label: 'Language',
-                hint: 'Stories and transcripts',
-                trailing: s.language,
-                onTap: ctl.cycleLanguage,
-              ),
-            ],
-          ),
-          SettingsGroup(
             title: 'Exploring',
             rows: [
               SettingRow.toggle(
@@ -83,25 +81,51 @@ class SettingsScreen extends ConsumerWidget {
             rows: [
               SettingRow.value(
                 label: 'Subscription',
-                hint: 'ArtLore Premium',
-                trailing: premium ? 'Active' : 'Manage',
-                onTap: () => context.push(AppRoutes.paywall),
+                hint: premium
+                    ? (planLabel != null
+                        ? '$planLabel · Manage in App Store'
+                        : 'Manage in App Store')
+                    : 'ArtLore Premium',
+                trailing: premium ? 'Active' : 'Upgrade',
+                onTap: premium
+                    ? () async {
+                        final uri = Uri.parse(
+                          'https://apps.apple.com/account/subscriptions',
+                        );
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      }
+                    : () => context.push(AppRoutes.paywall),
               ),
               SettingRow.value(
-                label: 'Privacy',
-                hint: 'Camera, data, history',
+                label: 'Privacy Policy',
+                hint: 'What stays with you',
                 trailing: '',
-                onTap: () => showArtSheet<void>(
-                  context,
-                  child: const InfoSheet(
-                    kicker: 'Privacy',
-                    title: 'What stays with you',
-                    body:
-                        'The camera is used only to recognise artworks. Your '
-                        'history, collection and explorations stay private to '
-                        'your account, and you can clear them at any time.',
-                  ),
-                ),
+                onTap: () async {
+                  final url =
+                      ref.read(remoteConfigServiceProvider).privacyPolicyUrl;
+                  final uri = Uri.tryParse(url);
+                  if (uri != null && await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+              ),
+              SettingRow.value(
+                label: 'Terms of Use',
+                hint: 'Conditions and EULA',
+                trailing: '',
+                onTap: () async {
+                  final url =
+                      ref.read(remoteConfigServiceProvider).termsOfServiceUrl;
+                  final uri = Uri.tryParse(url);
+                  if (uri != null && await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
               SettingRow.value(
                 label: 'About ArtLore',

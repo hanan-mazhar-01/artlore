@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
@@ -30,12 +30,28 @@ class AccountWallScreen extends ConsumerStatefulWidget {
 
 class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
   bool _busy = false;
+  String? _loadingMessage;
 
   Future<void> _signInGoogle() async {
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _loadingMessage = 'Connecting to Google…';
+    });
     final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
     try {
-      await ref.read(authServiceProvider).signInWithGoogle();
+      final cred = await ref.read(authServiceProvider).signInWithGoogle();
+      if (cred == null) {
+        if (mounted) {
+          setState(() {
+            _busy = false;
+            _loadingMessage = null;
+          });
+        }
+        return;
+      }
+      if (mounted) {
+        setState(() => _loadingMessage = 'Updating your account…');
+      }
       if (wasGuest) {
         await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
       }
@@ -47,19 +63,38 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
       ref.invalidate(historyProvider);
       ref.invalidate(artJourneyProvider);
       PaintingBinding.instance.imageCache.clear();
-      PaintingBinding.instance.imageCache.clearLiveImages();
       await ref.read(premiumProvider.notifier).refresh();
       if (mounted) context.pop(true);
     } catch (_) {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _loadingMessage = null;
+        });
+      }
     }
   }
 
   Future<void> _signInApple() async {
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _loadingMessage = 'Connecting to Apple…';
+    });
     final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
     try {
-      await ref.read(authServiceProvider).signInWithApple();
+      final cred = await ref.read(authServiceProvider).signInWithApple();
+      if (cred == null) {
+        if (mounted) {
+          setState(() {
+            _busy = false;
+            _loadingMessage = null;
+          });
+        }
+        return;
+      }
+      if (mounted) {
+        setState(() => _loadingMessage = 'Updating your account…');
+      }
       if (wasGuest) {
         await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
       }
@@ -71,11 +106,15 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
       ref.invalidate(historyProvider);
       ref.invalidate(artJourneyProvider);
       PaintingBinding.instance.imageCache.clear();
-      PaintingBinding.instance.imageCache.clearLiveImages();
       await ref.read(premiumProvider.notifier).refresh();
       if (mounted) context.pop(true);
     } catch (_) {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _loadingMessage = null;
+        });
+      }
     }
   }
 
@@ -87,54 +126,106 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final isDark = context.isDark;
     return ArtScaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(26, 20, 26, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlineIconButton(onTap: () => context.pop(false)),
-              const SizedBox(height: 28),
-              const GoldLabel('Free scans used', tracking: .28),
-              const SizedBox(height: 14),
-              EditorialHeading(
-                lead: 'Create an account',
-                emphasis: 'to keep exploring.',
-                style: AppTypography.title,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(26, 20, 26, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlineIconButton(onTap: () => _busy ? null : context.pop(false)),
+                  const SizedBox(height: 28),
+                  const GoldLabel('Free scans used', tracking: .28),
+                  const SizedBox(height: 14),
+                  EditorialHeading(
+                    lead: 'Create an account',
+                    emphasis: 'to keep exploring.',
+                    style: AppTypography.title,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'You\'ve used your free scans as a guest. Sign up — it\'s '
+                    'free — and we\'ll give you a few more.',
+                    style: AppTypography.bodySmall.copyWith(color: p.muted),
+                  ),
+                  const SizedBox(height: 28),
+                  PillButton(
+                    label: 'Continue with Google',
+                    onTap: _busy ? null : _signInGoogle,
+                    style: PillStyle.inverse,
+                    loading: _busy && _loadingMessage?.contains('Google') == true,
+                  ),
+                  if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                    const SizedBox(height: 10),
+                    PillButton(
+                      label: 'Continue with Apple',
+                      onTap: _busy ? null : _signInApple,
+                      style: PillStyle.outline,
+                      leading: ArtIcon(ArtIcons.apple, size: 16, color: p.ink),
+                      loading: _busy && _loadingMessage?.contains('Apple') == true,
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  PillButton(
+                    label: 'Continue with email',
+                    onTap: _busy ? null : _goToEmailAuth,
+                    style: PillStyle.outline,
+                    weight: FontWeight.w500,
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              Text(
-                'You\'ve used your free scans as a guest. Sign up — it\'s '
-                'free — and we\'ll give you a few more.',
-                style: AppTypography.bodySmall.copyWith(color: p.muted),
-              ),
-              const SizedBox(height: 28),
-              PillButton(
-                label: 'Continue with Google',
-                onTap: _busy ? null : _signInGoogle,
-                style: PillStyle.inverse,
-              ),
-              if (defaultTargetPlatform == TargetPlatform.iOS) ...[
-                const SizedBox(height: 10),
-                PillButton(
-                  label: 'Continue with Apple',
-                  onTap: _busy ? null : _signInApple,
-                  style: PillStyle.outline,
-                  leading: ArtIcon(ArtIcons.apple, size: 16, color: p.onInverse),
-                ),
-              ],
-              const SizedBox(height: 10),
-              PillButton(
-                label: 'Continue with email',
-                onTap: _busy ? null : _goToEmailAuth,
-                style: PillStyle.outline,
-                weight: FontWeight.w500,
-              ),
-            ],
+            ),
           ),
-        ),
+          if (_busy)
+            Positioned.fill(
+              child: Container(
+                color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.65),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+                    decoration: BoxDecoration(
+                      color: p.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: p.line(.2)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.6,
+                            color: p.accent,
+                          ),
+                        ),
+                        if (_loadingMessage != null) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            _loadingMessage!,
+                            style: AppTypography.sans(14, weight: FontWeight.w500).copyWith(
+                              color: p.ink,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
