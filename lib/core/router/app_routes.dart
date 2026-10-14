@@ -15,6 +15,12 @@ abstract final class AppRoutes {
   static const collection = '/collection';
   static const profile = '/profile';
 
+  // Search (from Home's search field and filter button).
+  static const search = '/search';
+
+  /// Opens search with the sort & filter sheet already up.
+  static const searchFilters = '/search?filters=1';
+
   // Scan flow.
   static const scan = '/scan';
   static const reading = '/scan/reading';

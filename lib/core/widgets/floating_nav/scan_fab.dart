@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
 import '../../extensions/context_x.dart';
-import '../../theme/app_colors.dart';
 import '../icons/art_icon.dart';
 import '../icons/art_icons.dart';
 import '../tappable.dart';
@@ -28,7 +27,10 @@ class ScanFab extends StatelessWidget {
         height: diameter,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: p.accent,
+          // Gold in dark mode; dark chocolate in light.
+          color: context.isDark
+              ? const Color(0xFFF3E4CF)
+              : const Color(0xFF2D2621),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -42,7 +44,9 @@ class ScanFab extends StatelessWidget {
         child: ArtIcon(
           ArtIcons.camera,
           size: diameter * 0.46,
-          color: AppColors.night,
+          color: context.isDark
+              ? const Color(0xFF2B1810)
+              : const Color(0xFFF3EBDD),
           strokeWidth: 1.9,
         ),
       ),

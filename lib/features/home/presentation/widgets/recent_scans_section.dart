@@ -1,26 +1,21 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/extensions/context_x.dart';
 import '../../../../core/router/app_routes.dart';
-import '../../../../core/theme/app_motion.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/date_labels.dart';
 import '../../../../core/widgets/art_image.dart';
-import '../../../../core/widgets/buttons.dart';
-import '../../../../core/widgets/editorial_text.dart';
 import '../../../../core/widgets/fade_slide_in.dart';
+import '../../../../core/widgets/icons/art_icon.dart';
+import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/tappable.dart';
 import '../../../artwork/presentation/artwork_providers.dart';
 import '../../../history/domain/history_entry.dart';
 import '../home_providers.dart';
+import 'home_style.dart';
 
-/// Every card along the rail shares one size and one soft rounded frame.
-const _cardWidth = 150.0;
-const _cardHeight = 170.0;
-
-/// "Recent scans" — the visitor's latest identifications, newest first.
+/// "Recent Scans": a title with "See all", then a rail of tall cards — or an
+/// inviting empty state when nothing has been scanned yet.
 class RecentScansSection extends ConsumerWidget {
   const RecentScansSection({super.key, required this.onScan});
 
@@ -28,50 +23,75 @@ class RecentScansSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = HomeStyle.of(context);
     final scans = ref.watch(recentScansProvider);
-    final caption = MediaQuery.textScalerOf(context).scale(76);
-    final seenIds = <String>{};
+    final hasScans = scans != null && scans.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 40, 24, 0),
-          child: SectionHeader(
-            title: 'Recent scans',
-            action: scans == null || scans.isEmpty ? null : 'See all',
-            onAction: () => context.push(AppRoutes.history),
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (scans == null)
-          SizedBox(height: _cardHeight + caption)
-        else if (scans.isEmpty)
-          _EmptyScans(onScan: onScan)
-        else
-          SizedBox(
-            height: _cardHeight + caption,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              itemCount: scans.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 14),
-              itemBuilder: (context, i) {
-                final entry = scans[i];
-                final isFirst = seenIds.add(entry.artworkId);
-                return FadeSlideIn(
-                  axis: Axis.horizontal,
-                  offset: 24,
-                  delay: Duration(milliseconds: 70 * i.clamp(0, 5)),
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: RecentArtworkCard(
-                      entry: entry,
-                      heroTag:
-                          isFirst ? 'artwork-hero-${entry.artworkId}' : null,
+          padding: const EdgeInsets.fromLTRB(22, 26, 22, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Expanded(
+                child: Text(
+                  'Recent Scans',
+                  style: AppTypography.serif(
+                    26,
+                    weight: FontWeight.w700,
+                  ).copyWith(color: s.ink),
+                ),
+              ),
+              if (hasScans)
+                Tappable(
+                  onTap: () => context.push(AppRoutes.history),
+                  semanticLabel: 'See all scans',
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'See all',
+                          style: AppTypography.sans(
+                            13,
+                            weight: FontWeight.w600,
+                          ).copyWith(color: s.ink),
+                        ),
+                        const SizedBox(width: 4),
+                        ArtIcon(
+                          ArtIcons.chevronRight,
+                          size: 14,
+                          color: s.ink,
+                          strokeWidth: 2,
+                        ),
+                      ],
                     ),
                   ),
-                );
-              },
+                ),
+            ],
+          ),
+        ),
+        if (scans == null)
+          const SizedBox(height: 212)
+        else if (scans.isEmpty)
+          _EmptyScans(onScan: onScan, style: s)
+        else
+          SizedBox(
+            height: 212 + 6,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(22, 0, 22, 6),
+              itemCount: scans.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, i) => FadeSlideIn(
+                axis: Axis.horizontal,
+                offset: 24,
+                delay: Duration(milliseconds: 70 * i.clamp(0, 5)),
+                child: _ScanCard(entry: scans[i], style: s),
+              ),
             ),
           ),
       ],
@@ -79,83 +99,101 @@ class RecentScansSection extends ConsumerWidget {
   }
 }
 
-/// One scanned work: its frame, when, what, who.
-class RecentArtworkCard extends ConsumerWidget {
-  const RecentArtworkCard({
-    super.key,
-    required this.entry,
-    this.heroTag,
-  });
+class _ScanCard extends ConsumerWidget {
+  const _ScanCard({required this.entry, required this.style});
 
   final HistoryEntry entry;
-  final String? heroTag;
+  final HomeStyle style;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final p = context.palette;
+    final s = style;
     final artwork = ref.watch(artworkProvider(entry.artworkId)).value;
-    if (artwork == null) return const SizedBox(width: _cardWidth);
-
-    Widget image = ArtImage(
-      artwork.image,
-      radius: AppRadius.round,
-      alignment: artwork.heroFocus,
-    );
-    if (heroTag != null) {
-      image = Hero(
-        tag: heroTag!,
-        createRectTween: (begin, end) => AppMotion.rectTween(begin, end),
-        flightShuttleBuilder: (
-          flightContext,
-          animation,
-          flightDirection,
-          fromHeroContext,
-          toHeroContext,
-        ) {
-          return AppMotion.heroShuttle(
-            animation: animation,
-            flightDirection: flightDirection,
-            fromHeroContext: fromHeroContext,
-            toHeroContext: toHeroContext,
-            startRadius: AppRadius.round,
-            endRadius: BorderRadius.zero,
-          );
-        },
-        child: image,
-      );
-    }
-
-    return SizedBox(
-      width: _cardWidth,
-      child: Tappable(
-        onTap: () => context.openArtwork(artwork.id),
-        semanticLabel:
-            '${artwork.semanticLabel}, scanned '
-            '${DateLabels.ago(entry.at)}',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+    if (artwork == null) return const SizedBox(width: 156);
+    return Tappable(
+      onTap: () => context.openArtwork(artwork.id),
+      semanticLabel:
+          '${artwork.semanticLabel}, scanned ${DateLabels.ago(entry.at)}',
+      pressedScale: .97,
+      child: Container(
+        width: 156,
+        height: 212,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: s.tile,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: s.shadow(.5),
+              offset: const Offset(0, 12),
+              blurRadius: 22,
+              spreadRadius: -16,
+            ),
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            SizedBox(
-              height: _cardHeight,
-              width: double.infinity,
-              child: image,
+            ArtImage(artwork.image, alignment: artwork.heroFocus),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x0026231F), Color(0xE026231F)],
+                  stops: [.45, 1],
+                ),
+              ),
             ),
-            const SizedBox(height: 10),
-            GoldLabel(DateLabels.ago(entry.at), tracking: .2, maxLines: 1),
-            const SizedBox(height: 5),
-            Text(
-              artwork.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.serif(17, height: 1.1),
+            Positioned(
+              top: 10,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xE6F7F2EC),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Text(
+                  DateLabels.ago(entry.at).toUpperCase(),
+                  style: AppTypography.sans(
+                    9.5,
+                    weight: FontWeight.w700,
+                    tracking: .12,
+                  ).copyWith(color: const Color(0xFF26231F)),
+                ),
+              ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              artwork.artist,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.metadata.copyWith(color: p.muted),
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    artwork.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.serif(
+                      18,
+                      weight: FontWeight.w700,
+                      height: 1.12,
+                    ).copyWith(color: s.onImage),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    artwork.artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.sans(
+                      11.5,
+                      weight: FontWeight.w500,
+                    ).copyWith(color: s.goldLight),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -165,43 +203,124 @@ class RecentArtworkCard extends ConsumerWidget {
 }
 
 class _EmptyScans extends StatelessWidget {
-  const _EmptyScans({required this.onScan});
+  const _EmptyScans({required this.onScan, required this.style});
 
   final VoidCallback onScan;
+  final HomeStyle style;
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.css(6, 48, 6, 6),
-        border: Border.all(color: p.line(.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Your gallery is waiting.',
-            style: AppTypography.serif(26, italic: true),
+    final s = style;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 22),
+      child: CustomPaint(
+        painter: _DashedRRect(color: s.line, radius: 24),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 26, 20, 26),
+          decoration: BoxDecoration(
+            color: s.surface,
+            borderRadius: BorderRadius.circular(24),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Scan your first artwork to begin your collection.',
-            style: AppTypography.sans(13, height: 1.5).copyWith(color: p.muted),
+          child: Column(
+            children: [
+              // A little empty picture frame.
+              Container(
+                width: 64,
+                height: 80,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: s.ground,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: s.line, width: 2),
+                ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: s.ground,
+                    border: Border.all(color: s.line),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Your gallery is waiting',
+                textAlign: TextAlign.center,
+                style: AppTypography.serif(
+                  22,
+                  weight: FontWeight.w700,
+                ).copyWith(color: s.ink),
+              ),
+              const SizedBox(height: 10),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 240),
+                child: Text(
+                  'Paintings you scan will appear here with their stories.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.sans(
+                    13,
+                    weight: FontWeight.w500,
+                    height: 1.45,
+                  ).copyWith(color: s.muted),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Tappable(
+                onTap: onScan,
+                semanticLabel: 'Scan your first painting',
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: s.deep,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Text(
+                    'Scan your first painting',
+                    style: AppTypography.sans(
+                      13.5,
+                      weight: FontWeight.w700,
+                    ).copyWith(color: s.onDeep),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 18),
-          PillButton(
-            label: 'Scan Artwork',
-            onTap: onScan,
-            style: PillStyle.outline,
-            height: 48,
-            fontSize: 14,
-            trailingArrow: true,
-          ),
-        ],
+        ),
       ),
     );
   }
+}
+
+/// A 1px dashed rounded rectangle.
+class _DashedRRect extends CustomPainter {
+  const _DashedRRect({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          (Offset.zero & size).deflate(.5),
+          Radius.circular(radius),
+        ),
+      );
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    for (final metric in path.computeMetrics()) {
+      var d = 0.0;
+      while (d < metric.length) {
+        canvas.drawPath(metric.extractPath(d, d + 5), paint);
+        d += 9;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRRect old) =>
+      old.color != color || old.radius != radius;
 }

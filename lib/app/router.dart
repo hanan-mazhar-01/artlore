@@ -21,6 +21,7 @@ import '../features/paywall/presentation/account_wall_screen.dart';
 import '../features/paywall/presentation/paywall_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/scan/presentation/analysis/analysis_screen.dart';
+import '../features/search/presentation/search_screen.dart';
 import '../features/scan/presentation/scan_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 
@@ -58,6 +59,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       _route(AppRoutes.splash, (_) => const SplashScreen(), ArtTransition.fade),
+      _route(
+        AppRoutes.search,
+        (s) => SearchScreen(openFilters: s.uri.queryParameters['filters'] == '1'),
+        ArtTransition.fade,
+      ),
       _route(AppRoutes.onboarding, (_) => const OnboardingScreen()),
       _route(AppRoutes.welcome, (_) => const WelcomeScreen()),
       _route(AppRoutes.emailAuth, (_) => const EmailAuthScreen()),

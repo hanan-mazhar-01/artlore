@@ -96,6 +96,19 @@ abstract final class ArtIcons {
     'M21 3v5h-5',
   ]);
 
+  static const search = ArtIconData([
+    'M4 11a7 7 0 1 0 14 0a7 7 0 1 0 -14 0',
+    'M20 20l-3.5-3.5',
+  ]);
+
+  static const filter = ArtIconData([
+    'M4 7h10M18 7h2M4 17h4M12 17h8',
+    'M14 7a2 2 0 1 0 4 0a2 2 0 1 0 -4 0',
+    'M8 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0',
+  ]);
+
+  static const arrowUpRight = ArtIconData(['M7 17L17 7M9 7h8v8']);
+
   static const camera = ArtIconData([
     'M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z',
     'M9 13a3 3 0 1 0 6 0a3 3 0 1 0 -6 0',

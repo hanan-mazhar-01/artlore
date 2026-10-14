@@ -48,10 +48,7 @@ class TabShell extends StatelessWidget {
 
   void _onSelected(int index) {
     final branch = artNavItems[index].branch;
-    shell.goBranch(
-      branch,
-      initialLocation: branch == shell.currentIndex,
-    );
+    shell.goBranch(branch, initialLocation: branch == shell.currentIndex);
   }
 
   @override
@@ -60,15 +57,14 @@ class TabShell extends StatelessWidget {
     final gap = bottomInset > 0 ? math.max(12.0, bottomInset - 6) : 16.0;
     // Reserve room for the scan button + its gap so the pill shrinks to
     // make space for it, rather than the pair crowding the screen edge.
-    const fabGap = 24.0;
-    const fabScale = 1.05; // a touch bigger than the pill it sits beside.
-    const fabMaxDiameter = 64.0 * fabScale;
+    // The scan button lives inside the capsule's extended right end; reserve
+    // just the width that extension adds.
+    final reserved = ScanFabDock.extraWidth(64);
     final m = FloatingNavMetrics.forScreen(
       MediaQuery.sizeOf(context).width,
       artNavItems.length,
-      reservedWidth: fabGap + fabMaxDiameter,
+      reservedWidth: reserved,
     );
-    final fabDiameter = m.height * fabScale;
     return ActiveTabScope(
       currentIndex: shell.currentIndex,
       child: Stack(
@@ -79,21 +75,30 @@ class TabShell extends StatelessWidget {
             right: 0,
             bottom: gap,
             child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FloatingBottomNav(
-                    items: artNavItems,
-                    selectedIndex: _selected,
-                    onSelected: _onSelected,
-                    metrics: m,
-                  ),
-                  ScanFabDock(
-                    diameter: fabDiameter,
-                    pillHeight: m.height,
-                    onTap: () => context.push(AppRoutes.scan),
-                  ),
-                ],
+              // The pill plus the extension that holds the scan button, as one
+              // capsule: the dock starts at the pill's old cap centre.
+              child: SizedBox(
+                width: m.width + ScanFabDock.extraWidth(m.height),
+                height: m.height,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    FloatingBottomNav(
+                      items: artNavItems,
+                      selectedIndex: _selected,
+                      onSelected: _onSelected,
+                      metrics: m,
+                    ),
+                    Positioned(
+                      left: m.width - m.height / 2,
+                      top: 0,
+                      child: ScanFabDock(
+                        pillHeight: m.height,
+                        onTap: () => context.push(AppRoutes.scan),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

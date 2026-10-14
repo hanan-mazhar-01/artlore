@@ -1,50 +1,63 @@
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 
-import '../../../../core/extensions/context_x.dart';
-import '../../../../core/theme/app_radius.dart';
+import '../../../../core/media/art_image_source.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/art_image.dart';
 import '../../../../core/widgets/icons/art_icon.dart';
 import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/tappable.dart';
+import 'home_style.dart';
 
-/// Two quiet companions to the scan card, mirrored like a diptych.
+/// Two cards under the hero: scan from the photo library (light) and the
+/// visitor's collection (dark, with its first few covers).
 class QuickActionsRow extends StatelessWidget {
   const QuickActionsRow({
     super.key,
     required this.onScanPhotos,
     required this.onCollection,
-    this.collectionHint,
+    required this.savedCount,
+    this.thumbs = const [],
+    this.latestPhoto,
   });
 
   final VoidCallback onScanPhotos;
   final VoidCallback onCollection;
 
-  /// "7 works saved".
-  final String? collectionHint;
+  /// Number of saved works, or null while it loads.
+  final int? savedCount;
+
+  /// Up to three cover images from the collection, newest first.
+  final List<ArtImageSource> thumbs;
+
+  /// The newest photo in the phone's library, if access was granted.
+  final Uint8List? latestPhoto;
 
   @override
   Widget build(BuildContext context) {
+    final s = HomeStyle.of(context);
+    final count = savedCount ?? 0;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+      padding: const EdgeInsets.fromLTRB(22, 14, 22, 0),
       child: Row(
         children: [
           Expanded(
-            child: QuickAction(
-              icon: ArtIcons.photos,
-              label: 'Scan from Photos',
-              hint: 'Your camera roll',
-              radius: AppRadius.css(30, 6, 6, 30),
+            child: _PhotosCard(
+              style: s,
               onTap: onScanPhotos,
+              photo: latestPhoto,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
-            child: QuickAction(
-              icon: ArtIcons.gallery,
-              label: 'My Collection',
-              hint: collectionHint ?? 'Your galleries',
-              radius: AppRadius.css(6, 30, 30, 6),
+            child: _CollectionCard(
+              style: s,
               onTap: onCollection,
+              thumbs: thumbs.take(3).toList(),
+              label: count > 0
+                  ? '$count ${count == 1 ? 'work' : 'works'} saved'
+                  : 'Start your collection',
             ),
           ),
         ],
@@ -53,79 +66,242 @@ class QuickActionsRow extends StatelessWidget {
   }
 }
 
-/// A compact icon + text action on a hairline frame.
-class QuickAction extends StatelessWidget {
-  const QuickAction({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.hint,
-    required this.radius,
+class _PhotosCard extends StatelessWidget {
+  const _PhotosCard({
+    required this.style,
     required this.onTap,
+    required this.photo,
   });
 
-  final ArtIconData icon;
-  final String label;
-  final String hint;
-  final BorderRadius radius;
+  final HomeStyle style;
   final VoidCallback onTap;
+  final Uint8List? photo;
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
+    final s = style;
     return Tappable(
       onTap: onTap,
-      semanticLabel: label,
+      semanticLabel: 'Scan from Photos',
       pressedScale: .97,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        height: 150,
+        padding: const EdgeInsets.all(16),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: p.surfaceAlt,
-          borderRadius: radius,
-          border: Border.all(color: p.line(.08)),
+          color: s.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: s.line),
+          boxShadow: [
+            BoxShadow(
+              color: s.shadow(.35),
+              offset: const Offset(0, 10),
+              blurRadius: 24,
+              spreadRadius: -18,
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              right: -42,
+              top: -42,
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: s.line),
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (photo != null)
+                      Container(
+                        width: 42,
+                        height: 54,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: s.tile,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: s.gold.withValues(alpha: .6),
+                          ),
+                        ),
+                        child: Image.memory(
+                          photo!,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                          excludeFromSemantics: true,
+                        ),
+                      )
+                    else
+                      Container(
+                        width: 42,
+                        height: 42,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: s.goldTint,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: ArtIcon(
+                          ArtIcons.photos,
+                          size: 20,
+                          color: s.goldDeep,
+                        ),
+                      ),
+                    ArtIcon(
+                      ArtIcons.arrowUpRight,
+                      size: 18,
+                      color: s.muted,
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  'Scan from Photos',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.sans(
+                    14.5,
+                    weight: FontWeight.w700,
+                  ).copyWith(color: s.ink),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Discover art from your gallery',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.sans(
+                    12,
+                    weight: FontWeight.w500,
+                    height: 1.35,
+                  ).copyWith(color: s.muted),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CollectionCard extends StatelessWidget {
+  const _CollectionCard({
+    required this.style,
+    required this.onTap,
+    required this.thumbs,
+    required this.label,
+  });
+
+  final HomeStyle style;
+  final VoidCallback onTap;
+  final List<ArtImageSource> thumbs;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = style;
+    return Tappable(
+      onTap: onTap,
+      semanticLabel: 'My Collection',
+      pressedScale: .97,
+      child: Container(
+        height: 150,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: s.card,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: s.shadow(.6),
+              offset: const Offset(0, 14),
+              blurRadius: 26,
+              spreadRadius: -16,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: p.accentAlpha(.45)),
+                if (thumbs.isNotEmpty)
+                  SizedBox(
+                    height: 40,
+                    width: 30.0 + (thumbs.length - 1) * 20,
+                    child: Stack(
+                      children: [
+                        for (var i = 0; i < thumbs.length; i++)
+                          Positioned(
+                            left: i * 20.0,
+                            child: Container(
+                              width: 30,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3A352F),
+                                borderRadius: BorderRadius.circular(7),
+                                border: Border.all(color: s.card, width: 2),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x73D9B46E),
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: ArtImage(
+                                thumbs[i],
+                                radius: BorderRadius.circular(5),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    width: 42,
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0x29D9B46E),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: ArtIcon(ArtIcons.gallery, size: 20, color: s.goldDeep),
                   ),
-                  child: ArtIcon(
-                    icon,
-                    size: 16,
-                    color: p.accent,
-                    strokeWidth: 1.5,
-                  ),
-                ),
-                const Spacer(),
-                ArtIcon(
-                  ArtIcons.arrowRight,
-                  size: 14,
-                  color: p.muted,
-                  strokeWidth: 1.5,
-                ),
+                ArtIcon(ArtIcons.arrowUpRight, size: 18, color: s.goldDeep),
               ],
             ),
-            const SizedBox(height: 14),
+            const Spacer(),
+            Text(
+              'My Collection',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.sans(
+                14.5,
+                weight: FontWeight.w700,
+              ).copyWith(color: s.ink),
+            ),
+            const SizedBox(height: 3),
             Text(
               label,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.sans(14, weight: FontWeight.w600),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              hint,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.metadata.copyWith(color: p.muted),
+              style: AppTypography.sans(
+                12,
+                weight: FontWeight.w500,
+                height: 1.35,
+              ).copyWith(color: s.ink.withValues(alpha: .72)),
             ),
           ],
         ),

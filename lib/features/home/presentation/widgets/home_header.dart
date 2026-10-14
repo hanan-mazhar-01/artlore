@@ -4,45 +4,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/editorial_text.dart';
 import '../../../../core/widgets/round_buttons.dart';
 import '../../../../core/widgets/tappable.dart';
 import '../../../profile/presentation/profile_providers.dart';
+import 'home_style.dart';
 
-/// The visitor's greeting and their avatar — no separate wordmark, no app
-/// bar; this one row is the whole top of Home.
+/// "Hi, Name" over a one-line tagline, and the profile avatar on the right.
 class HomeHeader extends ConsumerWidget {
   const HomeHeader({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final p = context.palette;
+    final s = HomeStyle.of(context);
     final profile = ref.watch(userProfileProvider).value;
-    final firstName = _resolveFirstName(profile);
+    final firstName = _firstName(profile);
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, context.topInset, 24, 0),
+      padding: EdgeInsets.fromLTRB(22, context.topInset, 22, 0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                EditorialHeading(
-                  lead: firstName == null ? 'Hi' : 'Hi,',
-                  emphasis: firstName,
-                  breakLine: false,
+                Text(
+                  firstName == null ? 'Hi' : 'Hi, $firstName',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.serif(
                     34,
-                    weight: FontWeight.w500,
+                    weight: FontWeight.w700,
                     height: 1.05,
-                  ),
+                    tracking: -.01,
+                  ).copyWith(color: s.ink),
                 ),
-
-                const SizedBox(height: 8),
+                const SizedBox(height: 2),
                 Text(
-                  'What will you discover today?',
-                  style: AppTypography.bodySmall.copyWith(color: p.muted),
+                  'Every masterpiece has a story.',
+                  style: AppTypography.sans(
+                    13.5,
+                    weight: FontWeight.w500,
+                    height: 1.4,
+                  ).copyWith(color: s.muted),
                 ),
               ],
             ),
@@ -52,24 +54,30 @@ class HomeHeader extends ConsumerWidget {
             onTap: () => context.go(AppRoutes.profile),
             semanticLabel: 'Your profile',
             pressedScale: .92,
-            // Padding brings the tap target up to the recommended 44dp
-            // without enlarging the disc itself.
-            child: Padding(
-              padding: const EdgeInsets.all(4),
+            child: DecoratedBox(
+              // The design's double ring: a ground-coloured gap, then a hairline.
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: s.line, spreadRadius: 5),
+                  BoxShadow(color: s.ground, spreadRadius: 4),
+                ],
+              ),
               child: InitialsAvatar(
                 initials: profile?.initials ?? '',
                 imageUrl: profile?.photoUrl,
-                style: AppTypography.sans(12, weight: FontWeight.w600),
-                elevated: true,
+                size: 46,
+                style: AppTypography.sans(18, weight: FontWeight.w600),
               ),
             ),
           ),
+          const SizedBox(width: 5),
         ],
       ),
     );
   }
 
-  String? _resolveFirstName(dynamic profile) {
+  String? _firstName(dynamic profile) {
     if (profile == null) return null;
     final String raw = profile.firstName?.trim() ?? '';
     if (raw.isEmpty ||
@@ -78,10 +86,8 @@ class HomeHeader extends ConsumerWidget {
         raw == 'Guest Collector') {
       return null;
     }
-    final words = raw.split(RegExp(r'[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+'));
-    if (words.isEmpty) return null;
+    final words = raw.split(RegExp(r'\s+'));
     final first = words.first.trim();
     return first.isEmpty ? null : first;
   }
 }
-

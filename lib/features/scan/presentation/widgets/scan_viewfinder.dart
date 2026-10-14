@@ -30,14 +30,15 @@ class ScanViewfinder extends StatelessWidget {
 
   static const _radius = 28.0;
 
-  static const _ready = Rect.fromLTWH(32, 68, 326, 306);
-  static const _locked = Rect.fromLTWH(38, 74, 314, 294);
+  // Landscape, like most paintings (about 4:3), centred in the stage.
+  static const _ready = Rect.fromLTWH(32, 104, 326, 234);
+  static const _locked = Rect.fromLTWH(38, 110, 314, 222);
 
   /// Width/height of the visible scanner frame — what the camera preview is
   /// windowed to on screen via `BoxFit.cover`. Captured photos are cropped
   /// to this same ratio so the saved image matches what the user framed,
   /// instead of the camera's full (wider) sensor output.
-  static const aspectRatio = 326 / 306;
+  static const aspectRatio = 326 / 234;
 
   @override
   Widget build(BuildContext context) {

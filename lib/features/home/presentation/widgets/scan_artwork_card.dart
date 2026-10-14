@@ -1,25 +1,21 @@
-import 'dart:async';
-import 'dart:math' as math;
-import 'dart:ui';
-
 import 'package:flutter/widgets.dart';
 
-import '../../../../core/extensions/context_x.dart';
-import '../../../../core/media/art_image_source.dart';
-import '../../../../core/router/tab_shell.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_motion.dart';
-import '../../../../core/theme/app_shadows.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/art_image.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/design_stage.dart';
 import '../../../../core/widgets/icons/art_icon.dart';
 import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/tappable.dart';
+import '../../../artwork/domain/artwork.dart';
+import 'home_style.dart';
 
-/// The front door of the app: a banner over a painting — "AI powered" chip,
-/// headline, one line of copy and a gold pill button. The whole card opens the
-/// scanner.
+/// The hero. A short film plays on loop: a painting fills the width under a
+/// light that scans down it, then slides to the left while the painting's
+/// story — title, artist, year, museum — writes itself in on the right, then
+/// it all folds back. Under it the headline, copy and "Scan a Painting" pill
+/// stay put. The whole card opens the scanner.
 class ScanArtworkCard extends StatefulWidget {
   const ScanArtworkCard({
     super.key,
@@ -27,359 +23,382 @@ class ScanArtworkCard extends StatefulWidget {
     required this.onTap,
   });
 
-  /// The painting shown inside the frame.
-  final ArtImageSource artwork;
+  /// The sample painting the banner scans and describes.
+  final Artwork artwork;
+
   final VoidCallback onTap;
 
   @override
   State<ScanArtworkCard> createState() => _ScanArtworkCardState();
 }
 
-class _ScanArtworkCardState extends State<ScanArtworkCard> {
-  static const _outerRadius = 24.0;
-  static const _innerRadius = 18.0;
-  static const _imageHeight = 222.0;
+class _ScanArtworkCardState extends State<ScanArtworkCard>
+    with TickerProviderStateMixin {
+  /// The motes: one 4.5 s cycle, each offset by its own delay.
+  late final AnimationController _motes = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 4500),
+  );
+
+  // (left %, top px, delay s)
+  static const _moteSpec = [
+    (70.0, 150.0, 0.0),
+    (82.0, 120.0, 1.4),
+    (62.0, 200.0, 2.6),
+    (90.0, 180.0, 3.5),
+  ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.reduced(context)) {
+      _motes.stop();
+    } else if (!_motes.isAnimating) {
+      _motes.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _motes.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
-    final content = ClipRRect(
-      borderRadius: BorderRadius.circular(_innerRadius - 3),
-      child: SizedBox(
-        height: _imageHeight,
-        width: double.infinity,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // A hair of blur so the button and copy read as sitting above
-            // the painting rather than printed on it.
-            Hero(
-              tag: 'scan-viewfinder-hero',
-              createRectTween: (begin, end) => AppMotion.rectTween(begin, end),
-              flightShuttleBuilder: (
-                flightContext,
-                animation,
-                flightDirection,
-                fromHeroContext,
-                toHeroContext,
-              ) {
-                return AppMotion.heroShuttle(
-                  animation: animation,
-                  flightDirection: flightDirection,
-                  fromHeroContext: fromHeroContext,
-                  toHeroContext: toHeroContext,
-                  startRadius: BorderRadius.circular(_innerRadius - 3),
-                  endRadius: BorderRadius.zero,
-                );
-              },
-              child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 1.4, sigmaY: 1.4),
-                child: ArtImage(
-                  widget.artwork,
-                  semanticLabel: 'Starry Night, sample scan',
-                ),
-              ),
-            ),
-            // Darkens the left side, where the copy sits, and lets the
-            // painting show through on the right.
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Color(0xE6101010),
-                    Color(0xB3101010),
-                    Color(0x26101010),
-                  ],
-                  stops: [0, .55, 1],
-                ),
-              ),
-            ),
-            // Scales the copy down rather than ever overflowing the card.
-            const Positioned.fill(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 16),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: _BannerCopy(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    final s = HomeStyle.of(context);
     return Tappable(
       onTap: widget.onTap,
       semanticLabel: 'Scan an artwork',
       haptic: HapticKind.light,
       pressedScale: .985,
       child: Container(
-        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: p.surface,
-          borderRadius: BorderRadius.circular(_outerRadius),
-          boxShadow: AppShadows.card(p),
+          color: s.bannerBg,
+          gradient: s.bannerGradient,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: s.bannerBorder),
+          boxShadow: [
+            BoxShadow(
+              color: s.shadow(.55),
+              offset: const Offset(0, 24),
+              blurRadius: 40,
+              spreadRadius: -22,
+            ),
+          ],
         ),
-        child: Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            border: Border.all(color: p.accentAlpha(.5)),
-            borderRadius: BorderRadius.circular(_innerRadius),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(29),
+          child: Stack(
+            children: [
+              // A soft glow behind the frame.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0, -.35),
+                      radius: .95,
+                      colors: [s.bannerGlow, s.bannerGlow.withValues(alpha: 0)],
+                    ),
+                  ),
+                ),
+              ),
+              // Motes drifting up behind the content.
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _motes,
+                    builder: (context, _) => LayoutBuilder(
+                      builder: (context, c) => Stack(
+                        children: [
+                          for (final (x, y, delay) in _moteSpec)
+                            _mote(c.maxWidth * x / 100, y, delay, s.bannerMote),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'DISCOVER THE STORY',
+                      style: AppTypography.sans(
+                        10.5,
+                        weight: FontWeight.w700,
+                        tracking: .23,
+                      ).copyWith(color: s.bannerAccent),
+                    ),
+                    const SizedBox(height: 12),
+                    _ScanStage(artwork: widget.artwork, style: s),
+                    const SizedBox(height: 14),
+                    _Copy(style: s),
+                  ],
+                ),
+              ),
+            ],
           ),
-          child: content,
+        ),
+      ),
+    );
+  }
+
+  Widget _mote(double left, double top, double delay, Color color) {
+    final seconds = _motes.value * 4.5;
+    final phase = (((seconds - delay) % 4.5) + 4.5) % 4.5 / 4.5;
+    // 0 → .9 by 30%, then back to 0; drifts 60px up.
+    final opacity = phase < .3
+        ? .9 * (phase / .3)
+        : .9 * (1 - (phase - .3) / .7);
+    final lift = 60 * Curves.easeOut.transform(phase);
+    return Positioned(
+      left: left,
+      top: top - lift,
+      child: Opacity(
+        opacity: opacity.clamp(0.0, 1.0),
+        child: Container(
+          width: 4,
+          height: 4,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: color, blurRadius: 8)],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Left-aligned copy block of the banner. The first time it appears it writes
-/// itself in: the headline types out behind a blinking cursor, then the line
-/// of copy rises in and the button settles into place. After that only the
-/// headline keeps typing, over and over; the rest stays put.
-class _BannerCopy extends StatefulWidget {
-  const _BannerCopy();
+/// The film strip of the banner: scan, slide left, story, fold back.
+class _ScanStage extends StatefulWidget {
+  const _ScanStage({required this.artwork, required this.style});
+
+  final Artwork artwork;
+  final HomeStyle style;
 
   @override
-  State<_BannerCopy> createState() => _BannerCopyState();
+  State<_ScanStage> createState() => _ScanStageState();
 }
 
-class _BannerCopyState extends State<_BannerCopy>
-    with TickerProviderStateMixin {
-  static const _gold = AppColors.gold;
-  static const _headline = 'Turn Any\nPainting Into\na Story';
-  static const _goldFrom = _headline.length - 'a Story'.length;
-  static const _intro = Duration(milliseconds: 3800);
-  static const _typeOnly = Duration(milliseconds: 2900);
+class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
+  static const _height = 124.0;
 
-  /// Where in the repeat the headline is done and the button gives its nudge.
-  static const _typedBy = .74;
+  /// Width the painting shrinks to once it has slid left.
+  static const _smallWidth = 132.0;
 
-  /// Gap between one typing pass finishing and the next starting.
-  static const _hold = Duration(milliseconds: 2500);
-
-  /// The full first-time timeline.
-  late final AnimationController _c = AnimationController(
+  /// The scanning light: one pass every 2.6 s, throughout.
+  late final AnimationController _scan = AnimationController(
     vsync: this,
-    duration: _intro,
+    duration: const Duration(milliseconds: 2600),
   );
 
-  /// Just the headline, for the repeats.
-  late final AnimationController _loop = AnimationController(
+  /// The whole film, ~10 s, looping.
+  late final AnimationController _film = AnimationController(
     vsync: this,
-    duration: _typeOnly,
+    duration: const Duration(seconds: 10),
   );
-
-  late final Animation<double> _typing = CurvedAnimation(
-    parent: _c,
-    curve: const Interval(.06, .56),
-  );
-  late final Animation<double> _copy = CurvedAnimation(
-    parent: _c,
-    curve: const Interval(.58, .78, curve: Curves.easeOutCubic),
-  );
-  late final Animation<double> _button = CurvedAnimation(
-    parent: _c,
-    curve: const Interval(.72, .96, curve: Curves.easeOutBack),
-  );
-  late final Animation<double> _loopTyping = CurvedAnimation(
-    parent: _loop,
-    curve: const Interval(.04, _typedBy),
-  );
-
-  Timer? _timer;
-  bool _active = false;
-
-  /// True once the first full write-in has finished.
-  bool _introDone = false;
-
-  void _play() {
-    _timer?.cancel();
-    if (AppMotion.reduced(context)) {
-      _c.value = 1;
-      _loop.value = 1;
-      _introDone = true;
-      return;
-    }
-    _timer = Timer(const Duration(milliseconds: 450), () {
-      if (!mounted || !_active) return;
-      if (_introDone) {
-        _playLoop();
-      } else {
-        _c.forward(from: 0).whenCompleteOrCancel(() {
-          if (!mounted || !_active || _c.value < 1) return;
-          _introDone = true;
-          _loop.value = 1;
-          _schedule();
-        });
-      }
-    });
-  }
-
-  void _playLoop() {
-    _loop.forward(from: 0).whenCompleteOrCancel(() {
-      if (!mounted || !_active || _loop.value < 1) return;
-      _schedule();
-    });
-  }
-
-  void _schedule() {
-    _timer?.cancel();
-    _timer = Timer(_hold, () {
-      if (mounted && _active) _playLoop();
-    });
-  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Only the Home tab runs it; leaving and coming back starts it afresh.
-    final onHome = ActiveTabScope.of(context) == 0;
-    if (onHome && !_active) {
-      _active = true;
-      if (!_introDone) _c.value = 0;
-      _play();
-    } else if (!onHome && _active) {
-      _active = false;
-      _timer?.cancel();
-      _c.stop();
-      _loop.stop();
-      if (_introDone) {
-        _loop.value = 1;
-      } else {
-        _c.value = 0;
-      }
+    if (AppMotion.reduced(context)) {
+      _scan.stop();
+      _film
+        ..stop()
+        ..value = .5; // rest on the "story" frame
+    } else {
+      if (!_scan.isAnimating) _scan.repeat();
+      if (!_film.isAnimating) _film.repeat();
     }
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
-    _c.dispose();
-    _loop.dispose();
+    _scan.dispose();
+    _film.dispose();
     super.dispose();
   }
 
-  /// A very slight swell of the button once the headline has finished typing:
-  /// up about 3.5% and back, in one smooth breath.
-  double get _nudge {
-    final t = _loop.value;
-    if (t <= _typedBy) return 1;
-    final p = (t - _typedBy) / (1 - _typedBy);
-    return 1 + .035 * math.sin(math.pi * p);
-  }
-
-  /// Typing progress, 0–1, from whichever timeline is current.
-  double get _typed => _introDone ? _loopTyping.value : _typing.value;
-
-  /// The cursor: shown while typing and for a moment after, blinking twice a
-  /// second, then gone.
-  bool get _cursorOn {
-    final AnimationController ctl = _introDone ? _loop : _c;
-    final t = ctl.value;
-    if (t >= (_introDone ? _typedBy + .05 : .8) || t <= 0) return false;
-    final ms = t * ctl.duration!.inMilliseconds;
-    return (ms ~/ 480).isEven;
-  }
-
-  InlineSpan _headlineSpan(int typed) {
-    final spans = <InlineSpan>[];
-    void run(int from, int to, Color color) {
-      if (to <= from) return;
-      spans.add(
-        TextSpan(
-          text: _headline.substring(from, to),
-          style: TextStyle(color: color),
-        ),
-      );
-    }
-
-    // Typed part, in its final colours.
-    run(0, typed.clamp(0, _goldFrom), AppColors.ivory);
-    if (typed > _goldFrom) run(_goldFrom, typed, _gold);
-
-    // Zero-width cursor, so it never nudges the text around it.
-    spans.add(
-      WidgetSpan(
-        alignment: PlaceholderAlignment.middle,
-        child: SizedBox(
-          width: 0,
-          height: 26,
-          child: OverflowBox(
-            maxWidth: 4,
-            alignment: Alignment.centerLeft,
-            child: Container(
-              width: 2.5,
-              height: 24,
-              margin: const EdgeInsets.only(left: 2),
-              color: _cursorOn ? _gold : const Color(0x00000000),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // The rest is laid out but invisible, so the lines never reflow.
-    const clear = Color(0x00000000);
-    run(typed, _headline.length, clear);
-    return TextSpan(children: spans);
-  }
+  /// 0 → 1 across [from]..[to] of the film, clamped.
+  double _span(double t, double from, double to) =>
+      ((t - from) / (to - from)).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 220),
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_c, _loop]),
-        builder: (context, _) {
-          final typed = (_typed * _headline.length).round();
-          final copy = _introDone ? 1.0 : _copy.value;
-          final button = _introDone ? 1.0 : _button.value;
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text.rich(
-                TextSpan(
-                  style: AppTypography.sans(
-                    23,
-                    weight: FontWeight.w800,
-                    height: 1.12,
+    final s = widget.style;
+    final a = widget.artwork;
+    return SizedBox(
+      height: _height,
+      width: double.infinity,
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final full = c.maxWidth;
+          return AnimatedBuilder(
+            animation: Listenable.merge([_film, _scan]),
+            builder: (context, _) {
+              final t = _film.value;
+              // Slide left, hold, fold back.
+              final move = Curves.easeInOutCubic.transform(
+                _span(t, .16, .28) - _span(t, .86, .96),
+              );
+              final width = full + (_smallWidth - full) * move;
+              // The story leaves quickly, just before the fold-back.
+              final storyOut = 1 - _span(t, .80, .85);
+
+              Widget line(int i, Widget child) {
+                final p = Curves.easeOutCubic.transform(
+                  _span(t, .24 + i * .035, .33 + i * .035),
+                );
+                final v = (p * storyOut).clamp(0.0, 1.0);
+                return Opacity(
+                  opacity: v,
+                  child: Transform.translate(
+                    offset: Offset(18 * (1 - p), 0),
+                    child: child,
                   ),
-                  children: [_headlineSpan(typed)],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Opacity(
-                opacity: copy.clamp(0.0, 1.0),
-                child: Transform.translate(
-                  offset: Offset(0, 8 * (1 - copy)),
-                  child: Text(
-                    'Point, scan and discover the hidden story behind the '
-                    'artwork.',
-                    style: AppTypography.sans(
-                      11.5,
-                      height: 1.4,
-                    ).copyWith(color: AppColors.ivory.withValues(alpha: .82)),
+                );
+              }
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // The story, to the right of the painting.
+                  Positioned(
+                    left: _smallWidth + 16,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        line(
+                          0,
+                          Text(
+                            a.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.serif(
+                              20,
+                              weight: FontWeight.w700,
+                              height: 1.1,
+                            ).copyWith(color: s.bannerText),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        line(
+                          1,
+                          Text(
+                            a.artist,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.sans(
+                              12.5,
+                              weight: FontWeight.w600,
+                            ).copyWith(color: s.bannerAccentSoft),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        line(
+                          2,
+                          Text(
+                            '${a.year} · ${a.movement}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.sans(
+                              11.5,
+                              weight: FontWeight.w500,
+                            ).copyWith(color: s.bannerBody(.78)),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        line(
+                          3,
+                          Text(
+                            '${a.museum}, ${a.city}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.sans(
+                              11.5,
+                              weight: FontWeight.w500,
+                              height: 1.25,
+                            ).copyWith(color: s.bannerBody(.6)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Opacity(
-                opacity: button.clamp(0.0, 1.0),
-                child: Transform.translate(
-                  offset: Offset(0, 10 * (1 - button)),
-                  child: Transform.scale(
-                    scale: _introDone ? _nudge : .94 + .06 * button,
-                    alignment: Alignment.centerLeft,
-                    child: const _PillButton(),
+                  // The painting and its scan frame.
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    width: width,
+                    height: _height,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Padding(
+                            padding: const EdgeInsets.all(3),
+                            child: Opacity(
+                              opacity: s.bannerImageOpacity,
+                              child: Hero(
+                                tag: 'scan-viewfinder-hero',
+                                createRectTween: (b, e) =>
+                                    AppMotion.rectTween(b, e),
+                                flightShuttleBuilder:
+                                    (ctx, animation, direction, from, to) {
+                                      return AppMotion.heroShuttle(
+                                        animation: animation,
+                                        flightDirection: direction,
+                                        fromHeroContext: from,
+                                        toHeroContext: to,
+                                        startRadius: BorderRadius.circular(6),
+                                        endRadius: BorderRadius.zero,
+                                      );
+                                    },
+                                // Decoded once at full size and scaled by the strip, so the
+                                // picture never reloads while it slides.
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: FittedBox(
+                                    fit: BoxFit.cover,
+                                    alignment: a.heroFocus,
+                                    child: SizedBox(
+                                      width: full - 6,
+                                      height: _height - 6,
+                                      child: ArtImage(
+                                        a.image,
+                                        alignment: a.heroFocus,
+                                        semanticLabel:
+                                            'Starry Night, sample scan',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: CornerBrackets(
+                            color: s.bannerAccent,
+                            size: 18,
+                            stroke: 2,
+                            radius: 6,
+                          ),
+                        ),
+                        _ScanLine(t: _scan.value, frameHeight: _height),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           );
         },
       ),
@@ -387,41 +406,143 @@ class _BannerCopyState extends State<_BannerCopy>
   }
 }
 
-class _PillButton extends StatelessWidget {
-  const _PillButton();
+/// The light bar that scans down the frame, top to bottom.
+class _ScanLine extends StatelessWidget {
+  const _ScanLine({required this.t, required this.frameHeight});
 
-  static const _ink = AppColors.night;
+  final double t;
+  final double frameHeight;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppColors.gold,
-        borderRadius: BorderRadius.circular(20),
+    // 8% → 88% of the frame's height, fading in over the first tenth and out
+    // over the last, on an ease-in-out.
+    final eased = const Cubic(.45, 0, .55, 1).transform(t);
+    final top = frameHeight * (.08 + .80 * eased);
+    final opacity = t < .1 ? t / .1 : (t > .9 ? (1 - t) / .1 : 1.0);
+    return Positioned(
+      left: 4,
+      right: 4,
+      top: top,
+      child: Opacity(
+        opacity: opacity.clamp(0.0, 1.0),
+        child: Container(
+          height: 2,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            gradient: const LinearGradient(
+              colors: [Color(0x00E2C27F), Color(0xFFF0D9A6), Color(0x00E2C27F)],
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x99E2C27F),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const ArtIcon(ArtIcons.camera, size: 16, color: _ink),
-          const SizedBox(width: 8),
-          Text(
-            'Scan a Painting',
+    );
+  }
+}
+
+class _Copy extends StatelessWidget {
+  const _Copy({required this.style});
+
+  final HomeStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = style;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 215),
+          child: Text.rich(
+            TextSpan(
+              style: AppTypography.serif(
+                32,
+                weight: FontWeight.w700,
+                height: 1.04,
+              ).copyWith(color: s.bannerText),
+              children: [
+                const TextSpan(text: 'Every Painting Has a '),
+                TextSpan(
+                  text: 'Story',
+                  style: TextStyle(color: s.bannerAccentSoft),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 9),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 240),
+          child: Text(
+            'Scan a masterpiece and uncover the story behind every brushstroke.',
             style: AppTypography.sans(
-              13.5,
-              weight: FontWeight.w700,
-            ).copyWith(color: _ink),
+              13,
+              weight: FontWeight.w500,
+              height: 1.45,
+            ).copyWith(color: s.bannerBody(.82)),
           ),
-          const SizedBox(width: 10),
-          const ArtIcon(
-            ArtIcons.arrowRight,
-            size: 15,
-            color: _ink,
-            strokeWidth: 1.9,
+        ),
+        const SizedBox(height: 15),
+        Container(
+          height: 48,
+          padding: const EdgeInsets.only(left: 18, right: 8),
+          decoration: BoxDecoration(
+            color: s.bannerBtnBg,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: s.bannerBtnBg.withValues(alpha: .4),
+                offset: const Offset(0, 10),
+                blurRadius: 22,
+                spreadRadius: -10,
+              ),
+            ],
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ArtIcon(
+                ArtIcons.camera,
+                size: 18,
+                color: s.bannerBtnInk,
+                strokeWidth: 1.9,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Scan a Painting',
+                style: AppTypography.sans(
+                  14.5,
+                  weight: FontWeight.w700,
+                ).copyWith(color: s.bannerBtnInk),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: s.bannerBtnDisc,
+                  shape: BoxShape.circle,
+                ),
+                child: ArtIcon(
+                  ArtIcons.arrowRight,
+                  size: 16,
+                  color: s.bannerBtnArrow,
+                  strokeWidth: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

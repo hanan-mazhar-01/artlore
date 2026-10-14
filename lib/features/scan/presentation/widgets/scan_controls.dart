@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/media/art_image_source.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/art_image.dart';
 import '../../../../core/widgets/icons/art_icon.dart';
-import '../../../../core/widgets/icons/scan_art_icon.dart';
 import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/round_buttons.dart';
 import '../../../../core/widgets/tappable.dart';
@@ -167,7 +167,12 @@ class ScanControls extends StatelessWidget {
                           color: Color(0xFFFFFFFF),
                         ),
                       )
-                    : const ScanArtIcon(size: 42),
+                    : const ArtIcon(
+                        ArtIcons.camera,
+                        size: 30,
+                        color: AppColors.night,
+                        strokeWidth: 1.9,
+                      ),
               ),
             ),
           ),
