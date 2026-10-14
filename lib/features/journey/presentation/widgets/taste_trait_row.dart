@@ -34,13 +34,16 @@ class TasteTraitRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Flexible(
-                  child: Text(trait.label, style: AppTypography.serif(24)),
+                  child: Text(
+                    trait.label,
+                    style: AppTypography.sans(16, weight: FontWeight.w500),
+                  ),
                 ),
                 Text(
                   '${trait.value}%',
-                  style: AppTypography.serif(
-                    26,
-                    italic: true,
+                  style: AppTypography.sans(
+                    16,
+                    weight: FontWeight.w500,
                   ).copyWith(color: color),
                 ),
               ],

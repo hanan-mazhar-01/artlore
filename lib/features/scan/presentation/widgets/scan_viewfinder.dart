@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
 
@@ -30,6 +28,8 @@ class ScanViewfinder extends StatelessWidget {
   final double zoom;
   final CameraController? cameraController;
 
+  static const _radius = 28.0;
+
   static const _ready = Rect.fromLTWH(32, 68, 326, 306);
   static const _locked = Rect.fromLTWH(38, 74, 314, 294);
 
@@ -42,7 +42,13 @@ class ScanViewfinder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final frameColor = (scanning || detected) ? p.accent : p.line(.7);
+    final frameColor = (scanning || detected)
+        ? p.accent
+        // White reads on the dark scanner; on the light theme it would vanish
+        // into the backdrop, so the brown accent takes its place.
+        : (context.isDark
+              ? const Color(0xFFFFFFFF).withValues(alpha: .9)
+              : p.accentAlpha(.9));
     final headerText = scanning
         ? 'Scanning artwork…'
         : detected
@@ -66,10 +72,7 @@ class ScanViewfinder extends StatelessWidget {
             child: Column(
               key: ValueKey('$detected-$scanning'),
               children: [
-                Text(
-                  headerText,
-                  style: AppTypography.serif(26, italic: true),
-                ),
+                Text(headerText, style: AppTypography.serif(26, italic: true)),
                 const SizedBox(height: 6),
                 Text(
                   subtitleText,
@@ -88,7 +91,7 @@ class ScanViewfinder extends StatelessWidget {
             children: [
               Positioned.fill(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(_radius),
                   child: _WallPainting(
                     painting: painting,
                     cameraController: cameraController,
@@ -97,21 +100,50 @@ class ScanViewfinder extends StatelessWidget {
                   ),
                 ),
               ),
+              // A fine white rounded edge all the way round the live view.
               Positioned.fill(
-                child: TweenAnimationBuilder<Color?>(
-                  tween: ColorTween(end: frameColor),
-                  duration: AppMotion.medium,
-                  builder: (context, c, _) => CornerBrackets(
-                    color: c!,
-                    radius: 12,
-                    stroke: 2.2,
-                    size: 32,
+                child: IgnorePointer(
+                  child: TweenAnimationBuilder<Color?>(
+                    tween: ColorTween(end: frameColor),
+                    duration: AppMotion.medium,
+                    builder: (context, c, _) => DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(_radius),
+                        border: Border.all(color: c!, width: 1.8),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Scan corners, set in from the frame edge so the live view
+              // shows around them.
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TweenAnimationBuilder<Color?>(
+                    tween: ColorTween(
+                      end: (scanning || detected)
+                          ? p.accent
+                          : const Color(0xFFFFFFFF),
+                    ),
+                    duration: AppMotion.medium,
+                    builder: (context, c, _) => CornerBrackets(
+                      color: c!,
+                      radius: 14,
+                      stroke: 2.6,
+                      size: 30,
+                    ),
                   ),
                 ),
               ),
               if (scanning)
-                const Positioned.fill(
-                  child: SweepLine(period: Duration(milliseconds: 1000)),
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(_radius),
+                    child: const SweepLine(
+                      period: Duration(milliseconds: 1000),
+                    ),
+                  ),
                 ),
               if (scanning)
                 Positioned.fill(
@@ -122,7 +154,7 @@ class ScanViewfinder extends StatelessWidget {
                     builder: (context, opacity, _) => IgnorePointer(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(_radius),
                           color: AppColors.cameraWarm.withValues(
                             alpha: opacity,
                           ),
@@ -166,35 +198,11 @@ class _WallPainting extends StatelessWidget {
       ),
     );
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween(end: snapped ? 1 : 0),
-      duration: const Duration(milliseconds: 450),
-      curve: Curves.easeOutCubic,
-      child: image,
-      builder: (context, t, child) {
-        final tilt = 1 - t;
-        // The real camera already zooms via setZoomLevel(), and its preview
-        // texture reflects that — so only simulate zoom visually here when
-        // there's no live camera (the static fallback painting). Otherwise
-        // this would double-apply zoom: once for real, once cosmetically,
-        // making the frame look more zoomed in than what actually gets
-        // captured.
-        final visualZoom = cameraController == null ? zoom : 1.0;
-        return Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 1 / 900)
-            ..rotateY(-7 * math.pi / 180 * tilt)
-            ..rotateZ(-1.5 * math.pi / 180 * tilt)
-            ..scaleByDouble(
-              (1.0 + .04 * t) * visualZoom,
-              (1.0 + .04 * t) * visualZoom,
-              1,
-              1,
-            ),
-          child: child,
-        );
-      },
-    );
+    // The live view is shown straight — no tilt, skew or scale. The real
+    // camera already zooms via setZoomLevel(), so only simulate zoom here when
+    // there's no live camera (the static fallback painting).
+    final visualZoom = cameraController == null ? zoom : 1.0;
+    if (visualZoom == 1.0) return image;
+    return Transform.scale(scale: visualZoom, child: image);
   }
 }

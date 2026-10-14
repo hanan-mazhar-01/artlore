@@ -7,6 +7,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/art_image.dart';
 import '../../../../core/widgets/icons/art_icon.dart';
+import '../../../../core/widgets/icons/scan_art_icon.dart';
 import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/round_buttons.dart';
 import '../../../../core/widgets/tappable.dart';
@@ -154,24 +155,19 @@ class ScanControls extends StatelessWidget {
                 height: 64,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: p.inverse,
+                  color: p.accent,
                   shape: BoxShape.circle,
                 ),
                 child: busy
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.2,
-                          color: p.onInverse,
+                          color: Color(0xFFFFFFFF),
                         ),
                       )
-                    : ArtIcon(
-                        ArtIcons.scan,
-                        size: 26,
-                        color: p.onInverse,
-                        strokeWidth: 1.5,
-                      ),
+                    : const ScanArtIcon(size: 42),
               ),
             ),
           ),

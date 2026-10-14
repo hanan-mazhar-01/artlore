@@ -57,7 +57,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     final premium = ref.read(premiumProvider.notifier);
     final plan = plans.isEmpty ? null : plans[_plan.clamp(0, plans.length - 1)];
     final wanderer = mockCatalog[ArtworkIds.wanderer]!;
-    final note = AppTypography.metadata.copyWith(color: p.muted);
+    final note = AppTypography.sans(13, height: 1.35).copyWith(color: p.muted);
     return ArtScaffold(
       forceLightStatusBar: true,
       body: LayoutBuilder(
@@ -156,7 +156,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                             ),
                             TextAction(
                               label: 'Restore',
-                              fontSize: 11,
+                              fontSize: 13,
                               onTap: _busy
                                   ? null
                                   : () => _run(
@@ -172,7 +172,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                           children: [
                             TextAction(
                               label: 'Terms of Use',
-                              fontSize: 11,
+                              fontSize: 13,
                               onTap: () => _openUrl(
                                 ref
                                     .read(remoteConfigServiceProvider)
@@ -186,7 +186,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                             ),
                             TextAction(
                               label: 'Privacy Policy',
-                              fontSize: 11,
+                              fontSize: 13,
                               onTap: () => _openUrl(
                                 ref
                                     .read(remoteConfigServiceProvider)

@@ -60,6 +60,11 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
   ) =>
       firestore.collection('deviceTrials').doc(deviceId);
 
+  /// One free trial per device. Ignored in debug builds so test accounts on
+  /// the same phone each get a fresh allowance.
+  static bool _isDeviceBlocked(Map<String, dynamic>? data) =>
+      !kDebugMode && (data?['deviceBlocked'] as bool? ?? false);
+
   PremiumStatus _statusFromData(
     Map<String, dynamic>? data, {
     required bool isAnonymous,
@@ -69,7 +74,7 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
   }) {
     final scansUsed = (data?['scansUsed'] as num?)?.toInt() ?? 0;
     final accountBonusGranted = data?['accountBonusGranted'] as bool? ?? false;
-    final deviceBlocked = data?['deviceBlocked'] as bool? ?? false;
+    final deviceBlocked = _isDeviceBlocked(data);
     final firestorePremium = data?['isPremium'] as bool? ?? false;
     final firestoreTrial = data?['isTrial'] as bool? ?? false;
 
@@ -374,7 +379,7 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
       if (data == null) return;
       final isPremium = data['isPremium'] as bool? ?? false;
       if (isPremium) return;
-      final deviceBlocked = data['deviceBlocked'] as bool? ?? false;
+      final deviceBlocked = _isDeviceBlocked(data);
       final accountBonusGranted =
           data['accountBonusGranted'] as bool? ?? false;
       final allowance = deviceBlocked

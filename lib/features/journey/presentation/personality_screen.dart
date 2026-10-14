@@ -106,9 +106,9 @@ class _PersonalityBody extends StatelessWidget {
                           lead: journey.personaLead,
                           emphasis: journey.personaEmphasis,
                           style: AppTypography.serif(
-                            46,
-                            weight: FontWeight.w500,
-                            height: .98,
+                            40,
+                            weight: FontWeight.w700,
+                            height: 1.1,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -134,7 +134,11 @@ class _PersonalityBody extends StatelessWidget {
                           children: [
                             Text(
                               'Your aesthetic fingerprint is waiting.',
-                              style: AppTypography.serif(22, height: 1.2),
+                              style: AppTypography.sans(
+                                16,
+                                weight: FontWeight.w500,
+                                height: 1.3,
+                              ),
                             ),
                             const SizedBox(height: 10),
                             Text(
@@ -179,7 +183,13 @@ class _PersonalityBody extends StatelessWidget {
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(label, style: AppTypography.serif(18)),
+                                      Text(
+                                        label,
+                                        style: AppTypography.sans(
+                                          15,
+                                          weight: FontWeight.w500,
+                                        ),
+                                      ),
                                       const SizedBox(height: 2),
                                       Text(
                                         desc,
@@ -191,7 +201,7 @@ class _PersonalityBody extends StatelessWidget {
                                   ),
                                   Text(
                                     '—',
-                                    style: AppTypography.serif(20).copyWith(
+                                    style: AppTypography.sans(16).copyWith(
                                       color: p.muted.withValues(alpha: 0.5),
                                     ),
                                   ),
@@ -261,7 +271,10 @@ class _PersonalityBody extends StatelessWidget {
                       ),
                       child: Text(
                         journey.summary,
-                        style: AppTypography.serif(24, italic: true, height: 1.3),
+                        style: AppTypography.sans(
+                          16,
+                          height: 1.6,
+                        ).copyWith(color: p.ink.withValues(alpha: .88)),
                       ),
                     ),
                     if (journey.painters.isNotEmpty) ...[
@@ -350,7 +363,7 @@ class _StatBadge extends StatelessWidget {
       children: [
         Text(
           '$value',
-          style: AppTypography.serif(24, weight: FontWeight.w600).copyWith(
+          style: AppTypography.sans(20, weight: FontWeight.w500).copyWith(
             color: p.ink,
           ),
         ),
@@ -402,7 +415,7 @@ class _Painter extends StatelessWidget {
           painter.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.sans(13, weight: FontWeight.w600).copyWith(
+          style: AppTypography.sans(13, weight: FontWeight.w500).copyWith(
             color: p.ink,
           ),
         ),

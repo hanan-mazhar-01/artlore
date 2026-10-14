@@ -35,9 +35,9 @@ class LookCloserIntro extends StatelessWidget {
             lead: '${numberWord(count, capitalize: true)} details',
             emphasis: 'worth a second look.',
             style: AppTypography.serif(
-              34,
-              weight: FontWeight.w500,
-              height: 1.02,
+              28,
+              weight: FontWeight.w700,
+              height: 1.1,
             ),
           ),
           const SizedBox(height: 12),
@@ -79,6 +79,8 @@ class DetailSheet extends StatelessWidget {
   final VoidCallback onNext;
 
   String _two(int n) => n.toString().padLeft(2, '0');
+
+  bool get isLast => index >= total - 1;
 
   @override
   Widget build(BuildContext context) {
@@ -135,17 +137,17 @@ class DetailSheet extends StatelessWidget {
                 Text(
                   detail.title.toUpperCase(),
                   style: AppTypography.serif(
-                    30,
-                    weight: FontWeight.w500,
-                    tracking: .06,
+                    22,
+                    weight: FontWeight.w700,
+                    tracking: .04,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   detail.description,
-                  style: AppTypography.serif(
-                    19,
-                    height: 1.4,
+                  style: AppTypography.sans(
+                    15,
+                    height: 1.55,
                   ).copyWith(color: p.ink.withValues(alpha: .88)),
                 ),
               ],
@@ -160,7 +162,10 @@ class DetailSheet extends StatelessWidget {
                 onTap: onPrevious,
                 padding: const EdgeInsets.symmetric(vertical: 8),
               ),
-              ArrowLink(label: 'Next detail', onTap: onNext),
+              ArrowLink(
+                label: isLast ? 'Finished' : 'Next detail',
+                onTap: isLast ? onClose : onNext,
+              ),
             ],
           ),
         ],

@@ -91,7 +91,6 @@ class EditorialHeading extends StatelessWidget {
               TextSpan(
                 text: breakLine ? '\n$em' : ' $em',
                 style: const TextStyle(
-                  fontStyle: FontStyle.italic,
                   fontWeight: FontWeight.w400,
                 ),
               ),

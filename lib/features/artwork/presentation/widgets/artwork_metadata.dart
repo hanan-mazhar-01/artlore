@@ -23,25 +23,31 @@ class ArtworkMetadata extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GoldLabel(kicker, tracking: .24, leadingRule: true),
-        const SizedBox(height: 12),
+        GoldLabel(
+          kicker,
+          size: 11,
+          tracking: .24,
+          weight: FontWeight.w600,
+          leadingRule: true,
+        ),
+        const SizedBox(height: 20),
         Semantics(
           header: true,
           child: Text(
             artwork.title,
             style: AppTypography.serif(
-              44,
-              weight: FontWeight.w500,
-              height: .98,
+              36,
+              weight: FontWeight.w700,
+              height: 1.15,
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         Text(
           artwork.artist,
           style: AppTypography.sans(15, weight: FontWeight.w500),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           '${artwork.year} · ${artwork.movement} · ${artwork.city}',
           style: AppTypography.caption.copyWith(color: p.muted),

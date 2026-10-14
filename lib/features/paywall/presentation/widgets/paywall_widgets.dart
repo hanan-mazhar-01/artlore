@@ -31,7 +31,7 @@ class PerksGrid extends StatelessWidget {
       children: [
         Container(width: 8, height: 1, color: p.accent),
         const SizedBox(width: 9),
-        Expanded(child: Text(text, style: AppTypography.sans(12, height: 1.3))),
+        Expanded(child: Text(text, style: AppTypography.sans(14, height: 1.3))),
       ],
     );
     final rows = <Widget>[];
@@ -118,7 +118,7 @@ class _PlanLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final small = AppTypography.metadata.copyWith(color: p.muted);
+    final small = AppTypography.sans(13, height: 1.35).copyWith(color: p.muted);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

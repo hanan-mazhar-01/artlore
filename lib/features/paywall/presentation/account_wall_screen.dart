@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,6 +12,7 @@ import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/editorial_text.dart';
 import '../../../core/widgets/icons/art_icon.dart';
 import '../../../core/widgets/icons/art_icons.dart';
+import '../../../core/widgets/icons/google_logo.dart';
 import '../../../core/widgets/round_buttons.dart';
 import '../../collections/presentation/collection_controller.dart';
 import '../../history/presentation/history_controller.dart';
@@ -37,7 +39,8 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
       _busy = true;
       _loadingMessage = 'Connecting to Google…';
     });
-    final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+    final wasGuest =
+        ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
     try {
       final cred = await ref.read(authServiceProvider).signInWithGoogle();
       if (cred == null) {
@@ -53,7 +56,9 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
         setState(() => _loadingMessage = 'Updating your account…');
       }
       if (wasGuest) {
-        await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+        await ref
+            .read(purchaseRepositoryProvider)
+            .grantAccountBonusIfEligible();
       }
       await ref.read(historyRepositoryProvider).clearLocalCache();
       await ref.read(collectionRepositoryProvider).clearLocalCache();
@@ -80,7 +85,8 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
       _busy = true;
       _loadingMessage = 'Connecting to Apple…';
     });
-    final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+    final wasGuest =
+        ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
     try {
       final cred = await ref.read(authServiceProvider).signInWithApple();
       if (cred == null) {
@@ -96,7 +102,9 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
         setState(() => _loadingMessage = 'Updating your account…');
       }
       if (wasGuest) {
-        await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+        await ref
+            .read(purchaseRepositoryProvider)
+            .grantAccountBonusIfEligible();
       }
       await ref.read(historyRepositoryProvider).clearLocalCache();
       await ref.read(collectionRepositoryProvider).clearLocalCache();
@@ -137,7 +145,9 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  OutlineIconButton(onTap: () => _busy ? null : context.pop(false)),
+                  OutlineIconButton(
+                    onTap: () => _busy ? null : context.pop(false),
+                  ),
                   const SizedBox(height: 28),
                   const GoldLabel('Free scans used', tracking: .28),
                   const SizedBox(height: 14),
@@ -157,7 +167,9 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
                     label: 'Continue with Google',
                     onTap: _busy ? null : _signInGoogle,
                     style: PillStyle.inverse,
-                    loading: _busy && _loadingMessage?.contains('Google') == true,
+                    leading: const GoogleLogo(),
+                    loading:
+                        _busy && _loadingMessage?.contains('Google') == true,
                   ),
                   if (defaultTargetPlatform == TargetPlatform.iOS) ...[
                     const SizedBox(height: 10),
@@ -166,7 +178,8 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
                       onTap: _busy ? null : _signInApple,
                       style: PillStyle.outline,
                       leading: ArtIcon(ArtIcons.apple, size: 16, color: p.ink),
-                      loading: _busy && _loadingMessage?.contains('Apple') == true,
+                      loading:
+                          _busy && _loadingMessage?.contains('Apple') == true,
                     ),
                   ],
                   const SizedBox(height: 10),
@@ -174,6 +187,7 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
                     label: 'Continue with email',
                     onTap: _busy ? null : _goToEmailAuth,
                     style: PillStyle.outline,
+                    leading: ArtIcon(ArtIcons.mail, size: 18, color: p.ink),
                     weight: FontWeight.w500,
                   ),
                 ],
@@ -183,10 +197,15 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
           if (_busy)
             Positioned.fill(
               child: Container(
-                color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.65),
+                color: (isDark ? Colors.black : Colors.white).withValues(
+                  alpha: 0.65,
+                ),
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 22,
+                    ),
                     decoration: BoxDecoration(
                       color: p.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -214,9 +233,10 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
                           const SizedBox(height: 16),
                           Text(
                             _loadingMessage!,
-                            style: AppTypography.sans(14, weight: FontWeight.w500).copyWith(
-                              color: p.ink,
-                            ),
+                            style: AppTypography.sans(
+                              14,
+                              weight: FontWeight.w500,
+                            ).copyWith(color: p.ink),
                           ),
                         ],
                       ],

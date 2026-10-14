@@ -50,9 +50,9 @@ class ProfileHeader extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.serif(
-                        28,
-                        weight: FontWeight.w500,
-                        height: 1,
+                        40,
+                        weight: FontWeight.w700,
+                        height: 1.1,
                       ),
                     ),
                   ),
@@ -78,7 +78,10 @@ class ProfileHeader extends StatelessWidget {
               if (subscriptionLabel != null) ...[
                 const SizedBox(height: 7),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 3.5,
+                  ),
                   decoration: BoxDecoration(
                     color: isPremium
                         ? p.accent.withValues(alpha: 0.12)
@@ -104,10 +107,11 @@ class ProfileHeader extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         subscriptionLabel!,
-                        style: AppTypography.sans(11, weight: FontWeight.w600).copyWith(
-                          color: isPremium ? p.accent : p.ink,
-                          letterSpacing: 0.2,
-                        ),
+                        style: AppTypography.sans(11, weight: FontWeight.w600)
+                            .copyWith(
+                              color: isPremium ? p.accent : p.ink,
+                              letterSpacing: 0.2,
+                            ),
                       ),
                     ],
                   ),
@@ -158,12 +162,17 @@ class ArtWorldStats extends StatelessWidget {
             children: [
               Text(
                 '$value',
-                style: AppTypography.serif(46, height: 1).copyWith(
-                  fontFeatures: const [
-                    FontFeature.liningFigures(),
-                    FontFeature.tabularFigures(),
-                  ],
-                ),
+                style:
+                    AppTypography.serif(
+                      46,
+                      weight: FontWeight.w700,
+                      height: 1,
+                    ).copyWith(
+                      fontFeatures: const [
+                        FontFeature.liningFigures(),
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -226,9 +235,7 @@ class ProfileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final titleColor = danger
-        ? p.danger
-        : (highlight ? p.accent : p.ink);
+    final titleColor = danger ? p.danger : (highlight ? p.accent : p.ink);
     return Tappable(
       onTap: onTap,
       semanticLabel: '$title. $subtitle',
@@ -245,13 +252,18 @@ class ProfileRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTypography.serif(23).copyWith(color: titleColor),
+                    style: AppTypography.sans(
+                      17,
+                      weight: FontWeight.w600,
+                    ).copyWith(color: titleColor),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: AppTypography.metadata.copyWith(
-                      color: danger ? p.danger.withValues(alpha: 0.75) : p.muted,
+                    style: AppTypography.sans(13, height: 1.35).copyWith(
+                      color: danger
+                          ? p.danger.withValues(alpha: 0.75)
+                          : p.muted,
                     ),
                   ),
                 ],

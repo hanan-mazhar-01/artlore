@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="none">
+  <defs><clipPath id="f"><rect x="220" y="222" width="215" height="213"/></clipPath></defs>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#052B77" stroke-width="62">
+      <path d="M195 122H160A40 40 0 0 0 120 162V195"/>
+      <path d="M445 122H480A40 40 0 0 1 520 162V195"/>
+      <path d="M120 445V485A40 40 0 0 0 160 525H195"/>
+      <path d="M520 445V485A40 40 0 0 1 480 525H445"/>
+    </g>
+    <g stroke="#FF6350" stroke-width="30">
+      <path d="M195 122H160A40 40 0 0 0 120 162V195"/>
+      <path d="M445 122H480A40 40 0 0 1 520 162V195"/>
+      <path d="M120 445V485A40 40 0 0 0 160 525H195"/>
+      <path d="M520 445V485A40 40 0 0 1 480 525H445"/>
+    </g>
+  </g>
+  <g clip-path="url(#f)">
+    <rect x="220" y="222" width="215" height="213" fill="#D4DCFA"/>
+    <path d="M322 222C298 285 305 370 388 435H435V222Z" fill="#FFFFFF"/>
+    <path d="M315 343L355 383L398 342L435 375V435H385C355 420 330 395 315 343Z" fill="#67CDD2"/>
+    <path d="M220 340L265 293L315 343C330 395 355 420 385 435H220Z" fill="#2BA3CC"/>
+    <circle cx="357" cy="281" r="22" fill="#FFCE55"/>
+  </g>
+  <rect x="210" y="212" width="235" height="233" rx="6" stroke="#052B77" stroke-width="20"/>
+</svg>

@@ -57,14 +57,10 @@ class _StoryBody extends StatefulWidget {
 class _StoryBodyState extends State<_StoryBody> {
   final _scroll = ScrollController();
   int _index = 0;
-  int _direction = 1;
 
   void _selectChapter(int newIndex) {
     if (newIndex == _index) return;
-    setState(() {
-      _direction = newIndex > _index ? 1 : -1;
-      _index = newIndex;
-    });
+    setState(() => _index = newIndex);
   }
 
   @override
@@ -154,10 +150,7 @@ class _StoryBodyState extends State<_StoryBody> {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0x66000000),
-                            Color(0x00000000),
-                          ],
+                          colors: [Color(0x66000000), Color(0x00000000)],
                         ),
                       ),
                     ),
@@ -251,35 +244,14 @@ class _StoryBodyState extends State<_StoryBody> {
                       onSelected: _selectChapter,
                     ),
 
-                    // Fully animated chapter content transition
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 380),
-                      switchInCurve: AppMotion.cardCurve,
-                      switchOutCurve: Curves.easeIn,
-                      transitionBuilder: (child, animation) {
-                        final inOffset = Tween<Offset>(
-                          begin: Offset(_direction * 0.12, 0),
-                          end: Offset.zero,
-                        ).animate(animation);
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: inOffset,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: KeyedSubtree(
-                        key: ValueKey<int>(_index),
-                        child: StoryChapterView(
-                          chapter: chapter,
-                          index: _index,
-                          total: chapters.length,
-                          next: next,
-                          onNext: () =>
-                              _selectChapter((_index + 1) % chapters.length),
-                        ),
-                      ),
+                    // Chapter content swaps instantly — no transition.
+                    StoryChapterView(
+                      chapter: chapter,
+                      index: _index,
+                      total: chapters.length,
+                      next: next,
+                      onNext: () =>
+                          _selectChapter((_index + 1) % chapters.length),
                     ),
                   ],
                 ),

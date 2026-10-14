@@ -174,7 +174,7 @@ class _ResultBody extends ConsumerWidget {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 60),
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 60),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

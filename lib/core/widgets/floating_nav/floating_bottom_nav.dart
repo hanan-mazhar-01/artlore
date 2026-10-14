@@ -85,6 +85,12 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
       child: Container(
         width: m.width,
         height: m.height,
+        // A fine glass edge, painted over the pill (not as a layout border)
+        // so it can't eat into the width the icon row was measured against.
+        foregroundDecoration: _GlassEdge(
+          dark: context.isDark,
+          lightColor: p.accentAlpha(.45),
+        ),
         decoration: BoxDecoration(
           color: p.navPill,
           borderRadius: BorderRadius.circular(m.height / 2),
@@ -181,6 +187,47 @@ class _NavIcon extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The pill's rim: a faint white on dark, and on light the app's own brown
+/// (the same accent the other bordered elements use).
+class _GlassEdge extends Decoration {
+  const _GlassEdge({required this.dark, required this.lightColor});
+
+  final bool dark;
+  final Color lightColor;
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) =>
+      _GlassEdgePainter(dark, lightColor);
+}
+
+class _GlassEdgePainter extends BoxPainter {
+  _GlassEdgePainter(this.dark, this.lightColor);
+
+  final bool dark;
+  final Color lightColor;
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final size = configuration.size;
+    if (size == null) return;
+    const width = 0.8;
+    final rrect = RRect.fromRectAndRadius(
+      (offset & size).deflate(width / 2),
+      Radius.circular(size.height / 2),
+    );
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = width
+        ..isAntiAlias = true
+        ..color = dark
+            ? const Color(0xFFFFFFFF).withValues(alpha: .16)
+            : lightColor,
     );
   }
 }

@@ -96,6 +96,21 @@ abstract final class ArtIcons {
     'M21 3v5h-5',
   ]);
 
+  static const camera = ArtIconData([
+    'M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z',
+    'M9 13a3 3 0 1 0 6 0a3 3 0 1 0 -6 0',
+  ]);
+
+  static const sparkle = ArtIconData(
+    [],
+    fills: ['M12 2l2.2 6.3L21 10.5l-6.3 2.2L12 20l-2.2-7.3L3 10.5l6.8-2.2z'],
+  );
+
+  static const mail = ArtIconData([
+    'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z',
+    'M3 7l9 6 9-6',
+  ]);
+
   static const apple = ArtIconData(
     [],
     viewBox: Size(17, 20),

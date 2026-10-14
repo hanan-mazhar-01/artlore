@@ -26,10 +26,17 @@ class ArtLoreApp extends ConsumerWidget {
       scrollBehavior: const ArtScrollBehavior(),
       builder: (context, child) {
         final media = MediaQuery.of(context);
+        // Layouts are drawn for a ~390pt-wide iPhone: narrower phones (SE,
+        // mini) scale type down a touch, and Dynamic Type is kept within a
+        // range the layouts hold at.
+        final widthFactor = (media.size.width / 390).clamp(.9, 1.0);
+        final system = media.textScaler
+            .clamp(minScaleFactor: .9, maxScaleFactor: 1.15)
+            .scale(100) /
+            100;
         return MediaQuery(
           data: media.copyWith(
-            // Editorial layouts stay composed up to a generous text size.
-            textScaler: media.textScaler.clamp(maxScaleFactor: 1.3),
+            textScaler: TextScaler.linear(system * widthFactor),
             disableAnimations: media.disableAnimations || reduceMotion,
           ),
           child: child!,

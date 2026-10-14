@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
 import '../../../../core/extensions/context_x.dart';
-import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/tappable.dart';
@@ -48,16 +47,13 @@ class DeepDiveTabBar extends StatelessWidget {
                 top: padding,
                 width: tabWidth,
                 height: 38,
-                duration: const Duration(milliseconds: 320),
-                curve: AppMotion.cardCurve,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
                 child: Container(
                   decoration: BoxDecoration(
                     color: p.background,
                     borderRadius: BorderRadius.circular(19),
-                    border: Border.all(
-                      color: p.accentAlpha(.45),
-                      width: 1.2,
-                    ),
+                    border: Border.all(color: p.accentAlpha(.45), width: 1.2),
                     boxShadow: [
                       BoxShadow(
                         color: p.shadow.withValues(alpha: p.shadow.a * .4),
@@ -123,10 +119,7 @@ class _DeepDiveTabItem extends StatelessWidget {
           style: AppTypography.sans(
             12,
             weight: selected ? FontWeight.w700 : FontWeight.w500,
-          ).copyWith(
-            color: selected ? p.ink : p.muted,
-            letterSpacing: 0.2,
-          ),
+          ).copyWith(color: selected ? p.ink : p.muted, letterSpacing: 0.2),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: FittedBox(
@@ -137,8 +130,9 @@ class _DeepDiveTabItem extends StatelessWidget {
                   Text(
                     numeral,
                     style: AppTypography.metadata.copyWith(
-                      color:
-                          selected ? p.accent : p.muted.withValues(alpha: .7),
+                      color: selected
+                          ? p.accent
+                          : p.muted.withValues(alpha: .7),
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                     ),

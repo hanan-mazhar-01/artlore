@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,6 +16,7 @@ import '../../../core/widgets/editorial_text.dart';
 import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/icons/art_icon.dart';
 import '../../../core/widgets/icons/art_icons.dart';
+import '../../../core/widgets/icons/google_logo.dart';
 import '../../artwork/data/mock_catalog.dart';
 import '../../collections/presentation/collection_controller.dart';
 import '../../history/presentation/history_controller.dart';
@@ -45,7 +47,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       _busy = true;
       _loadingMessage = 'Connecting to Google…';
     });
-    final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+    final wasGuest =
+        ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
     try {
       final cred = await ref.read(authServiceProvider).signInWithGoogle();
       if (cred == null) {
@@ -56,7 +59,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         setState(() => _loadingMessage = 'Preparing your gallery…');
       }
       if (wasGuest) {
-        await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+        await ref
+            .read(purchaseRepositoryProvider)
+            .grantAccountBonusIfEligible();
       }
     } catch (e) {
       debugPrint('WelcomeScreen signInGoogle error: $e');
@@ -80,7 +85,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       _busy = true;
       _loadingMessage = 'Connecting to Apple…';
     });
-    final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+    final wasGuest =
+        ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
     try {
       final cred = await ref.read(authServiceProvider).signInWithApple();
       if (cred == null) {
@@ -91,7 +97,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         setState(() => _loadingMessage = 'Preparing your gallery…');
       }
       if (wasGuest) {
-        await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+        await ref
+            .read(purchaseRepositoryProvider)
+            .grantAccountBonusIfEligible();
       }
     } catch (e) {
       debugPrint('WelcomeScreen signInApple error: $e');
@@ -204,10 +212,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
           if (_busy)
             Positioned.fill(
               child: Container(
-                color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.65),
+                color: (isDark ? Colors.black : Colors.white).withValues(
+                  alpha: 0.65,
+                ),
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 22,
+                    ),
                     decoration: BoxDecoration(
                       color: p.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -235,9 +248,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           const SizedBox(height: 16),
                           Text(
                             _loadingMessage!,
-                            style: AppTypography.sans(14, weight: FontWeight.w500).copyWith(
-                              color: p.ink,
-                            ),
+                            style: AppTypography.sans(
+                              14,
+                              weight: FontWeight.w500,
+                            ).copyWith(color: p.ink),
                           ),
                         ],
                       ],
@@ -306,13 +320,14 @@ class _WelcomeCopy extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'WELCOME TO ARTLORE',
-                    style: AppTypography.sans(
-                      11.5,
-                      weight: FontWeight.w700,
-                      tracking: .22,
-                    ).copyWith(
-                      color: isDark ? p.accent : const Color(0xFF674812),
-                    ),
+                    style:
+                        AppTypography.sans(
+                          11.5,
+                          weight: FontWeight.w700,
+                          tracking: .22,
+                        ).copyWith(
+                          color: isDark ? p.accent : const Color(0xFF674812),
+                        ),
                   ),
                 ],
               ),
@@ -338,6 +353,7 @@ class _WelcomeCopy extends StatelessWidget {
           label: 'Continue with Google',
           onTap: busy ? null : onGoogle,
           style: PillStyle.inverse,
+          leading: const GoogleLogo(),
         ),
         if (defaultTargetPlatform == TargetPlatform.iOS) ...[
           const SizedBox(height: 10),
@@ -353,6 +369,7 @@ class _WelcomeCopy extends StatelessWidget {
           label: 'Continue with email',
           onTap: busy ? null : onEmail,
           style: PillStyle.outline,
+          leading: ArtIcon(ArtIcons.mail, size: 18, color: p.ink),
           weight: FontWeight.w500,
         ),
         const SizedBox(height: 10),

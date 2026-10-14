@@ -22,8 +22,6 @@ import 'widgets/remove_artwork_sheet.dart';
 const _tabs = [
   'Favorites',
   'Galleries',
-  'Recently Viewed',
-  'Artists',
   'Museums',
 ];
 
@@ -236,33 +234,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
           child: CustomGalleriesView(startDelay: startDelay),
         ),
       ];
-    } else if (_tab == 2) {
-      final works = ref.watch(recentArtworksProvider);
-      final list = works.value;
-      if (list == null) return const [];
-      if (list.isEmpty) {
-        return const [
-          SliverToBoxAdapter(
-            child: CollectionEmpty(
-              lead: 'No recent',
-              emphasis: 'explorations yet.',
-              message:
-                  'Artworks you explore or scan will automatically appear here.',
-            ),
-          ),
-        ];
-      }
-      return [
-        CollectionMasonry(
-          key: ValueKey('$_tab-$_entranceEpoch'),
-          artworks: list,
-          rhythm: recentRhythm,
-          startDelay: startDelay,
-        ),
-      ];
     }
 
-    final grouping = CollectionGrouping.values[_tab - 3];
+    const grouping = CollectionGrouping.museums;
     final groups = ref.watch(collectionGroupsProvider(grouping)).value;
     if (groups == null) return const [];
     if (groups.isEmpty) {
