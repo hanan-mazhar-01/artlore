@@ -55,16 +55,12 @@ class TabShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomInset = context.bottomInset;
     final gap = bottomInset > 0 ? math.max(12.0, bottomInset - 6) : 16.0;
-    // Reserve room for the scan button + its gap so the pill shrinks to
-    // make space for it, rather than the pair crowding the screen edge.
-    // The scan button lives inside the capsule's extended right end; reserve
-    // just the width that extension adds.
-    final reserved = ScanFabDock.extraWidth(64);
-    final m = FloatingNavMetrics.forScreen(
+    // The nav after the mock-up: tabs and the scan button's end make one pill.
+    final m = FloatingNavMetrics.mock(
       MediaQuery.sizeOf(context).width,
       artNavItems.length,
-      reservedWidth: reserved,
     );
+    final extra = ScanFabDock.extraWidth(m.height);
     return ActiveTabScope(
       currentIndex: shell.currentIndex,
       child: Stack(
@@ -75,10 +71,9 @@ class TabShell extends StatelessWidget {
             right: 0,
             bottom: gap,
             child: Center(
-              // The pill plus the extension that holds the scan button, as one
-              // capsule: the dock starts at the pill's old cap centre.
+              // One pill: the tabs and, at its right end, the scan button.
               child: SizedBox(
-                width: m.width + ScanFabDock.extraWidth(m.height),
+                width: m.width + extra,
                 height: m.height,
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -88,9 +83,15 @@ class TabShell extends StatelessWidget {
                       selectedIndex: _selected,
                       onSelected: _onSelected,
                       metrics: m,
+                      extra: extra,
                     ),
                     Positioned(
-                      left: m.width - m.height / 2,
+                      // Centred on the pill's right cap.
+                      left:
+                          m.width +
+                          extra -
+                          m.height / 2 -
+                          ScanFabDock.ringWidth(m.height) / 2,
                       top: 0,
                       child: ScanFabDock(
                         pillHeight: m.height,

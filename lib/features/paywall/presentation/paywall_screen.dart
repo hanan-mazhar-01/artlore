@@ -1,10 +1,13 @@
+import '../../legal/open_legal.dart';
+
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../app/providers.dart';
 import '../../../core/extensions/context_x.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_typography.dart';
@@ -33,7 +36,31 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
   Future<void> _run(Future<bool> Function() action, String success) async {
     setState(() => _busy = true);
-    final ok = await action();
+    var ok = false;
+    String? failure;
+    try {
+      ok = await action();
+    } on PlatformException catch (e) {
+      // Backing out of Apple's purchase sheet is not an error: say nothing.
+      final code = PurchasesErrorHelper.getErrorCode(e);
+      if (code != PurchasesErrorCode.purchaseCancelledError) {
+        failure = code == PurchasesErrorCode.paymentPendingError
+            ? 'Your purchase is pending approval.'
+            : "The purchase couldn't be completed. Please try again.";
+      }
+      if (!mounted) return;
+      setState(() => _busy = false);
+      if (failure != null) ArtToast.show(context, failure);
+      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ArtToast.show(
+        context,
+        "Something went wrong. Please check your connection and try again.",
+      );
+      return;
+    }
     if (!mounted) return;
     setState(() => _busy = false);
     ArtToast.show(context, ok ? success : 'No previous purchase found');
@@ -132,27 +159,35 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                         PremiumButton(
                           label: isPremium
                               ? 'Manage Subscription'
-                              : (plan != null && plan.hasTrial && plan.trialDays > 0)
-                                  ? 'Begin ${plan.trialDays} days free'
-                                  : (plan != null
-                                      ? 'Subscribe (${plan.price}${plan.period})'
-                                      : 'Start Subscription'),
+                              : plan == null
+                              ? 'Try again'
+                              : (plan.hasTrial && plan.trialDays > 0)
+                              ? 'Begin ${plan.trialDays} days free'
+                              : 'Subscribe · ${plan.price}${plan.period}',
                           busy: _busy,
                           onTap: isPremium
-                              ? () => _openUrl('https://apps.apple.com/account/subscriptions')
+                              ? () => _openUrl(
+                                  'https://apps.apple.com/account/subscriptions',
+                                )
                               : (plan == null
-                                  ? () => context.go(AppRoutes.home)
-                                  : () => _run(
-                                      () => premium.purchase(plan.id),
-                                      'Welcome to ArtLore Premium',
-                                    )),
+                                    ? () => ref.invalidate(plansProvider)
+                                    : () => _run(
+                                        () => premium.purchase(plan.id),
+                                        'Welcome to ArtLore Premium',
+                                      )),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Flexible(
-                              child: Text(plan?.renewalNote ?? '', style: note),
+                              child: Text(
+                                plan?.renewalNote ??
+                                    (ref.watch(plansProvider).isLoading
+                                        ? 'Loading plans…'
+                                        : "Plans can't be loaded right now."),
+                                style: note,
+                              ),
                             ),
                             TextAction(
                               label: 'Restore',
@@ -167,31 +202,37 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                           ],
                         ),
                         const SizedBox(height: 10),
+                        // The standard auto-renewal terms, stated before the
+                        // purchase.
+                        Text(
+                          'Payment is charged to your Apple ID at confirmation '
+                          'of purchase. The subscription renews automatically '
+                          'unless it is cancelled at least 24 hours before the '
+                          'end of the current period. Any unused part of a free '
+                          'trial is forfeited when you subscribe. Manage or '
+                          'cancel anytime in your App Store account settings.',
+                          textAlign: TextAlign.center,
+                          style: note.copyWith(fontSize: 11, height: 1.4),
+                        ),
+                        const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             TextAction(
                               label: 'Terms of Use',
                               fontSize: 13,
-                              onTap: () => _openUrl(
-                                ref
-                                    .read(remoteConfigServiceProvider)
-                                    .termsOfServiceUrl,
-                              ),
+                              onTap: () => openLegal(context, privacy: false),
                             ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
                               child: Text('•', style: note),
                             ),
                             TextAction(
                               label: 'Privacy Policy',
                               fontSize: 13,
-                              onTap: () => _openUrl(
-                                ref
-                                    .read(remoteConfigServiceProvider)
-                                    .privacyPolicyUrl,
-                              ),
+                              onTap: () => openLegal(context, privacy: true),
                             ),
                           ],
                         ),

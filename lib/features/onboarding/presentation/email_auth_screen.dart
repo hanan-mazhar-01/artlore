@@ -57,7 +57,8 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
     final email = _email.text.trim();
     final password = _password.text;
     final name = _name.text.trim();
-    final wasGuest = ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
+    final wasGuest =
+        ref.read(authServiceProvider).currentUser?.isAnonymous ?? false;
     setState(() {
       _busy = true;
       _error = null;
@@ -67,7 +68,9 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
       if (_isRegistering) {
         await auth.registerWithEmail(email, password, name: name);
         if (wasGuest) {
-          await ref.read(purchaseRepositoryProvider).grantAccountBonusIfEligible();
+          await ref
+              .read(purchaseRepositoryProvider)
+              .grantAccountBonusIfEligible();
         }
       } else {
         await auth.signInWithEmail(email, password);
@@ -100,8 +103,9 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
   }
 
   String _messageFor(String code) => switch (code) {
-    'user-not-found' || 'invalid-credential' || 'wrong-password' =>
-      'Incorrect email or password.',
+    'user-not-found' ||
+    'invalid-credential' ||
+    'wrong-password' => 'Incorrect email or password.',
     'email-already-in-use' => 'An account already exists for that email.',
     'invalid-email' => 'That email address looks invalid.',
     'weak-password' => 'Choose a password with at least 6 characters.',
@@ -124,7 +128,12 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  OutlineIconButton(onTap: () => context.backOr(AppRoutes.welcome)),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlineIconButton(
+                      onTap: () => context.backOr(AppRoutes.welcome),
+                    ),
+                  ),
                   const SizedBox(height: 28),
                   EditorialHeading(
                     lead: _isRegistering ? 'Create your' : 'Welcome',
@@ -134,7 +143,7 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _isRegistering
-                        ? 'A free account keeps your collection with you.'
+                        ? 'An account keeps your collection with you.'
                         : 'Sign in with the email you registered with.',
                     style: AppTypography.bodySmall.copyWith(color: p.muted),
                   ),
@@ -162,7 +171,9 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
                     hint: 'Password',
                     obscureText: _obscure,
                     autofillHints: [
-                      _isRegistering ? AutofillHints.newPassword : AutofillHints.password,
+                      _isRegistering
+                          ? AutofillHints.newPassword
+                          : AutofillHints.password,
                     ],
                     onChanged: (_) => setState(() {}),
                     trailing: TextAction(
@@ -188,6 +199,7 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
                   const SizedBox(height: 14),
                   Center(
                     child: TextAction(
+                      bold: true,
                       label: _isRegistering
                           ? 'Already have an account? Sign in'
                           : 'New here? Create an account',
@@ -206,10 +218,15 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
           if (_busy)
             Positioned.fill(
               child: Container(
-                color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.65),
+                color: (isDark ? Colors.black : Colors.white).withValues(
+                  alpha: 0.65,
+                ),
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 22,
+                    ),
                     decoration: BoxDecoration(
                       color: p.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -235,10 +252,13 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          _isRegistering ? 'Creating your account…' : 'Signing you in…',
-                          style: AppTypography.sans(14, weight: FontWeight.w500).copyWith(
-                            color: p.ink,
-                          ),
+                          _isRegistering
+                              ? 'Creating your account…'
+                              : 'Signing you in…',
+                          style: AppTypography.sans(
+                            14,
+                            weight: FontWeight.w500,
+                          ).copyWith(color: p.ink),
                         ),
                       ],
                     ),

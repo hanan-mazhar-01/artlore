@@ -15,8 +15,8 @@ class FirestoreCollectionRepository implements CollectionRepository {
   FirestoreCollectionRepository({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-  })  : _customFirestore = firestore,
-        _customAuth = auth;
+  }) : _customFirestore = firestore,
+       _customAuth = auth;
 
   final FirebaseFirestore? _customFirestore;
   final FirebaseAuth? _customAuth;
@@ -87,17 +87,21 @@ class FirestoreCollectionRepository implements CollectionRepository {
           }
         }
       } catch (e) {
-        debugPrint('FirestoreCollectionRepository dynamic_artworks sync note: $e');
+        debugPrint(
+          'FirestoreCollectionRepository dynamic_artworks sync note: $e',
+        );
       }
 
       final galleriesSnap = await userDoc.collection('galleries').get();
       final savedSnap = await userDoc.collection('saved_works').get();
 
       final userGalleries = galleriesSnap.docs
-          .map((doc) => Gallery(
-                id: doc.id,
-                name: doc.data()['name'] as String? ?? 'Gallery',
-              ))
+          .map(
+            (doc) => Gallery(
+              id: doc.id,
+              name: doc.data()['name'] as String? ?? 'Gallery',
+            ),
+          )
           .where((g) => g.id != 'favorites')
           .toList();
 
@@ -106,17 +110,30 @@ class FirestoreCollectionRepository implements CollectionRepository {
         ...userGalleries,
       ];
 
-      final saved = savedSnap.docs
-          .map((doc) => SavedWork(
-                artworkId: doc.data()['artworkId'] as String? ?? doc.id,
-                galleryId: doc.data()['galleryId'] as String? ?? 'favorites',
-              ))
+      // Firestore hands documents back in id order, not save order — so sort
+      // by when each was saved, newest first, as the rest of the app expects
+      // ("the three newest" on Home reads the top of this list). A write that
+      // has not reached the server yet has no time: it is the newest of all.
+      DateTime savedAt(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final t = doc.data()['savedAt'];
+        if (t is Timestamp) return t.toDate();
+        return doc.metadata.hasPendingWrites
+            ? DateTime.now()
+            : DateTime.fromMillisecondsSinceEpoch(0);
+      }
+
+      final ordered = [...savedSnap.docs]
+        ..sort((a, b) => savedAt(b).compareTo(savedAt(a)));
+      final saved = ordered
+          .map(
+            (doc) => SavedWork(
+              artworkId: doc.data()['artworkId'] as String? ?? doc.id,
+              galleryId: doc.data()['galleryId'] as String? ?? 'favorites',
+            ),
+          )
           .toList();
 
-      return CollectionSnapshot(
-        galleries: allGalleries,
-        saved: saved,
-      );
+      return CollectionSnapshot(galleries: allGalleries, saved: saved);
     } catch (e) {
       debugPrint('FirestoreCollectionRepository load error: $e');
       return CollectionSnapshot(
@@ -143,10 +160,10 @@ class FirestoreCollectionRepository implements CollectionRepository {
           .collection('saved_works')
           .doc(artworkId)
           .set({
-        'artworkId': artworkId,
-        'galleryId': galleryId,
-        'savedAt': FieldValue.serverTimestamp(),
-      });
+            'artworkId': artworkId,
+            'galleryId': galleryId,
+            'savedAt': FieldValue.serverTimestamp(),
+          });
 
       // Persist the artwork metadata to the cloud if dynamic
       final art = getArtwork(artworkId);
@@ -159,21 +176,21 @@ class FirestoreCollectionRepository implements CollectionRepository {
             .collection('dynamic_artworks')
             .doc(art.id)
             .set({
-          'id': art.id,
-          'title': art.title,
-          'artist': art.artist,
-          'artistShort': art.artistShort,
-          'artistLife': art.artistLife,
-          'year': art.year,
-          'medium': art.medium,
-          'dimensions': art.dimensions,
-          'museum': art.museum,
-          'city': art.city,
-          'movement': art.movement,
-          'summary': art.summary,
-          'imageBase64': ?b64,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+              'id': art.id,
+              'title': art.title,
+              'artist': art.artist,
+              'artistShort': art.artistShort,
+              'artistLife': art.artistLife,
+              'year': art.year,
+              'medium': art.medium,
+              'dimensions': art.dimensions,
+              'museum': art.museum,
+              'city': art.city,
+              'movement': art.movement,
+              'summary': art.summary,
+              'imageBase64': ?b64,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
       }
     } catch (e) {
       debugPrint('FirestoreCollectionRepository save error: $e');
@@ -252,4 +269,3 @@ class FirestoreCollectionRepository implements CollectionRepository {
     _fallbackSaved.clear();
   }
 }
-

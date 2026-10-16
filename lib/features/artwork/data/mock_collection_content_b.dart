@@ -38,8 +38,7 @@ final wandererContent = ArtworkContent(
       opening:
           'Painted in Dresden around 1818, this canvas captured the post-Napoleonic '
           'era\'s spiritual yearning for boundless nature and inner solitude.',
-      quote:
-          'The painter should paint not only what he sees before him, but also what he sees within himself.',
+      quote: 'The painter should paint not only what he sees before him, but also what he sees within himself.',
       quoteSource: 'Caspar David Friedrich',
       closing:
           'Friedrich synthesized field sketches from different Bohemian summits '
@@ -52,8 +51,7 @@ final wandererContent = ArtworkContent(
       opening:
           'By concealing the protagonist\'s identity, Friedrich turns him into a universal '
           'stand-in for every human confronting existence.',
-      quote:
-          'Close your bodily eye, so that you may see your picture first with the spiritual eye.',
+      quote: 'Close your bodily eye, so that you may see your picture first with the spiritual eye.',
       quoteSource: 'Caspar David Friedrich',
       closing:
           'Dark, razor-sharp foreground boulders plunge into pale atmospheric haze, '
@@ -68,8 +66,7 @@ final wandererContent = ArtworkContent(
           'of the cosmos.',
       quote: 'A silent monument to the solitude of the human spirit.',
       quoteSource: 'Romanticism Essays',
-      closing:
-          'The fog represents the veil between earthly reality and spiritual mystery.',
+      closing: 'The fog represents the veil between earthly reality and spiritual mystery.',
     ),
   ],
   comparison: ArtworkComparison(
@@ -148,12 +145,10 @@ final milkmaidContent = ArtworkContent(
       label: 'Interpretation',
       focus: focal(.45, .35),
       heading: 'The sacrament of the present',
-      opening:
-          'Her absorption in her task is total. Nothing is wasted, nothing is rushed.',
+      opening: 'Her absorption in her task is total. Nothing is wasted, nothing is rushed.',
       quote: 'A moment of stillness so profound it feels sacred.',
       quoteSource: 'Delft Masterpieces Anthology',
-      closing:
-          'The Milkmaid celebrates the quiet nobility found in humble, honest daily routines.',
+      closing: 'The Milkmaid celebrates the quiet nobility found in humble, honest daily routines.',
     ),
   ],
   comparison: ArtworkComparison(
@@ -180,22 +175,19 @@ final sunriseContent = ArtworkContent(
       title: 'The Blood-Orange Sun',
       x: .56,
       y: .33,
-      description:
-          'A pure dab of unblended vermilion glowing against misty blue-grey sky.',
+      description: 'A pure dab of unblended vermilion glowing against misty blue-grey sky.',
     ),
     ArtworkDetail(
       title: 'The Ghostly Ships',
       x: .72,
       y: .48,
-      description:
-          'Masts, cranes, and smokestacks of industrial Le Havre emerge from the morning fog.',
+      description: 'Masts, cranes, and smokestacks of industrial Le Havre emerge from the morning fog.',
     ),
     ArtworkDetail(
       title: 'The Dark Rowboat',
       x: .45,
       y: .75,
-      description:
-          'Two swift strokes of dark pigment anchor the foreground in the rippling water.',
+      description: 'Two swift strokes of dark pigment anchor the foreground in the rippling water.',
     ),
   ],
   story: [
@@ -206,7 +198,8 @@ final sunriseContent = ArtworkContent(
       opening:
           'Painted in April 1872 from a hotel window in Le Havre, its title gave '
           'hostile critics the word "Impressionism".',
-      quote: 'A landscape is only an impression, instantaneous, hence the title.',
+      quote:
+          'A landscape is only an impression, instantaneous, hence the title.',
       quoteSource: 'Claude Monet, 1898',
       closing:
           'What began as a sneering insult in a satire magazine became the name '
@@ -234,8 +227,7 @@ final sunriseContent = ArtworkContent(
           'the Franco-Prussian war.',
       quote: 'The awakening of light over an industrial harbor.',
       quoteSource: 'Impressionist Studies',
-      closing:
-          'Monet captures not the harbor itself, but the vibration of light striking the retina.',
+      closing: 'Monet captures not the harbor itself, but the vibration of light striking the retina.',
     ),
   ],
   comparison: ArtworkComparison(
@@ -249,9 +241,9 @@ final sunriseContent = ArtworkContent(
         focusB: focal(.44, .3),
         textA: 'Gentle, horizontal water ripples and drifting morning smoke.',
         textB: 'Violent, swirling cosmic vortices turning night into a storm.',
-        verdict: 'Monet records atmospheric light. Van Gogh paints inner spirit.',
+        verdict:
+            'Monet records atmospheric light. Van Gogh paints inner spirit.',
       ),
     ],
   ),
 );
-

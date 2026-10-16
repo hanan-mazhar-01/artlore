@@ -32,4 +32,3 @@ abstract interface class HistoryRepository {
   Future<void> add(HistoryEntry entry);
   Future<void> clearLocalCache();
 }
-

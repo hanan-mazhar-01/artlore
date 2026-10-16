@@ -23,7 +23,6 @@ dependencies:
   http: ^1.6.0
   image: ^4.10.1
   image_picker: ^1.2.3
-  in_app_purchase: ^3.3.1
   photo_manager: ^3.12.0
   purchases_flutter: ^10.14.0
   share_plus: ^13.3.1
@@ -40,6 +39,7 @@ flutter:
 
   assets:
     - assets/artworks/
+    - assets/frame/
     - assets/animations/
 
   fonts:

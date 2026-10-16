@@ -8,7 +8,13 @@ import 'editorial_text.dart';
 
 /// Presents [child] in the design's warm bottom sheet, rising with the
 /// house sheet curve over a soft scrim.
-Future<T?> showArtSheet<T>(BuildContext context, {required Widget child}) {
+Future<T?> showArtSheet<T>(
+  BuildContext context, {
+  required Widget child,
+
+  /// Overrides the house rise, for a sheet that makes its own entrance.
+  AnimationStyle? animation,
+}) {
   final p = context.palette;
   return showModalBottomSheet<T>(
     context: context,
@@ -17,11 +23,13 @@ Future<T?> showArtSheet<T>(BuildContext context, {required Widget child}) {
     backgroundColor: Colors.transparent,
     barrierColor: p.scrim,
     elevation: 0,
-    sheetAnimationStyle: AnimationStyle(
-      duration: AppMotion.of(context, const Duration(milliseconds: 550)),
-      reverseDuration: const Duration(milliseconds: 300),
-      curve: AppMotion.sheet,
-    ),
+    sheetAnimationStyle:
+        animation ??
+        AnimationStyle(
+          duration: AppMotion.of(context, const Duration(milliseconds: 550)),
+          reverseDuration: const Duration(milliseconds: 300),
+          curve: AppMotion.sheet,
+        ),
     builder: (_) => ArtSheetSurface(child: child),
   );
 }

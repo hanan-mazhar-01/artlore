@@ -45,14 +45,18 @@ class ProfileHeader extends StatelessWidget {
               Row(
                 children: [
                   Flexible(
-                    child: Text(
-                      profile.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.serif(
-                        40,
-                        weight: FontWeight.w700,
-                        height: 1.1,
+                    // A long name shrinks to fit rather than being cut off.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        profile.name,
+                        maxLines: 1,
+                        style: AppTypography.serif(
+                          40,
+                          weight: FontWeight.w700,
+                          height: 1.1,
+                        ),
                       ),
                     ),
                   ),

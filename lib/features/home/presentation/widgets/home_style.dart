@@ -21,21 +21,23 @@ abstract final class HomeLight {
   static const mote = Color(0xFFE8C98A);
 }
 
-/// The dark-mode scheme of Home and Search. (Current: espresso with a rich
-/// brown banner, amber accents and cream buttons.)
+/// The dark-mode scheme of Home and Search: the app's own near-black ground
+/// and gold, with frosted-glass surfaces — translucent white over the ground
+/// and a fine white edge. Glass is painted with plain translucent fills (no
+/// live blur), so scrolling stays cheap.
 abstract final class HomeDark {
-  static const ground = Color(0xFF231710); // page
-  static const surface = Color(0xFF2E1F16); // search field, cards
-  static const tile = Color(0xFF3A281C); // placeholders, icon tiles
-  static const line = Color(0xFF4A3426); // hairlines
-  static const ink = Color(0xFFF5E9D8); // text, cream
-  static const muted = Color(0xFFB89F86); // secondary text
-  static const cream = Color(0xFFF3E4CF); // buttons, chips
-  static const espresso = Color(0xFF2B1810); // ink on cream
-  static const amber = Color(0xFFE9A84C); // "Story", labels, brackets
-  static const bannerBg = Color(0xFF583318);
-  static const bannerBorder = Color(0xFF6E4527);
-  static const mote = Color(0xFFF0C27A);
+  static const ground = Color(0xFF151515); // page (the app's night)
+  static const surface = Color(0x14FFFFFF); // glass cards, search field
+  static const tile = Color(0x1FFFFFFF); // placeholders, icon tiles
+  static const line = Color(0x1FFFFFFF); // glass edge
+  static const ink = Color(0xFFF5EFE5); // text, ivory
+  static const muted = Color(0xFFB8AEA0); // secondary text, sand
+  static const cream = Color(0xFFF5EFE5); // buttons, chips
+  static const espresso = Color(0xFF151515); // ink on cream
+  static const amber = Color(0xFFC9A45C); // "Story", labels, brackets
+  static const bannerBg = Color(0xFF1C1C1B);
+  static const bannerBorder = Color(0x29FFFFFF);
+  static const mote = Color(0xFFE0C17E);
 }
 
 /// Colours of the redesigned Home, resolved for the current theme. Dark keeps
@@ -81,7 +83,7 @@ class HomeStyle {
   Color get goldDeep => dark ? HomeDark.amber : HomeLight.accent;
 
   /// Pale tile behind icons / badges.
-  Color get goldTint => dark ? const Color(0x29E9A84C) : HomeLight.peach;
+  Color get goldTint => dark ? const Color(0x29C9A45C) : HomeLight.peach;
 
   /// Placeholder tile behind images.
   Color get tile => dark ? HomeDark.tile : HomeLight.peach;
@@ -103,8 +105,21 @@ class HomeStyle {
   Color get bannerMote => dark ? HomeDark.mote : HomeLight.mote;
   double get bannerImageOpacity => .45;
 
-  /// Optional banner gradient (none in the current schemes).
-  Gradient? get bannerGradient => null;
+  /// Dark: a sheen of frosted glass across the banner. Light: none.
+  ///
+  /// A gradient *replaces* the box colour, so the sheen is blended onto the
+  /// banner's own colour here — otherwise the banner would be see-through and
+  /// whatever lies behind it (the sheet's edge) would show.
+  Gradient? get bannerGradient => dark
+      ? LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(const Color(0x26FFFFFF), HomeDark.bannerBg),
+            Color.alphaBlend(const Color(0x08FFFFFF), HomeDark.bannerBg),
+          ],
+        )
+      : null;
 
   /// Soft glow behind the scan frame.
   Color get bannerGlow => const Color(0x33C9A45D);

@@ -97,9 +97,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     scrim: AppColors.scrimDark,
     glass: Color(0x73151515),
     shadow: Color(0x80000000),
-    navPill: Color(0xFF34241A),
-    navIcon: Color(0xFFB89F86),
-    navLamp: Color(0xFFF3E4CF),
+    navPill: Color(0xFF242321),
+    navIcon: Color(0xFFA89E91),
+    navLamp: Color(0xFFF5EFE5),
   );
 
   static const light = AppPalette(

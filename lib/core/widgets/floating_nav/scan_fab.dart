@@ -29,7 +29,7 @@ class ScanFab extends StatelessWidget {
         decoration: BoxDecoration(
           // Gold in dark mode; dark chocolate in light.
           color: context.isDark
-              ? const Color(0xFFF3E4CF)
+              ? const Color(0xFFF5EFE5)
               : const Color(0xFF2D2621),
           shape: BoxShape.circle,
           boxShadow: [
@@ -45,7 +45,7 @@ class ScanFab extends StatelessWidget {
           ArtIcons.camera,
           size: diameter * 0.46,
           color: context.isDark
-              ? const Color(0xFF2B1810)
+              ? const Color(0xFF151515)
               : const Color(0xFFF3EBDD),
           strokeWidth: 1.9,
         ),

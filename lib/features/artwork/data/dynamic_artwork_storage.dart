@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
@@ -40,7 +41,10 @@ abstract final class DynamicArtworkStorage {
             summary: map['summary'] as String? ?? '',
             image: b64 != null
                 ? ArtImageSource.memory(base64Decode(b64))
-                : const ArtImageSource.asset('assets/artworks/starry_night.jpg', aspect: 1.0),
+                : const ArtImageSource.asset(
+                    'assets/artworks/starry_night.jpg',
+                    aspect: 1.0,
+                  ),
           );
           registerDynamicArtwork(art, persist: false);
         }
@@ -53,15 +57,17 @@ abstract final class DynamicArtworkStorage {
           if (rawStory != null) {
             for (final ch in rawStory) {
               if (ch is Map<String, dynamic>) {
-                chapters.add(StoryChapter(
-                  label: ch['label'] as String? ?? 'Context',
-                  focus: Alignment.center,
-                  heading: ch['heading'] as String? ?? '',
-                  opening: ch['opening'] as String? ?? '',
-                  quote: ch['quote'] as String? ?? '',
-                  quoteSource: ch['quoteSource'] as String? ?? '',
-                  closing: ch['closing'] as String? ?? '',
-                ));
+                chapters.add(
+                  StoryChapter(
+                    label: ch['label'] as String? ?? 'Context',
+                    focus: Alignment.center,
+                    heading: ch['heading'] as String? ?? '',
+                    opening: ch['opening'] as String? ?? '',
+                    quote: ch['quote'] as String? ?? '',
+                    quoteSource: ch['quoteSource'] as String? ?? '',
+                    closing: ch['closing'] as String? ?? '',
+                  ),
+                );
               }
             }
           }
@@ -70,12 +76,14 @@ abstract final class DynamicArtworkStorage {
           if (rawDetails != null) {
             for (final d in rawDetails) {
               if (d is Map<String, dynamic>) {
-                details.add(ArtworkDetail(
-                  title: d['title'] as String? ?? 'Visual Focus',
-                  x: (d['x'] as num?)?.toDouble() ?? 0.5,
-                  y: (d['y'] as num?)?.toDouble() ?? 0.5,
-                  description: d['description'] as String? ?? '',
-                ));
+                details.add(
+                  ArtworkDetail(
+                    title: d['title'] as String? ?? 'Visual Focus',
+                    x: (d['x'] as num?)?.toDouble() ?? 0.5,
+                    y: (d['y'] as num?)?.toDouble() ?? 0.5,
+                    description: d['description'] as String? ?? '',
+                  ),
+                );
               }
             }
           }
@@ -140,7 +148,7 @@ abstract final class DynamicArtworkStorage {
               'quote': c.quote,
               'quoteSource': c.quoteSource,
               'closing': c.closing,
-            }
+            },
         ],
         'details': [
           for (final d in content.details)
@@ -149,7 +157,7 @@ abstract final class DynamicArtworkStorage {
               'x': d.x,
               'y': d.y,
               'description': d.description,
-            }
+            },
         ],
       };
       prefs.setString('artlore.dynamic_content.$id', jsonEncode(map));
@@ -213,4 +221,3 @@ abstract final class DynamicArtworkStorage {
     clearDynamicCatalog();
   }
 }
-

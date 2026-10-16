@@ -86,12 +86,7 @@ class CloserCollage extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: p.accent,
-              boxShadow: [
-                BoxShadow(
-                  color: p.accentAlpha(.4),
-                  blurRadius: 4,
-                ),
-              ],
+              boxShadow: [BoxShadow(color: p.accentAlpha(.4), blurRadius: 4)],
             ),
           ),
         ),

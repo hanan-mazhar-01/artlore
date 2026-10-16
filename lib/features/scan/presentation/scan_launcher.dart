@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/router/app_routes.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/widgets/art_sheet.dart';
 import '../../paywall/presentation/premium_controller.dart';
 import 'widgets/photo_picker_sheet.dart';
@@ -17,6 +18,15 @@ abstract final class ScanLauncher {
     final photoId = await showArtSheet<String>(
       context,
       child: const PhotoPickerSheet(),
+      // A long, decelerating rise: the sheet arrives fast, then settles while
+      // its contents come in one after another.
+      animation: AppMotion.reduced(context)
+          ? null
+          : const AnimationStyle(
+              duration: Duration(milliseconds: 900),
+              reverseDuration: Duration(milliseconds: 320),
+              curve: Cubic(.16, 1, .3, 1),
+            ),
     );
     if (photoId == null || !context.mounted) return;
     await _gateAndReadPhoto(context, ref, photoId);

@@ -233,4 +233,3 @@ void clearDynamicCatalog() {
   _dynamicCatalog.clear();
   _dynamicContent.clear();
 }
-

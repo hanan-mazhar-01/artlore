@@ -57,9 +57,13 @@ class NavSpotlightPainter extends CustomPainter {
     required this.motion,
     required this.metrics,
     required this.lamp,
-  }) : super(repaint: progress);
+    this.breath,
+  }) : super(repaint: breath == null ? progress : Listenable.merge([progress, breath]));
 
   final Animation<double> progress;
+
+  /// 0 → 1 → 0 on a slow loop: the beam dims a little and brightens again.
+  final Animation<double>? breath;
   final SpotlightMotion motion;
   final FloatingNavMetrics metrics;
   final Color lamp;
@@ -76,30 +80,42 @@ class NavSpotlightPainter extends CustomPainter {
       ),
     );
 
-    // The cone: a near-rectangular beam, fading as it falls.
+    // The cone. In the mock-up's nav it is a lamp's beam: narrow where it
+    // leaves the bar and opening out as it falls, fading away. (The earlier
+    // sizing keeps its near-rectangular beam.)
     final cx = m.centerOf(motion.position(t));
     final top = m.barHeight * .5;
-    final topHalf = m.barWidth * .465, bottomHalf = m.barWidth * .485;
+    final coneWidth = m.mock ? m.barWidth * 1.065 : m.barWidth;
+    final topHalf = m.mock ? coneWidth * .36 : m.barWidth * .465;
+    final bottomHalf = m.mock ? coneWidth * .5 : m.barWidth * .485;
     final beam = Path()
       ..moveTo(cx - topHalf, top)
       ..lineTo(cx + topHalf, top)
       ..lineTo(cx + bottomHalf, m.coneHeight)
       ..lineTo(cx - bottomHalf, m.coneHeight)
       ..close();
-    final strength = motion.beam(t);
+    final breathe = Curves.easeInOut.transform(breath?.value ?? 0);
+    final strength = motion.beam(t) *
+        (m.mock ? .8 - .35 * breathe : 1 - .4375 * breathe);
     canvas.drawPath(
       beam,
       Paint()
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, m.height * .02)
+        ..isAntiAlias = true
+        ..maskFilter = MaskFilter.blur(
+          BlurStyle.normal,
+          m.height * (m.mock ? .008 : .02),
+        )
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            lamp.withValues(alpha: .5 * strength),
-            lamp.withValues(alpha: .2 * strength),
-            lamp.withValues(alpha: 0),
-          ],
-          stops: const [0, .5, 1],
+          colors: m.mock
+              ? [lamp.withValues(alpha: .30 * strength), lamp.withValues(alpha: 0)]
+              : [
+                  lamp.withValues(alpha: .5 * strength),
+                  lamp.withValues(alpha: .2 * strength),
+                  lamp.withValues(alpha: 0),
+                ],
+          stops: m.mock ? const [0, 1] : const [0, .5, 1],
         ).createShader(Rect.fromLTRB(0, top, size.width, m.coneHeight)),
     );
 

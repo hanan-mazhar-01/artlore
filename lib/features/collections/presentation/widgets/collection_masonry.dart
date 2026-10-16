@@ -7,6 +7,7 @@ import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../artwork/domain/artwork.dart';
 import '../../../artwork/presentation/widgets/artwork_card.dart';
+import 'collection_landing.dart';
 
 /// Uniform card image height so all artworks share equal proportions.
 const double collectionCardHeight = 210.0;
@@ -101,7 +102,7 @@ class _CollectionMasonryState extends State<CollectionMasonry>
                 ),
               );
 
-              return AnimatedBuilder(
+              final reveal = AnimatedBuilder(
                 animation: _c,
                 builder: (context, child) => _CollectionCardReveal(
                   progress: _c.isCompleted ? 1.0 : cardAnim.value,
@@ -119,6 +120,15 @@ class _CollectionMasonryState extends State<CollectionMasonry>
                       : () => widget.onLongPress!(a),
                 ),
               );
+              // The first few cards are where covers flying in from Home land.
+              return i < CollectionLanding.keys.length
+                  ? CollectionLandingSlot(
+                      index: i,
+                      imageHeight: widget.cardHeight,
+                      radius: AppRadius.round,
+                      child: reveal,
+                    )
+                  : reveal;
             },
           ),
         ),
@@ -140,10 +150,7 @@ class _CollectionMasonryState extends State<CollectionMasonry>
 /// A sweeping cinematic card reveal inspired by the prototype motion:
 /// cards rise upwards from below, fade in smoothly, and expand into full size.
 class _CollectionCardReveal extends StatelessWidget {
-  const _CollectionCardReveal({
-    required this.progress,
-    required this.child,
-  });
+  const _CollectionCardReveal({required this.progress, required this.child});
 
   final double progress;
   final Widget child;
@@ -158,10 +165,7 @@ class _CollectionCardReveal extends StatelessWidget {
       opacity: Curves.easeOutCubic.transform(t),
       child: Transform.translate(
         offset: Offset(0, _slideDistance * (1.0 - t)),
-        child: Transform.scale(
-          scale: 0.90 + 0.10 * t,
-          child: child,
-        ),
+        child: Transform.scale(scale: 0.90 + 0.10 * t, child: child),
       ),
     );
   }

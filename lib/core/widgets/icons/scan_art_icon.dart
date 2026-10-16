@@ -136,14 +136,30 @@ class _ScanArtPainter extends CustomPainter {
     canvas.scale(size.width / 640, size.height / 640);
 
     final corners = [
-      _corner(const Offset(195, 122), const Offset(160, 122),
-          const Offset(120, 162), const Offset(120, 195)),
-      _corner(const Offset(445, 122), const Offset(480, 122),
-          const Offset(520, 162), const Offset(520, 195)),
-      _corner(const Offset(120, 445), const Offset(120, 485),
-          const Offset(160, 525), const Offset(195, 525)),
-      _corner(const Offset(520, 445), const Offset(520, 485),
-          const Offset(480, 525), const Offset(445, 525)),
+      _corner(
+        const Offset(195, 122),
+        const Offset(160, 122),
+        const Offset(120, 162),
+        const Offset(120, 195),
+      ),
+      _corner(
+        const Offset(445, 122),
+        const Offset(480, 122),
+        const Offset(520, 162),
+        const Offset(520, 195),
+      ),
+      _corner(
+        const Offset(120, 445),
+        const Offset(120, 485),
+        const Offset(160, 525),
+        const Offset(195, 525),
+      ),
+      _corner(
+        const Offset(520, 445),
+        const Offset(520, 485),
+        const Offset(480, 525),
+        const Offset(445, 525),
+      ),
     ];
     Paint stroke(Color c, double w) => Paint()
       ..color = c

@@ -3,44 +3,52 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Per-visitor data (profile, saved works, galleries, scan history).
-    // Anonymous (guest) sessions are authenticated users too, so this
-    // covers both guest and signed-in accounts transparently.
+    // Per-visitor data (profile, saved works, galleries, scan history,
+    // pictures of artworks the AI named). Guest (anonymous) sessions are
+    // authenticated users too, so this covers guests and accounts alike.
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
 
-      match /galleries/{galleryId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
-      }
-      match /saved_works/{workId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
-      }
-      match /history/{entryId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
-      }
-      match /dynamic_artworks/{artworkId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
-      }
       match /{allSubcollections=**} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
     }
 
-    // Free-scan allowance + premium status, one doc per Firebase UID.
-    // Only the server (via the client acting as the signed-in owner) ever
-    // writes this; it's deleted when the account is deleted.
+    // The free-scan counter, one document per Firebase UID. Premium is NOT
+    // stored here — it comes only from RevenueCat — so this document can hold
+    // nothing that unlocks anything: the owner may create it at zero, count
+    // scans up by one at a time, and flip the account bonus on once.
     match /entitlements/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(
+             ['scansUsed', 'accountBonusGranted', 'deviceBlocked', 'createdAt'])
+        && request.resource.data.scansUsed == 0
+        && request.resource.data.accountBonusGranted == false;
+
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['scansUsed', 'accountBonusGranted'])
+        && request.resource.data.scansUsed >= resource.data.scansUsed
+        && request.resource.data.scansUsed <= resource.data.scansUsed + 1
+        && (request.resource.data.accountBonusGranted == resource.data.accountBonusGranted
+            || (resource.data.accountBonusGranted == false
+                && request.resource.data.accountBonusGranted == true));
     }
 
-    // One-time per-device free-trial marker. Deliberately NOT keyed by uid
-    // and NEVER deleted on account deletion — it's what stops a visitor
-    // from deleting an account (or dropping back to guest mode) to re-claim
-    // free scans on the same device. Any authenticated session (including
-    // guest) may read or claim it, but it only ever flips false -> true in
-    // practice because the client never resets it.
+    // One-time per-device marker that stops free scans being claimed again by
+    // deleting and recreating accounts. It is never deleted with an account.
+    // A signed-in visitor may claim a device once, and may only ever keep it
+    // claimed; nobody can clear it.
     match /deviceTrials/{deviceId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.trialConsumed == true;
+      allow update: if request.auth != null
+        && resource.data.trialConsumed == true
+        && request.resource.data.trialConsumed == true;
+      allow delete: if false;
     }
   }
 }

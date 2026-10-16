@@ -53,8 +53,9 @@ class _GalleryPickerState extends State<GalleryPicker> {
     final rule = BoxDecoration(
       border: Border(top: BorderSide(color: p.line(.1))),
     );
-    final customCount =
-        widget.galleries.where((g) => g.id != 'favorites').length;
+    final customCount = widget.galleries
+        .where((g) => g.id != 'favorites')
+        .length;
     final isLimitReached = customCount >= maxCustomGalleries;
 
     return Column(
@@ -123,9 +124,8 @@ class _GalleryPickerState extends State<GalleryPicker> {
                     isLimitReached
                         ? '+ New gallery (Limit reached $maxCustomGalleries/$maxCustomGalleries)'
                         : '+ New gallery',
-                    style: AppTypography.sans(14).copyWith(
-                      color: isLimitReached ? p.muted : p.accent,
-                    ),
+                    style: AppTypography.sans(14)
+                        .copyWith(color: isLimitReached ? p.muted : p.accent),
                   ),
                 ),
         ),

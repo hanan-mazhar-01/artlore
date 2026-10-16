@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ArtLore — Home redesign mock-up</title>
+<style>
+  /* Inter ships with the app; the mock-up uses the same file. */
+  @font-face {
+    font-family: "Inter";
+    src: url("../assets/fonts/Inter-Variable.ttf") format("truetype");
+    font-weight: 100 900;
+  }
+
+  /* ---------- The app's own palette (app_colors.dart / home_style.dart) ---------- */
+  .phone.dark {
+    --ground: #151515;
+    --sheet: #1b1b1a;
+    --surface: rgba(255,255,255,.075);
+    --surface-2: rgba(255,255,255,.12);
+    --line: rgba(255,255,255,.12);
+    --ink: #f5efe5;
+    --muted: #b8aea0;
+    --gold: #c9a45c;
+    --gold-soft: #e0c17e;
+    --banner: #1c1c1b;
+    --pill: #242321;
+    --pill-ink: #a89e91;
+    --lamp: #f5efe5;
+    --shadow: rgba(0,0,0,.55);
+    --btn: #f5efe5;
+    --btn-ink: #151515;
+    --scrim: rgba(10,10,9,.6);
+  }
+  .phone.light {
+    --ground: #f6f0e6;
+    --sheet: #fcf9f3;
+    --surface: #efe8db;
+    --surface-2: #e8dfcf;
+    --line: #e0d6c5;
+    --ink: #2b2420;
+    --muted: #857a6d;
+    --gold: #a9843a;
+    --gold-soft: #c9a45d;
+    --banner: #2d2621;
+    --pill: #efe7da;
+    --pill-ink: #857a6d;
+    --lamp: #2d2621;
+    --shadow: rgba(58,44,26,.22);
+    --btn: #2d2621;
+    --btn-ink: #f3ebdd;
+    --scrim: rgba(37,34,30,.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: #0c0c0b; }
+  body {
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #f5efe5;
+    min-height: 100vh;
+    padding: 56px 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Page ---------- */
+  .page { max-width: 1400px; margin: 0 auto; }
+  .page > .lede, .page > h1 { max-width: 1180px; }
+  .kicker { font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: #c9a45c; font-weight: 700; }
+  h1 { font-size: 40px; line-height: 1.08; margin: 12px 0 14px; letter-spacing: -.02em; font-weight: 700; }
+  .lede { max-width: 720px; color: #b8aea0; font-size: 16px; line-height: 1.6; }
+  .stage { display: flex; gap: 56px; justify-content: center; flex-wrap: wrap; margin: 56px 0 72px; }
+  .stage figure { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .stage figcaption { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #b8aea0; }
+
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .note { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 22px; padding: 22px 22px 24px; }
+  .note b { display: block; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #c9a45c; margin-bottom: 10px; }
+  .note h3 { font-size: 18px; margin-bottom: 8px; letter-spacing: -.01em; }
+  .note p { color: #b8aea0; font-size: 14px; line-height: 1.6; }
+  h2.section { font-size: 22px; margin: 0 0 20px; letter-spacing: -.01em; }
+
+  /* ---------- Phone ---------- */
+  .phone {
+    position: relative;
+    width: 390px; height: 844px;
+    border-radius: 54px;
+    background: var(--ground);
+    color: var(--ink);
+    border: 10px solid #2a2927;
+    box-shadow: 0 0 0 2px #0a0a09, 0 40px 80px rgba(0,0,0,.55);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .phone::before { /* dynamic island */
+    content: ""; position: absolute; z-index: 50; top: 10px; left: 50%; translate: -50% 0;
+    width: 108px; height: 31px; border-radius: 20px; background: #000;
+  }
+  .status {
+    position: absolute; z-index: 40; inset: 0 0 auto 0; height: 50px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 30px 0; font-size: 14px; font-weight: 700;
+    pointer-events: none;
+  }
+  .status i { display: inline-flex; gap: 5px; align-items: center; }
+  .status svg { width: 16px; height: 16px; fill: currentColor; }
+
+  .scroll {
+    position: absolute; inset: 0;
+    overflow-y: auto; overflow-x: hidden;
+    scrollbar-width: none;
+    padding-bottom: 150px;
+  }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* ---------- Header ---------- */
+  .head { padding: 60px 22px 0; display: flex; align-items: center; justify-content: space-between; }
+  .hello small { display: block; font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 6px; }
+  .hello b { font-size: 31px; letter-spacing: -.02em; font-weight: 700; line-height: 1.05; }
+  .head .tools { display: flex; align-items: center; gap: 10px; }
+  .round {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  .round svg { width: 19px; height: 19px; stroke: var(--ink); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .avatar { width: 46px; height: 46px; background: var(--surface); border: 1.5px solid var(--gold); color: var(--gold); font-weight: 700; font-size: 17px; }
+
+  /* ---------- Scan stage (hero) ---------- */
+  .scanstage { margin: 22px 22px 0; border-radius: 32px; position: relative; overflow: hidden; background: var(--banner); border: 1px solid var(--line); box-shadow: 0 26px 40px -24px var(--shadow); }
+  .scanstage::before { /* a sheen, like frosted glass */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 55%);
+  }
+  .viewfinder { position: relative; margin: 14px 14px 0; height: 214px; border-radius: 22px; overflow: hidden; }
+  .viewfinder img { width: 100%; height: 100%; object-fit: cover; object-position: 38% 40%; opacity: .62; display: block; transform: scale(1.04); animation: drift 14s ease-in-out infinite alternate; }
+  @keyframes drift { to { transform: scale(1.12) translate(-10px, -4px); } }
+  .viewfinder .vf-vignette { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.55)); }
+  .corner { position: absolute; width: 26px; height: 26px; border: 0 solid var(--gold-soft); }
+  .corner.tl { top: 10px; left: 10px; border-top-width: 2.5px; border-left-width: 2.5px; border-top-left-radius: 9px; }
+  .corner.tr { top: 10px; right: 10px; border-top-width: 2.5px; border-right-width: 2.5px; border-top-right-radius: 9px; }
+  .corner.bl { bottom: 10px; left: 10px; border-bottom-width: 2.5px; border-left-width: 2.5px; border-bottom-left-radius: 9px; }
+  .corner.br { bottom: 10px; right: 10px; border-bottom-width: 2.5px; border-right-width: 2.5px; border-bottom-right-radius: 9px; }
+  .scanline { position: absolute; left: 12px; right: 12px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, #f0d9a6, transparent); box-shadow: 0 0 14px 2px rgba(226,194,127,.6); animation: scan 3.2s cubic-bezier(.45,0,.55,1) infinite; }
+  @keyframes scan { 0% { top: 8%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: 88%; opacity: 0; } }
+  .vf-tag { position: absolute; left: 50%; bottom: 14px; translate: -50% 0; font-size: 11px; font-weight: 600; letter-spacing: .04em; padding: 6px 12px; border-radius: 20px; background: rgba(0,0,0,.45); backdrop-filter: blur(8px); color: #f5efe5; white-space: nowrap; display: flex; gap: 7px; align-items: center; }
+  .vf-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #e0c17e; box-shadow: 0 0 8px #e0c17e; animation: blink 1.6s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .stage-copy { position: relative; padding: 18px 22px 22px; display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+  .stage-copy h2 { color: #f5efe5; font-size: 24px; line-height: 1.12; letter-spacing: -.02em; font-weight: 700; }
+  .stage-copy h2 em { font-style: normal; color: var(--gold-soft); }
+  .stage-copy p { color: rgba(245,239,229,.7); font-size: 12.5px; line-height: 1.45; margin-top: 7px; max-width: 190px; }
+  .shutter { flex: none; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; background: #f3e4cf; border: 4px solid rgba(255,255,255,.18); box-shadow: 0 0 0 1.5px rgba(243,228,207,.55), 0 10px 22px rgba(0,0,0,.4); }
+  .shutter svg { width: 26px; height: 26px; stroke: #2b1810; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- Section scaffolding ---------- */
+  .sec { padding: 28px 22px 0; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+  .sec-head h3 { font-size: 21px; letter-spacing: -.015em; font-weight: 700; }
+  .sec-head span { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .sec-head a { font-size: 13px; font-weight: 600; color: var(--gold); display: inline-flex; align-items: center; gap: 4px; }
+
+  /* ---------- Two quick actions ---------- */
+  .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 18px 22px 0; }
+  .qa { height: 158px; border-radius: 26px; padding: 16px; position: relative; background: var(--surface); border: 1px solid var(--line); overflow: visible; box-shadow: 0 14px 26px -18px var(--shadow); }
+  .qa b { display: block; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.005em; }
+  .qa small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.35; font-weight: 500; }
+  .qa .arrow { position: absolute; right: 14px; top: 14px; width: 17px; height: 17px; stroke: var(--muted); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .qa .copy { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+  /* polaroids */
+  .polas { position: absolute; left: 14px; top: 16px; width: 82px; height: 66px; }
+  .pola { position: absolute; width: 44px; height: 56px; padding: 2.5px; background: #f7f2ec; border-radius: 9px; box-shadow: 0 5px 9px -2px rgba(0,0,0,.35); }
+  .pola img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; display: block; }
+  .pola.a { left: 0; top: 8px; rotate: -7.5deg; }
+  .pola.b { left: 32px; top: 2px; rotate: 7deg; }
+  .qa:hover .pola.a { rotate: -13deg; translate: -3px -4px; transition: .5s cubic-bezier(.2,.8,.2,1); }
+  .qa:hover .pola.b { rotate: 12deg; translate: 3px -6px; transition: .5s cubic-bezier(.2,.8,.2,1); }
+  /* tiny hanging frames */
+  .mini-wall { position: absolute; left: 0; right: 0; top: -1px; display: flex; justify-content: center; gap: 7px; }
+  .hang { transform-origin: 50% 0; animation: sway 6s ease-in-out infinite; }
+  .hang:nth-child(2) { animation-duration: 4s; animation-delay: -1.2s; }
+  .hang:nth-child(3) { animation-duration: 3s; animation-delay: -2s; }
+  @keyframes sway { 0%,100% { transform: rotate(-3.2deg); } 50% { transform: rotate(3.2deg); } }
+  .hang .nail { width: 7px; height: 7px; border-radius: 50%; margin: 0 auto; background: radial-gradient(circle at 35% 30%, #fff0c4, #d9b46e 55%, #7a5a22); }
+  .hang .wire { position: relative; height: 13px; }
+  .hang .wire::before, .hang .wire::after { content: ""; position: absolute; top: 0; width: 1.2px; height: 14px; background: linear-gradient(#f1d894, #b88c3e); transform-origin: top; }
+  .hang .wire::before { left: 50%; rotate: 33deg; } .hang .wire::after { left: 50%; rotate: -33deg; }
+  .hang .fr { width: 36px; height: 44px; padding: 3.3px; border-radius: 4px; background: linear-gradient(135deg, #f8e3a6, #d2a94f 40%, #8e6a26 70%, #e8c77c); box-shadow: 0 8px 9px -3px rgba(0,0,0,.5); }
+  .hang .fr div { width: 100%; height: 100%; padding: 1.3px; border-radius: 2px; background: linear-gradient(315deg, #f1d58c, #9a7430 50%, #6b4d1c); }
+  .hang .fr img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 1px; }
+  .qa .copy.low { bottom: 14px; }
+  .pill { display: inline-block; margin-top: 7px; font-size: 11px; font-weight: 600; padding: 3.5px 9px; border-radius: 20px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); }
+
+  /* ---------- Artwork of the day ---------- */
+  .aotd { position: relative; height: 318px; border-radius: 30px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 26px 40px -24px var(--shadow); }
+  .aotd img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; animation: kb 18s ease-in-out infinite alternate; }
+  @keyframes kb { to { transform: scale(1.08); } }
+  .aotd::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,8,6,.92) 8%, rgba(10,8,6,.45) 42%, transparent 70%); }
+  .aotd .badge { position: absolute; z-index: 2; top: 14px; left: 14px; font-size: 10px; letter-spacing: .2em; font-weight: 700; text-transform: uppercase; padding: 6px 11px; border-radius: 20px; color: #f5efe5; background: rgba(0,0,0,.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.18); }
+  .aotd .save { position: absolute; z-index: 2; top: 12px; right: 12px; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.18); }
+  .aotd .save svg { width: 17px; height: 17px; stroke: #f5efe5; fill: none; stroke-width: 1.9; stroke-linejoin: round; }
+  .aotd .info { position: absolute; z-index: 2; left: 18px; right: 18px; bottom: 18px; color: #f5efe5; }
+  .aotd .info small { font-size: 11.5px; font-weight: 600; color: #e0c17e; letter-spacing: .03em; }
+  .aotd .info h4 { font-size: 24px; letter-spacing: -.02em; line-height: 1.12; margin: 4px 0 6px; font-weight: 700; }
+  .aotd .info p { font-size: 12.5px; line-height: 1.45; color: rgba(245,239,229,.78); max-width: 290px; }
+  .aotd .row { display: flex; gap: 9px; margin-top: 13px; }
+  .btn { height: 38px; padding: 0 16px; border-radius: 20px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; }
+  .btn.solid { background: #f3e4cf; color: #2b1810; }
+  .btn.ghost { background: rgba(255,255,255,.12); color: #f5efe5; border: 1px solid rgba(255,255,255,.2); backdrop-filter: blur(8px); }
+  .btn svg { width: 14px; height: 14px; fill: currentColor; stroke: none; }
+
+  /* ---------- The wall: saved works ---------- */
+  .wall { position: relative; height: 196px; border-radius: 28px; background: var(--surface); border: 1px solid var(--line); overflow: hidden; box-shadow: 0 18px 30px -22px var(--shadow); }
+  .wall::before { /* a picture rail along the top, and warm light from above */
+    content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(to bottom, rgba(201,164,92,.35) 0 2px, transparent 2px),
+      radial-gradient(70% 60% at 50% -10%, rgba(255,226,160,.22), transparent 70%);
+  }
+  .wall .frames { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: center; gap: 22px; padding-top: 4px; }
+  .wall .hang .fr { width: 74px; height: 92px; padding: 6px; border-radius: 6px; }
+  .wall .hang .fr div { padding: 2.4px; border-radius: 3px; }
+  .wall .hang .wire { height: 26px; }
+  .wall .hang .wire::before, .wall .hang .wire::after { height: 28px; }
+  .wall .hang .nail { width: 9px; height: 9px; }
+  .wall .caption { position: absolute; left: 20px; right: 20px; bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .wall .caption b { font-size: 14px; }
+  .wall .caption span { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
+  .wall .caption .go { width: 36px; height: 36px; border-radius: 50%; background: var(--btn); display: grid; place-items: center; }
+  .wall .caption .go svg { width: 16px; height: 16px; stroke: var(--btn-ink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- Recent scans: a cover-flow deck ---------- */
+  .recent .sec-head .count { font-size: 12.5px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .recent .sec-head .count b, .recent .sec-head .count i { font-style: normal; font-weight: 700; color: var(--ink); }
+  .deck { position: relative; height: 292px; margin: 4px -22px 0; perspective: 980px; touch-action: pan-y; cursor: grab; outline: none; user-select: none; -webkit-user-select: none; }
+  .deck:active { cursor: grabbing; }
+  .deck .cards { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .dcard {
+    position: absolute; left: 50%; top: 14px; width: 196px; height: 262px; margin-left: -98px;
+    border-radius: 28px; overflow: hidden; background: var(--surface);
+    box-shadow: 0 26px 34px -22px var(--shadow), 0 0 0 1px var(--line);
+    transition: transform .8s cubic-bezier(.2,.8,.2,1), opacity .6s ease, filter .6s ease, box-shadow .6s ease;
+    will-change: transform;
+  }
+  .dcard img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.12); transition: transform 1.4s cubic-bezier(.2,.8,.2,1); }
+  .dcard::after { /* a soft fall-off so the label sits cleanly */
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,8,6,.78), rgba(10,8,6,.0) 48%), linear-gradient(to bottom, rgba(10,8,6,.35), transparent 28%);
+  }
+  .dcard .when { position: absolute; z-index: 3; top: 13px; left: 13px; font-size: 10px; font-weight: 700; letter-spacing: .1em; padding: 5px 10px; border-radius: 20px; background: rgba(247,242,236,.92); color: #2b2420; }
+  .dcard .name { position: absolute; z-index: 3; left: 15px; right: 15px; bottom: 14px; color: #f5efe5; font-size: 15px; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+  .dcard .name small { display: block; margin-bottom: 3px; font-size: 11px; font-weight: 600; color: #e0c17e; letter-spacing: .02em; }
+  /* the match ring: draws itself when the card comes to the front */
+  .dcard .ring { position: absolute; z-index: 3; top: 9px; right: 9px; width: 40px; height: 40px; opacity: 0; transform: scale(.7); transition: .5s .25s cubic-bezier(.2,.8,.2,1); }
+  .dcard .ring svg { width: 100%; height: 100%; rotate: -90deg; }
+  .dcard .ring circle { fill: rgba(0,0,0,.42); stroke-width: 3; }
+  .dcard .ring .trk { stroke: rgba(255,255,255,.2); }
+  .dcard .ring .val { stroke: #e0c17e; stroke-linecap: round; stroke-dasharray: 100.5; stroke-dashoffset: 100.5; transition: stroke-dashoffset 1.1s .35s cubic-bezier(.2,.8,.2,1); }
+  .dcard .ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #f5efe5; }
+  /* scanning brackets and the sweep, as if it were just scanned */
+  .dcard .brk { position: absolute; z-index: 3; inset: 10px; opacity: 0; transition: opacity .4s .2s; pointer-events: none; }
+  .dcard .brk i { position: absolute; width: 22px; height: 22px; border: 0 solid #e0c17e; }
+  .dcard .brk i:nth-child(1) { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 10px; }
+  .dcard .brk i:nth-child(2) { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 10px; }
+  .dcard .brk i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 10px; }
+  .dcard .brk i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 10px; }
+  .dcard .sweep { position: absolute; z-index: 2; left: 0; right: 0; top: 0; height: 90px; opacity: 0; pointer-events: none; background: linear-gradient(to bottom, transparent, rgba(240,217,166,.32) 70%, rgba(240,217,166,.0)); }
+  .dcard.front .ring { opacity: 1; transform: none; }
+  .dcard.front .ring .val { stroke-dashoffset: calc(100.5 - 100.5 * var(--match)); }
+  .dcard.front .brk { opacity: 1; }
+  .dcard.front img { transform: scale(1.02); }
+  .dcard.front .sweep { animation: sweep 1.5s .15s cubic-bezier(.45,0,.55,1) 1; }
+  @keyframes sweep { 0% { opacity: 0; translate: 0 -90px; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; translate: 0 262px; } }
+
+  /* positions: the front card, two to each side, the rest tucked away */
+  .dcard.p0  { transform: translate3d(0,0,0) scale(1); z-index: 5; }
+  .dcard.p1  { transform: translate3d(124px,6px,-60px) rotateY(-34deg) scale(.82); z-index: 4; filter: brightness(.72) saturate(.9); }
+  .dcard.pm1 { transform: translate3d(-124px,6px,-60px) rotateY(34deg) scale(.82); z-index: 4; filter: brightness(.72) saturate(.9); }
+  .dcard.p2  { transform: translate3d(206px,12px,-130px) rotateY(-44deg) scale(.66); z-index: 3; filter: brightness(.5) saturate(.8); opacity: .75; }
+  .dcard.pm2 { transform: translate3d(-206px,12px,-130px) rotateY(44deg) scale(.66); z-index: 3; filter: brightness(.5) saturate(.8); opacity: .75; }
+  .dcard.ph  { transform: translate3d(0,10px,-200px) scale(.5); z-index: 1; opacity: 0; pointer-events: none; }
+  /* before the section scrolls into view, every card is stacked at the centre; they fan out on entry */
+  .deck:not(.in) .dcard { transform: translate3d(0,14px,-120px) scale(.6) !important; opacity: 0 !important; }
+  .deck.in .dcard.p1, .deck.in .dcard.pm1 { transition-delay: .08s; }
+  .deck.in .dcard.p2, .deck.in .dcard.pm2 { transition-delay: .16s; }
+
+  .dinfo { position: relative; margin-top: 4px; min-height: 92px; text-align: center; }
+  .dinfo .swap { animation: swap .6s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes swap { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .dinfo h4 { font-size: 20px; letter-spacing: -.02em; font-weight: 700; }
+  .dinfo p { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .dinfo .tags { display: flex; justify-content: center; gap: 7px; margin-top: 11px; }
+  .dinfo .tag { font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); }
+  .dinfo .tag.gold { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+  .dots { display: flex; justify-content: center; gap: 6px; margin-top: 16px; }
+  .dots button { all: unset; cursor: pointer; width: 7px; height: 7px; border-radius: 4px; background: var(--line); position: relative; overflow: hidden; transition: width .5s cubic-bezier(.2,.8,.2,1), background .4s; }
+  .dots button.on { width: 28px; background: color-mix(in srgb, var(--ink) 22%, transparent); }
+  .dots button.on::after { content: ""; position: absolute; inset: 0; background: var(--gold); transform-origin: left; animation: fill var(--dur, 3.8s) linear forwards; }
+  .dots.paused button.on::after { animation-play-state: paused; }
+  @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  /* ---------- Explore ---------- */
+  .chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -22px; padding: 0 22px 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; height: 38px; padding: 0 16px; border-radius: 20px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; background: var(--surface); border: 1px solid var(--line); }
+  .chip.on { background: var(--btn); color: var(--btn-ink); border-color: transparent; }
+  .artists { display: flex; gap: 16px; margin-top: 18px; }
+  .artist { width: 62px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+  .artist .ph { width: 62px; height: 62px; border-radius: 50%; overflow: hidden; margin-bottom: 7px; border: 1.5px solid var(--gold); padding: 3px; background: var(--ground); }
+  .artist .ph img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+
+  /* ---------- Floating nav (the lamp pill with the docked scan button) ---------- */
+  .nav { position: absolute; z-index: 30; left: 50%; bottom: 26px; translate: -50% 0; width: 340px; height: 62px; }
+  .nav .pillbar { position: absolute; inset: 0; border-radius: 31px; background: var(--pill); border: 1px solid var(--line); box-shadow: 0 14px 26px -10px var(--shadow); }
+  .nav .tabs { position: absolute; left: 0; top: 0; bottom: 0; width: 262px; display: flex; padding: 0 12px; }
+  .nav .tab { flex: 1; display: grid; place-items: center; position: relative; }
+  .nav .tab svg { width: 24px; height: 24px; stroke: var(--pill-ink); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .nav .tab.on svg { stroke: var(--lamp); }
+  .nav .tab.on::before { content: ""; position: absolute; top: -1px; width: 62px; height: 6px; border-radius: 4px; background: var(--lamp); }
+  .nav .tab.on::after { content: ""; position: absolute; top: 5px; width: 66px; height: 50px; background: linear-gradient(to bottom, color-mix(in srgb, var(--lamp) 30%, transparent), transparent); clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%); opacity: .8; animation: lamp 4s ease-in-out infinite; }
+  @keyframes lamp { 50% { opacity: .45; } }
+  .nav .scan { position: absolute; right: 6px; top: 6px; width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); box-shadow: 0 0 0 3px var(--pill), 0 0 0 4.5px color-mix(in srgb, var(--ink) 45%, transparent); }
+  .nav .scan svg { width: 22px; height: 22px; stroke: var(--btn-ink); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  .home-bar { position: absolute; z-index: 31; bottom: 8px; left: 50%; translate: -50% 0; width: 134px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 70%, transparent); }
+
+
+
+  /* =====================================================================
+     SCAN SCREEN — a camera that reads a wall (always dark, like iOS)
+     ===================================================================== */
+  .sc-nav { display: flex; gap: 10px; margin-top: 26px; }
+  .sc-nav a { text-decoration: none; color: #f5efe5; font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.05); }
+  .sc-nav a:hover { background: rgba(255,255,255,.12); }
+
+  /* =====================================================================
+     SCAN SCREEN, SECOND DIRECTION — framed viewfinder over a light tray
+     (from the reference layout: header, corner frame, hint, tray with zoom + shutter)
+     ===================================================================== */
+  .sv { background: #0b0a09; color: #f5efe5; --gold: #c9a45c; --gold-soft: #e0c17e; --glass: rgba(34,31,28,.62); --edge: rgba(255,255,255,.14); --tray: #f3ede2; --tray-ink: #2b2420; --tray-mute: #8a7f70; --chipbg: #e6dece; }
+  .sv .feed { position: absolute; inset: 0; overflow: hidden; background: #120f0c; }
+  .sv .feed img { position: absolute; left: 50%; top: 40%; width: 520px; height: 520px; margin: -260px 0 0 -260px; object-fit: cover; filter: brightness(.5) saturate(1.05); transform: scale(var(--z, 1)); transition: transform .7s cubic-bezier(.2,.8,.2,1); animation: svdrift 9s ease-in-out infinite alternate; }
+  @keyframes svdrift { from { translate: -6px -4px; } to { translate: 6px 5px; } }
+  .sv .feed::after { content: ""; position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 38%, transparent 40%, rgba(8,6,5,.9) 100%), linear-gradient(180deg, rgba(8,6,5,.55), transparent 22%, transparent 60%, rgba(8,6,5,.6)); }
+  /* header: back · title · flash · close */
+  .sv .top { position: absolute; z-index: 30; top: 58px; left: 16px; right: 16px; display: flex; align-items: center; gap: 10px; }
+  .sv .top h2 { flex: 1; text-align: center; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+  .sv .rb { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: rgba(243,237,226,.92); }
+  .sv .rb svg { width: 18px; height: 18px; stroke: #2b2420; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sv .rb.ghost { width: 38px; height: 38px; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); }
+  .sv .rb.ghost svg { stroke: #f5efe5; width: 17px; height: 17px; }
+  /* the frame: four rounded corners, gold, with a beam passing through */
+  .sv .frame { position: absolute; z-index: 20; left: 34px; right: 34px; top: 138px; height: 360px; }
+  .sv .frame i { position: absolute; width: 46px; height: 46px; border: 3px solid var(--gold-soft); filter: drop-shadow(0 0 8px rgba(224,193,126,.45)); animation: svbreathe 3.4s ease-in-out infinite; }
+  .sv .frame i.a { left: 0; top: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 26px; }
+  .sv .frame i.b { right: 0; top: 0; border-left: 0; border-bottom: 0; border-top-right-radius: 26px; }
+  .sv .frame i.c { left: 0; bottom: 0; border-right: 0; border-top: 0; border-bottom-left-radius: 26px; }
+  .sv .frame i.d { right: 0; bottom: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 26px; }
+  @keyframes svbreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(.955); } }
+  .sv .frame .sweep { position: absolute; left: 14px; right: 14px; top: 0; height: 70px; overflow: visible; animation: svsweep 3.6s cubic-bezier(.45,0,.55,1) infinite; }
+  .sv .frame .sweep::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(240,217,166,.32)); }
+  .sv .frame .sweep::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #f6e2b3; border-radius: 2px; box-shadow: 0 0 16px 3px rgba(226,194,127,.65); }
+  @keyframes svsweep { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { transform: translateY(290px); opacity: 0; } }
+  .sv .hint { position: absolute; z-index: 22; left: 50%; top: 520px; translate: -50% 0; padding: 10px 18px; border-radius: 22px; font-size: 13px; font-weight: 600; white-space: nowrap; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); }
+  /* the light tray */
+  .sv .tray { position: absolute; z-index: 30; left: 0; right: 0; bottom: 0; height: 232px; border-radius: 36px 36px 0 0; background: var(--tray); color: var(--tray-ink); padding: 18px 22px 0; box-shadow: 0 -18px 40px rgba(0,0,0,.45); }
+  .sv .zooms { display: flex; justify-content: center; gap: 10px; }
+  .sv .zooms button { all: unset; cursor: pointer; min-width: 46px; text-align: center; padding: 8px 14px; border-radius: 18px; font-size: 14px; font-weight: 700; color: #6c6155; background: var(--chipbg); transition: all .3s; }
+  .sv .zooms button.on { color: #7a5a1a; background: rgba(201,164,92,.28); box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .sv .ruler { position: relative; height: 26px; margin: 14px 4px 0; background: repeating-linear-gradient(90deg, rgba(43,36,32,.32) 0 1.5px, transparent 1.5px 20px); -webkit-mask: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); height: 14px; margin-top: 18px; }
+  .sv .ruler-wrap { position: relative; }
+  .sv .ruler-wrap b { position: absolute; top: 12px; width: 3px; height: 22px; margin-left: -1.5px; border-radius: 2px; background: #a9843a; transition: left .6s cubic-bezier(.2,.8,.2,1); left: 8%; }
+  .sv .ruler-wrap u { position: absolute; top: 14px; width: 1.5px; height: 18px; background: rgba(43,36,32,.55); }
+  .sv .dock2 { position: absolute; left: 0; right: 0; bottom: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+  .sv .gal { width: 62px; height: 62px; border-radius: 50%; padding: 3px; background: #fff; box-shadow: 0 6px 14px rgba(0,0,0,.25); }
+  .sv .gal img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .sv .shut2 { position: relative; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; }
+  .sv .shut2::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(201,164,92,.5); animation: svpulse 2.6s ease-in-out infinite; }
+  @keyframes svpulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: .5; } }
+  .sv .shut2 .core { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(145deg, #e8cd8d, #c29a48); box-shadow: 0 10px 24px -6px rgba(168,126,48,.7), inset 0 1px 0 rgba(255,255,255,.5); transition: transform .15s; }
+  .sv .shut2:active .core { transform: scale(.92); }
+  .sv .shut2 svg { width: 30px; height: 30px; stroke: #fff; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .sv .flip { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; background: #1d1a17; }
+  .sv .flip svg { width: 26px; height: 26px; stroke: #f5efe5; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* =====================================================================
+     ANALYSING A PAINTING — a turntable canvas and a gold scanning bar
+     (from the reference: the sheet spins, the bar rides it, the text appears)
+     ===================================================================== */
+  .an { background: radial-gradient(90% 55% at 50% 38%, #2a2420 0%, #151311 62%, #0c0b0a 100%); color: #f5efe5; --gold: #c9a45c; --gold-soft: #e0c17e; --T: 11s; }
+  .an .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 52%; background: linear-gradient(180deg, transparent, rgba(255,235,190,.05) 40%, rgba(255,235,190,.1)); -webkit-mask: radial-gradient(70% 90% at 50% 100%, #000, transparent 75%); mask: radial-gradient(70% 90% at 50% 100%, #000, transparent 75%); }
+  .an .hdr { position: absolute; z-index: 20; top: 64px; left: 0; right: 0; text-align: center; }
+  .an .hdr small { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: var(--gold-soft); }
+  .an .hdr .steps { position: relative; height: 34px; margin-top: 8px; }
+  .an .hdr .steps b { position: absolute; left: 0; right: 0; top: 0; font-size: 24px; letter-spacing: -.02em; opacity: 0; animation: anstep var(--T) infinite; }
+  .an .hdr .steps b:nth-child(1) { animation-name: anst0; } .an .hdr .steps b:nth-child(2) { animation-name: anst1; }
+  .an .hdr .steps b:nth-child(3) { animation-name: anst2; } .an .hdr .steps b:nth-child(4) { animation-name: anst3; }
+  @keyframes anst0 { 0% { opacity: 0; transform: translateY(8px); } 3%, 13% { opacity: 1; transform: none; } 16%, 100% { opacity: 0; transform: translateY(-8px); } }
+  @keyframes anst1 { 0%, 14% { opacity: 0; transform: translateY(8px); } 18%, 38% { opacity: 1; transform: none; } 42%, 100% { opacity: 0; transform: translateY(-8px); } }
+  @keyframes anst2 { 0%, 43% { opacity: 0; transform: translateY(8px); } 47%, 62% { opacity: 1; transform: none; } 66%, 100% { opacity: 0; transform: translateY(-8px); } }
+  @keyframes anst3 { 0%, 63% { opacity: 0; transform: translateY(8px); } 67%, 86% { opacity: 1; transform: none; } 90%, 100% { opacity: 0; transform: translateY(-8px); } }
+
+  .an .stage3d { position: absolute; left: 50%; top: 168px; width: 252px; height: 330px; margin-left: -126px; perspective: 1150px; z-index: 10; }
+  .an .sway { position: absolute; inset: 0; transform-style: preserve-3d; animation: answay 5.5s ease-in-out infinite alternate; }
+  @keyframes answay { from { transform: rotateX(3deg) rotateZ(-.6deg) translateY(-4px); } to { transform: rotateX(-1deg) rotateZ(.6deg) translateY(5px); } }
+  .an .card { position: absolute; inset: 0; transform-style: preserve-3d; animation: anspin var(--T) infinite; }
+  /* a long turntable spin that lands square to the viewer, then a turn away */
+  @keyframes anspin {
+    0%   { transform: rotateY(-270deg) scale(.55); opacity: 0; animation-timing-function: cubic-bezier(.3,.55,.2,1); }
+    3%   { opacity: 1; }
+    41%  { transform: rotateY(360deg) scale(1); animation-timing-function: linear; }
+    80%  { transform: rotateY(360deg) scale(1); animation-timing-function: cubic-bezier(.6,0,.9,.5); }
+    92%  { transform: rotateY(450deg) scale(.62); opacity: 1; }
+    94%, 100% { transform: rotateY(450deg) scale(.62); opacity: 0; }
+  }
+  .an .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform-style: preserve-3d; border-radius: 6px; }
+  .an .front .gilt { position: absolute; inset: 0; border-radius: 6px; padding: 12px; background: linear-gradient(135deg, #f8e3a6, #d2a94f 38%, #8e6a26 68%, #e8c77c); box-shadow: 0 40px 60px -22px rgba(0,0,0,.85), 0 10px 20px rgba(0,0,0,.5); }
+  .an .front .gilt > div { width: 100%; height: 100%; padding: 4px; border-radius: 3px; background: linear-gradient(315deg, #f1d58c, #9a7430 50%, #6b4d1c); }
+  .an .art { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 2px; background: #111; }
+  .an .art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .an .art .raw { filter: grayscale(1) brightness(.5) contrast(1.15); }
+  /* what the bar has passed: colour comes in below it */
+  .an .art .lit { animation: anlit var(--T) infinite; clip-path: inset(100% 0 0 0); }
+  @keyframes anlit { 0%, 8% { clip-path: inset(100% 0 0 0); } 38% { clip-path: inset(0 0 0 0); } 100% { clip-path: inset(0 0 0 0); } }
+  .an .art svg.trace { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .an .trace path, .an .trace circle { fill: none; stroke: #f6e2b3; stroke-width: 1.6; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(246,226,179,.8)); }
+  .an .trace path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: andraw var(--T) infinite; }
+  .an .trace path:nth-child(2) { animation-delay: .25s; } .an .trace path:nth-child(3) { animation-delay: .5s; } .an .trace path:nth-child(4) { animation-delay: .75s; }
+  @keyframes andraw { 0%, 45% { stroke-dashoffset: 1; opacity: 1; } 62% { stroke-dashoffset: 0; } 80% { stroke-dashoffset: 0; opacity: 1; } 88%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+  .an .trace .pt { fill: #f6e2b3; stroke: none; opacity: 0; transform-box: fill-box; transform-origin: center; animation: anpt var(--T) infinite; }
+  @keyframes anpt { 0%, 48% { opacity: 0; transform: scale(0); } 54% { opacity: 1; transform: scale(1.6); } 60%, 82% { opacity: .85; transform: scale(1); } 90%, 100% { opacity: 0; transform: scale(1); } }
+  .an .front .gilt::after { content: ""; position: absolute; inset: 16px; background: linear-gradient(115deg, rgba(255,255,255,.2), transparent 38%); pointer-events: none; border-radius: 2px; }
+  /* the back of a real canvas: stretcher bars, a label */
+  .an .back { transform: rotateY(180deg); background: linear-gradient(160deg, #3a2f26, #241c16); border: 1px solid rgba(255,255,255,.08); box-shadow: 0 30px 50px -20px rgba(0,0,0,.8); }
+  .an .back::before { content: ""; position: absolute; inset: 14px; border: 10px solid #5b4630; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.35); }
+  .an .back::after { content: ""; position: absolute; left: 14px; right: 14px; top: 50%; height: 9px; margin-top: -4px; background: #5b4630; }
+  .an .back .lbl { position: absolute; z-index: 2; left: 50%; top: 24%; width: 86px; height: 52px; margin-left: -43px; padding: 9px; border-radius: 3px; background: #efe4cf; color: #3a2f26; font-size: 8px; line-height: 1.5; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .an .back .lbl i { display: block; height: 3px; margin-top: 4px; border-radius: 2px; background: rgba(58,47,38,.35); }
+  /* the bar: a gold plank with depth, riding in front of the canvas */
+  .an .track { position: absolute; left: 12px; right: 12px; top: 16px; bottom: 16px; transform-style: preserve-3d; pointer-events: none; }
+  .an .plank { position: absolute; left: -18px; right: -18px; top: 100%; height: 12px; margin-top: -6px; transform-style: preserve-3d; transform: translateZ(26px); animation: anbar var(--T) infinite; opacity: 0; }
+  .an .plank .fr { position: absolute; inset: 0; border-radius: 3px; background: linear-gradient(180deg, #f6e2b3, #c9a45c 55%, #8e6a26); box-shadow: 0 0 22px 4px rgba(226,194,127,.55); }
+  .an .plank .tp { position: absolute; left: 0; right: 0; bottom: 100%; height: 26px; transform-origin: bottom; transform: rotateX(90deg); background: linear-gradient(90deg, #d9b765, #f6e2b3 50%, #d9b765); border-radius: 3px; }
+  .an .plank .sh { position: absolute; left: 18px; right: 18px; top: 100%; height: 60px; transform: translateZ(-26px); background: linear-gradient(180deg, rgba(0,0,0,.55), transparent); filter: blur(3px); }
+  @keyframes anbar {
+    0%, 4% { top: 100%; opacity: 0; }
+    7% { opacity: 1; }
+    40% { top: 0%; opacity: 1; }
+    52% { top: 0%; opacity: 1; }
+    62% { top: 0%; opacity: 0; }
+    100% { top: 0%; opacity: 0; }
+  }
+  /* readouts that appear around the finished canvas */
+  .an .chipx { position: absolute; z-index: 25; display: flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 18px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: rgba(30,27,24,.72); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(14px); opacity: 0; animation: anchip var(--T) infinite; }
+  .an .chipx::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold-soft); box-shadow: 0 0 8px var(--gold-soft); }
+  .an .chipx.c1 { left: 18px; top: 236px; animation-delay: .0s; } .an .chipx.c2 { right: 18px; top: 330px; animation-delay: .35s; } .an .chipx.c3 { left: 28px; top: 430px; animation-delay: .7s; }
+  @keyframes anchip { 0%, 49% { opacity: 0; transform: translateY(10px) scale(.92); } 55%, 80% { opacity: 1; transform: none; } 88%, 100% { opacity: 0; transform: translateY(-6px) scale(.96); } }
+  .an .pal { position: absolute; z-index: 25; left: 0; right: 0; top: 548px; display: flex; justify-content: center; gap: 9px; }
+  .an .pal i { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(245,239,229,.92); box-shadow: 0 12px 20px -8px rgba(0,0,0,.7); opacity: 0; animation: anpal var(--T) infinite; }
+  .an .pal i:nth-child(2) { animation-delay: .1s; } .an .pal i:nth-child(3) { animation-delay: .2s; } .an .pal i:nth-child(4) { animation-delay: .3s; } .an .pal i:nth-child(5) { animation-delay: .4s; }
+  @keyframes anpal { 0%, 56% { opacity: 0; transform: translateY(-36px) scale(.3); } 63%, 82% { opacity: 1; transform: none; } 90%, 100% { opacity: 0; transform: translateY(8px) scale(.9); } }
+  .an .plab { position: absolute; z-index: 25; left: 0; right: 0; top: 596px; text-align: center; font-size: 10.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-soft); opacity: 0; animation: anplab var(--T) infinite; }
+  @keyframes anplab { 0%, 62% { opacity: 0; } 68%, 82% { opacity: 1; } 90%, 100% { opacity: 0; } }
+  /* progress */
+  .an .prog { position: absolute; z-index: 25; left: 44px; right: 44px; bottom: 74px; }
+  .an .prog .bar { height: 4px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .an .prog .bar i { display: block; height: 100%; width: 100%; transform-origin: left; background: linear-gradient(90deg, #c9a45c, #f6e2b3); animation: anprog var(--T) infinite; }
+  @keyframes anprog { 0% { transform: scaleX(0); } 80% { transform: scaleX(1); } 92%, 100% { transform: scaleX(1); opacity: 0; } }
+  .an .prog p { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; color: #b8aea0; }
+  @property --pc { syntax: "<integer>"; inherits: false; initial-value: 0; }
+  .an .prog .pct { --pc: 0; animation: anpct var(--T) infinite; counter-reset: pc var(--pc); font-weight: 700; color: #f5efe5; }
+  .an .prog .pct::after { content: counter(pc) "%"; }
+  @keyframes anpct { 0% { --pc: 0; } 80%, 100% { --pc: 100; } }
+  .scan-sec { margin-top: 110px; scroll-margin-top: 40px; }
+  .scan-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 72px; align-items: center; margin-top: 48px; }
+  @media (max-width: 960px) { .scan-wrap { grid-template-columns: 1fr; justify-items: center; } }
+
+  /* the story, as a stepper beside the phone */
+  .flow { display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+  .flow button { all: unset; cursor: pointer; display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 18px 20px; border-radius: 24px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); transition: background .4s, border-color .4s; position: relative; overflow: hidden; }
+  .flow button:hover { background: rgba(255,255,255,.06); }
+  .flow button .n { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 15px; color: #b8aea0; border: 1px solid rgba(255,255,255,.14); transition: all .4s; }
+  .flow button h4 { font-size: 17px; letter-spacing: -.01em; margin-bottom: 4px; color: #d9d2c6; transition: color .4s; }
+  .flow button p { font-size: 13.5px; line-height: 1.55; color: #8f877b; transition: color .4s; }
+  .flow button.on { background: rgba(255,255,255,.07); border-color: rgba(201,164,92,.45); }
+  .flow button.on .n { background: #c9a45c; color: #20180d; border-color: transparent; }
+  .flow button.on h4 { color: #f5efe5; } .flow button.on p { color: #b8aea0; }
+  .flow button .bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: #c9a45c; transform-origin: left; transform: scaleX(0); }
+  .flow button.on .bar { animation: stagefill var(--d, 3s) linear forwards; }
+  .flow.paused button.on .bar { animation-play-state: paused; }
+  @keyframes stagefill { to { transform: scaleX(1); } }
+  .flow-tools { display: flex; gap: 10px; margin-top: 8px; }
+  .flow-tools button { all: unset; cursor: pointer; font-size: 12.5px; font-weight: 600; padding: 9px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.05); color: #f5efe5; }
+  .flow-tools button:hover { background: rgba(255,255,255,.12); }
+
+  /* ---- the phone ---- */
+  .sx { background: #0a0a09; color: #f5efe5; --gold: #c9a45c; --gold-soft: #e0c17e; --glass: rgba(22,20,18,.55); --edge: rgba(255,255,255,.14); }
+  .sx .scene { position: absolute; inset: 0; overflow: hidden; perspective: 900px; }
+  /* the wall */
+  .sx .wall-bg { position: absolute; inset: -8%; background:
+      radial-gradient(60% 38% at 50% 38%, rgba(255,226,170,.34), transparent 70%),
+      radial-gradient(120% 70% at 50% 110%, rgba(0,0,0,.65), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 2px, transparent 2px 7px),
+      linear-gradient(180deg, #4a3d33 0%, #3a2f27 55%, #231c17 100%);
+    animation: handheld 9s ease-in-out infinite alternate; }
+  .sx .wall-bg::after { content: ""; position: absolute; left: 0; right: 0; top: 66%; height: 3px; background: linear-gradient(90deg, transparent, rgba(255,220,160,.22), transparent); box-shadow: 0 18px 30px rgba(0,0,0,.45); }
+  @keyframes handheld { from { transform: translate(-6px, -4px) rotate(-.4deg); } to { transform: translate(6px, 5px) rotate(.4deg); } }
+  /* the painting hangs on the wall; the plane is tilted like a real camera angle */
+  .sx .plane { position: absolute; left: 50%; top: 188px; width: 312px; height: 252px; margin-left: -156px; transform-style: preserve-3d; transform: rotateY(-13deg) rotateX(4deg) rotateZ(-1.2deg); transition: transform 1.1s cubic-bezier(.2,.8,.2,1), opacity .8s; animation: handheld2 7s ease-in-out infinite alternate; }
+  @keyframes handheld2 { from { translate: -5px -3px; } to { translate: 5px 4px; } }
+  .sx .gilt { position: absolute; inset: 0; border-radius: 6px; padding: 11px; background: linear-gradient(135deg, #f8e3a6, #d2a94f 38%, #8e6a26 68%, #e8c77c); box-shadow: 0 34px 50px -18px rgba(0,0,0,.8), 0 10px 18px rgba(0,0,0,.45); }
+  .sx .gilt > div { width: 100%; height: 100%; padding: 4px; border-radius: 3px; background: linear-gradient(315deg, #f1d58c, #9a7430 50%, #6b4d1c); }
+  .sx .gilt img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 1.5px; }
+  .sx .gilt::after { content: ""; position: absolute; inset: 11px; background: linear-gradient(115deg, rgba(255,255,255,.2), transparent 38%); pointer-events: none; }
+  .sx .light { position: absolute; left: 50%; top: 120px; width: 300px; height: 90px; margin-left: -150px; background: radial-gradient(60% 100% at 50% 0%, rgba(255,235,190,.55), transparent 80%); filter: blur(6px); }
+  /* the detection outline, drawn in the plane so it follows the angle */
+  @property --p { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  .sx .trace { position: absolute; inset: -9px; border: 2.5px solid var(--gold-soft); border-radius: 9px; opacity: 0; --p: 0deg;
+    -webkit-mask: conic-gradient(from 0deg, #000 var(--p), transparent 0); mask: conic-gradient(from 0deg, #000 var(--p), transparent 0);
+    filter: drop-shadow(0 0 7px rgba(224,193,126,.7)); }
+  .sx .node { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; z-index: 6; border-radius: 50%; background: #1a1612; border: 2.5px solid var(--gold-soft); box-shadow: 0 0 12px rgba(224,193,126,.8); opacity: 0; transform: scale(0); }
+  .sx .node.a { left: -9px; top: -9px; } .sx .node.b { right: -9px; top: -9px; margin: -7px -7px 0 0; } .sx .node.c { right: -9px; bottom: -9px; margin: 0 -7px -7px 0; } .sx .node.d { left: -9px; bottom: -9px; margin: 0 0 -7px -7px; }
+  /* the beam and the points, during reading */
+  .sx .beam { position: absolute; inset: 11px; overflow: hidden; border-radius: 2px; opacity: 0; }
+  .sx .beam::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 90px; background: linear-gradient(to bottom, transparent, rgba(240,217,166,.38) 78%, rgba(240,217,166,0)); border-bottom: 2px solid #f6e2b3; box-shadow: 0 6px 24px rgba(226,194,127,.7); animation: beam 2.1s cubic-bezier(.45,0,.55,1) infinite; }
+  @keyframes beam { 0% { transform: translateY(-90px); } 100% { transform: translateY(240px); } }
+  .sx .beam i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #f6e2b3; box-shadow: 0 0 10px #f6e2b3; opacity: 0; animation: feature 2.1s infinite; }
+  @keyframes feature { 0%, 100% { opacity: 0; transform: scale(0); } 30% { opacity: 1; transform: scale(1.3); } 60% { opacity: .35; transform: scale(.8); } }
+  /* floating readouts */
+  .sx .tag { position: absolute; z-index: 12; display: flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 18px; font-size: 11.5px; font-weight: 600; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); opacity: 0; transform: translateY(8px) scale(.94); transition: opacity .5s, transform .6s cubic-bezier(.2,.8,.2,1); white-space: nowrap; }
+  .sx .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold-soft); box-shadow: 0 0 8px var(--gold-soft); }
+  .sx .tag.t1 { left: 14px; top: 214px; } .sx .tag.t2 { right: 14px; top: 300px; } .sx .tag.t3 { left: 22px; top: 400px; }
+  .sx .chip { position: absolute; z-index: 14; left: 50%; top: 130px; translate: -50% 0; display: flex; align-items: center; gap: 9px; padding: 9px 16px; border-radius: 22px; font-size: 13px; font-weight: 700; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(16px); white-space: nowrap; }
+  .sx .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: #e0c17e; box-shadow: 0 0 10px #e0c17e; animation: blink 1.4s infinite; }
+  .sx .chip .txt { display: grid; }
+  .sx .chip .txt b { grid-area: 1 / 1; text-align: center; opacity: 0; font-weight: 700; transition: opacity .35s; }
+  /* the palette the camera pulls out of the painting */
+  .sx .palette { position: absolute; z-index: 12; left: 24px; right: 60px; top: 478px; display: flex; justify-content: center; gap: 8px; }
+  .sx .palette i { width: 40px; height: 40px; border-radius: 50%; border: 3px solid rgba(245,239,229,.9); box-shadow: 0 12px 20px -8px rgba(0,0,0,.7); opacity: 0; transform: translateY(-40px) scale(.3); transition: opacity .5s, transform .8s cubic-bezier(.2,1.2,.3,1); }
+  .sx .plabel { position: absolute; z-index: 12; left: 0; right: 36px; top: 530px; text-align: center; font-size: 10.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-soft); opacity: 0; transition: opacity .5s .5s; }
+  /* top bar */
+  .sx .bar { position: absolute; z-index: 30; top: 58px; left: 18px; right: 18px; display: flex; align-items: center; justify-content: space-between; }
+  .sx .gb { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); }
+  .sx .gb svg { width: 18px; height: 18px; stroke: #f5efe5; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .sx .seg { display: flex; padding: 3px; border-radius: 22px; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); font-size: 12px; font-weight: 700; }
+  .sx .seg span { padding: 7px 14px; border-radius: 18px; color: rgba(245,239,229,.65); }
+  .sx .seg span.on { background: #f5efe5; color: #151515; }
+  /* a focus ring that hunts while aiming */
+  .sx .focus { position: absolute; z-index: 11; left: 50%; top: 314px; width: 66px; height: 66px; margin: -33px 0 0 -33px; border-radius: 18px; border: 1.5px solid rgba(255,255,255,.85); opacity: 0; }
+  .sx .focus::before, .sx .focus::after { content: ""; position: absolute; background: rgba(255,255,255,.85); }
+  .sx .focus::before { left: 50%; top: -5px; width: 1.5px; height: 6px; } .sx .focus::after { top: 50%; left: -5px; height: 1.5px; width: 6px; }
+  /* the result sheet */
+  .sx .sheet { position: absolute; z-index: 35; left: 10px; right: 10px; bottom: 10px; height: 392px; border-radius: 34px 34px 40px 40px; padding: 12px 22px 22px; background: rgba(245,239,229,.97); color: #2b2420; transform: translateY(110%); transition: transform .9s cubic-bezier(.2,.8,.2,1); box-shadow: 0 -20px 50px rgba(0,0,0,.5); }
+  .sx .sheet .grab { width: 40px; height: 4px; border-radius: 2px; background: rgba(43,36,32,.2); margin: 0 auto 16px; }
+  .sx .sheet .k { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #a9843a; }
+  .sx .sheet .k::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #3f9b62; }
+  .sx .sheet h3 { font-size: 27px; letter-spacing: -.02em; margin: 8px 0 3px; line-height: 1.08; }
+  .sx .sheet .by { font-size: 13.5px; color: #857a6d; }
+  .sx .sheet .meta { display: flex; gap: 8px; margin-top: 14px; }
+  .sx .sheet .meta span { font-size: 11.5px; font-weight: 600; padding: 6px 12px; border-radius: 18px; background: #eae1d2; }
+  .sx .sheet .meta span:first-child { background: #2d2621; color: #f3ebdd; }
+  .sx .sheet p { margin-top: 14px; font-size: 13.5px; line-height: 1.55; color: #4a423a; }
+  .sx .sheet .sw { display: flex; gap: 6px; margin-top: 14px; align-items: center; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #857a6d; }
+  .sx .sheet .sw i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+  .sx .sheet .acts { position: absolute; left: 22px; right: 22px; bottom: 20px; display: flex; gap: 10px; }
+  .sx .sheet .acts b { flex: 1; height: 50px; border-radius: 26px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 700; }
+  .sx .sheet .acts b:first-child { background: #2d2621; color: #f3ebdd; }
+  .sx .sheet .acts b:last-child { background: #eae1d2; color: #2b2420; }
+  .sx .sheet .acts svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* the dock */
+  .sx .dock { position: absolute; z-index: 30; left: 0; right: 0; bottom: 0; padding: 0 22px 32px; display: flex; align-items: center; justify-content: space-between; transition: opacity .5s, transform .7s cubic-bezier(.2,.8,.2,1); }
+  .sx .thumb { width: 54px; height: 54px; border-radius: 16px; padding: 3px; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); position: relative; }
+  .sx .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 13px; display: block; }
+  .sx .thumb b { position: absolute; right: -5px; top: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); display: grid; place-items: center; }
+  .sx .thumb b svg { width: 11px; height: 11px; stroke: #20180d; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .sx .shut { position: relative; width: 86px; height: 86px; display: grid; place-items: center; }
+  .sx .shut .ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid rgba(245,239,229,.85); transition: border-color .5s; }
+  .sx .shut .core { width: 66px; height: 66px; border-radius: 50%; background: #f5efe5; display: grid; place-items: center; transition: transform .5s cubic-bezier(.2,.8,.2,1), background .5s; box-shadow: 0 8px 22px rgba(0,0,0,.45); }
+  .sx .shut .core svg { width: 26px; height: 26px; stroke: #151515; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .sx .shut .arc { position: absolute; inset: -2px; width: 90px; height: 90px; rotate: -90deg; }
+  .sx .shut .arc circle { fill: none; stroke: var(--gold-soft); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 265; stroke-dashoffset: 265; }
+  .sx .zoomv { position: absolute; z-index: 28; right: 14px; top: 474px; display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: 22px; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); transition: opacity .5s; }
+  .sx .zoomv span { width: 40px; height: 36px; display: grid; place-items: center; font-size: 12px; font-weight: 700; border-radius: 18px; color: rgba(245,239,229,.7); font-variant-numeric: tabular-nums; }
+  .sx .zoomv span.on { background: #f5efe5; color: #151515; }
+  .sx .reset { width: 54px; height: 54px; border-radius: 16px; display: grid; place-items: center; background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); }
+  .sx .reset svg { width: 20px; height: 20px; stroke: #f5efe5; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .sx .flash { position: absolute; z-index: 60; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+
+  /* ---------------- the four stages ---------------- */
+  /* 0 · aim: the focus ring hunts, the wall drifts */
+  .sx[data-stage="0"] .focus { animation: hunt 2.6s ease-in-out infinite; }
+  @keyframes hunt { 0% { opacity: 0; transform: scale(1.5) translate(-30px, 40px); } 30% { opacity: 1; transform: scale(1) translate(-30px, 40px); } 60% { opacity: 1; transform: scale(1) translate(24px, -22px); } 100% { opacity: 0; transform: scale(.8) translate(0, 0); } }
+  .sx[data-stage="0"] .chip b.s0 { opacity: 1; }
+  .sx[data-stage="0"] .shut .core { animation: idle 2.8s ease-in-out infinite; }
+  @keyframes idle { 50% { transform: scale(.94); } }
+  /* 1 · lock: the outline draws itself round the painting, the nodes pop */
+  .sx[data-stage="1"] .trace, .sx[data-stage="2"] .trace, .sx[data-stage="3"] .trace { opacity: 1; }
+  .sx[data-stage="1"] .trace { animation: draw 1.05s cubic-bezier(.5,0,.2,1) forwards; }
+  .sx[data-stage="2"] .trace, .sx[data-stage="3"] .trace { --p: 360deg; }
+  @keyframes draw { to { --p: 360deg; } }
+  .sx[data-stage="1"] .node { animation: pop .5s cubic-bezier(.2,1.5,.4,1) forwards; }
+  .sx[data-stage="1"] .node.b { animation-delay: .22s; } .sx[data-stage="1"] .node.c { animation-delay: .44s; } .sx[data-stage="1"] .node.d { animation-delay: .66s; }
+  .sx[data-stage="2"] .node, .sx[data-stage="3"] .node { opacity: 1; transform: scale(1); }
+  @keyframes pop { to { opacity: 1; transform: scale(1); } }
+  .sx[data-stage="1"] .chip b.s1 { opacity: 1; }
+  .sx[data-stage="1"] .shut .core { background: var(--gold-soft); }
+  .sx[data-stage="1"] .plane { transform: rotateY(-5deg) rotateX(1.5deg) rotateZ(-.4deg) scale(1.03); }
+  /* 2 · read: the beam, the points, the readouts, the palette */
+  .sx[data-stage="2"] .beam { opacity: 1; }
+  .sx[data-stage="2"] .plane { transform: rotateY(-3deg) rotateX(1deg) scale(1.04); }
+  .sx[data-stage="2"] .chip b.s2 { opacity: 1; }
+  .sx[data-stage="2"] .tag.t1 { opacity: 1; transform: none; transition-delay: .3s; }
+  .sx[data-stage="2"] .tag.t2 { opacity: 1; transform: none; transition-delay: 1s; }
+  .sx[data-stage="2"] .tag.t3 { opacity: 1; transform: none; transition-delay: 1.7s; }
+  .sx[data-stage="2"] .palette i { opacity: 1; transform: none; }
+  .sx[data-stage="2"] .palette i:nth-child(1) { transition-delay: .5s; } .sx[data-stage="2"] .palette i:nth-child(2) { transition-delay: .75s; }
+  .sx[data-stage="2"] .palette i:nth-child(3) { transition-delay: 1s; } .sx[data-stage="2"] .palette i:nth-child(4) { transition-delay: 1.25s; } .sx[data-stage="2"] .palette i:nth-child(5) { transition-delay: 1.5s; }
+  .sx[data-stage="2"] .plabel { opacity: 1; }
+  .sx[data-stage="2"] .shut .arc circle { animation: fillarc var(--stage, 3.6s) linear forwards; }
+  .sx[data-stage="2"] .shut .core { transform: scale(.78); }
+  @keyframes fillarc { to { stroke-dashoffset: 0; } }
+  /* 3 · result: the painting glides up and settles; the card rises */
+  .sx[data-stage="3"] .plane { transform: translateY(-82px) scale(.68) rotateY(0) rotateX(0); }
+  .sx[data-stage="3"] .wall-bg { filter: brightness(.55) blur(2px); transition: filter .9s; }
+  .sx[data-stage="3"] .sheet { transform: none; }
+  .sx[data-stage="3"] .dock, .sx[data-stage="3"] .zoomv, .sx[data-stage="3"] .chip, .sx[data-stage="3"] .tag, .sx[data-stage="3"] .palette, .sx[data-stage="3"] .plabel { opacity: 0 !important; pointer-events: none; }
+  .sx[data-stage="3"] .light { opacity: .4; }
+  .sx[data-stage="3"] .flash { animation: shot .5s ease-out; }
+  @keyframes shot { 0% { opacity: .0; } 12% { opacity: .55; } 100% { opacity: 0; } }
+  .sx .wall-bg, .sx .light { transition: filter .9s, opacity .9s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scanline, .hang, .viewfinder img, .aotd img, .vf-tag::before, .nav .tab.on::after, .dcard .sweep, .dots button.on::after,
+    .sx *, .sx *::before, .sx *::after { animation: none !important; transition-duration: .01s !important; }
+    .dcard, .dcard img { transition: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.2 12 4l8 7.2V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-gallery" viewBox="0 0 24 24"><path d="M5 21V10a7 7 0 0 1 14 0v11"/><path d="M5 21h14M9 21v-6a3 3 0 0 1 6 0"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20.2c.6-3.7 3.7-5.7 7.2-5.7s6.6 2 7.2 5.7"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7H8l1.2-2h5.6L16 7h2.5A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-mark" viewBox="0 0 24 24"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><path d="M5 3.5h14a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V5A1.5 1.5 0 0 1 5 3.5z"/><path d="m20.5 15.5-4.5-4.5-9.5 9.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-frame" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></symbol>
+  </defs>
+</svg>
+
+<div class="page" id="home">
+  <div class="kicker">ArtLore · Home redesign</div>
+  <h1>A home screen that feels like walking into your own museum.</h1>
+  <p class="lede">
+    ArtLore does one thing better than anything else: you point at a painting and it tells you its story.
+    So the redesign puts that moment first, then lays the rest of the visit out the way a gallery does —
+    the work of the day, your own wall, what you saw last, and where to wander next.
+    It keeps everything that already makes the app yours: Inter, the gold-on-near-black palette, the scanning frame,
+    the photo polaroids, the hanging frames and the lamp navigation.
+  </p>
+  <div class="sc-nav"><a href="#home">Home screen</a><a href="#scan">Scan screen</a><a href="#scan2">Scan screen 2</a><a href="#analyse2">Analysing 2</a></div>
+
+  <div class="stage">
+
+    <!-- ===================== DARK ===================== -->
+    <figure>
+      <div class="phone dark">
+        <div class="status"><span>9:41</span><i>
+          <svg viewBox="0 0 24 24"><path d="M2 18h3v3H2zM7 14h3v7H7zM12 10h3v11h-3zM17 5h3v16h-3z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 19.5 1.6 8.7a14.6 14.6 0 0 1 20.8 0z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M3 8h15a2 2 0 0 1 2 2v1h1.5v3H20v1a2 2 0 0 1-2 2H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/></svg>
+        </i></div>
+
+        <div class="scroll">
+          <div class="head">
+            <div class="hello"><small>Good evening</small><b>Hanan</b></div>
+            <div class="tools">
+              <div class="round"><svg><use href="#i-search"/></svg></div>
+              <div class="round avatar">H</div>
+            </div>
+          </div>
+
+          <!-- 1 · Scan stage -->
+          <div class="scanstage">
+            <div class="viewfinder">
+              <img src="../assets/artworks/starry_night.jpg" alt="">
+              <div class="vf-vignette"></div>
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div class="scanline"></div>
+              <div class="vf-tag">Point at any painting</div>
+            </div>
+            <div class="stage-copy">
+              <div>
+                <h2>Every painting<br>has a <em>story.</em></h2>
+                <p>Scan a masterpiece and uncover the story behind every brushstroke.</p>
+              </div>
+              <div class="shutter"><svg><use href="#i-camera"/></svg></div>
+            </div>
+          </div>
+
+          <!-- 2 · Two ways in -->
+          <div class="quick">
+            <div class="qa">
+              <div class="polas">
+                <div class="pola a"><img src="../assets/artworks/great_wave.jpg" alt=""></div>
+                <div class="pola b"><img src="../assets/artworks/pearl_earring.jpg" alt=""></div>
+              </div>
+              <svg class="arrow"><use href="#i-arrow"/></svg>
+              <div class="copy"><b>Scan from Photos</b><small>Discover art from your gallery</small></div>
+            </div>
+            <div class="qa">
+              <div class="mini-wall">
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/the_kiss.jpg" alt=""></div></div></div>
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/milkmaid.jpg" alt=""></div></div></div>
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/great_wave.jpg" alt=""></div></div></div>
+              </div>
+              <div class="copy low"><b>My Collection</b><span class="pill">3 works saved</span></div>
+            </div>
+          </div>
+
+          <!-- 3 · Artwork of the day -->
+          <div class="sec">
+            <div class="sec-head"><h3>In the gallery today</h3><a>See all <svg width="14" height="14" style="stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><use href="#i-chev"/></svg></a></div>
+            <div class="aotd">
+              <img src="../assets/artworks/impression_sunrise.jpg" alt="">
+              <span class="badge">Artwork of the day</span>
+              <span class="save"><svg viewBox="0 0 24 24"><use href="#i-mark"/></svg></span>
+              <div class="info">
+                <small>Claude Monet · 1872 · Musée Marmottan</small>
+                <h4>Impression, Sunrise</h4>
+                <p>The harbour at Le Havre in a quarter-hour of mist — the picture that gave a whole movement its name.</p>
+                <div class="row">
+                  <span class="btn solid">Read the story</span>
+                  <span class="btn ghost"><svg viewBox="0 0 24 24"><use href="#i-play"/></svg>Listen · 2 min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 · Your wall -->
+          <div class="sec">
+            <div class="sec-head"><h3>Your wall</h3><span>3 works</span></div>
+            <div class="wall">
+              <div class="frames">
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/the_kiss.jpg" alt=""></div></div></div>
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/milkmaid.jpg" alt=""></div></div></div>
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/great_wave.jpg" alt=""></div></div></div>
+              </div>
+              <div class="caption">
+                <div><b>Saved from your scans</b><span>Newest first · hang up to three</span></div>
+                <div class="go"><svg viewBox="0 0 24 24"><use href="#i-right"/></svg></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5 · Recent scans -->
+          <div class="sec recent">
+            <div class="sec-head"><h3>Recent scans</h3><span class="count"><b data-now>1</b> / <i data-total>5</i></span></div>
+            <div class="deck" data-deck tabindex="0" aria-label="Recent scans">
+              <div class="cards"></div>
+            </div>
+            <div class="dinfo" data-info></div>
+            <div class="dots" data-dots></div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-head"><h3>Wander by movement</h3></div>
+            <div class="chips">
+              <span class="chip on">All</span><span class="chip">Impressionism</span><span class="chip">Baroque</span><span class="chip">Romanticism</span><span class="chip">Ukiyo-e</span><span class="chip">Post-Impressionism</span>
+            </div>
+            <div class="artists">
+              <div class="artist"><div class="ph"><img src="../assets/artworks/starry_night.jpg" alt=""></div>Van Gogh</div>
+              <div class="artist"><div class="ph"><img src="../assets/artworks/impression_sunrise.jpg" alt=""></div>Monet</div>
+              <div class="artist"><div class="ph"><img src="../assets/artworks/pearl_earring.jpg" alt=""></div>Vermeer</div>
+              <div class="artist"><div class="ph"><img src="../assets/artworks/fighting_temeraire.jpg" alt=""></div>Turner</div>
+              <div class="artist"><div class="ph"><img src="../assets/artworks/grande_jatte.jpg" alt=""></div>Seurat</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav">
+          <div class="pillbar"></div>
+          <div class="tabs">
+            <div class="tab on"><svg><use href="#i-home"/></svg></div>
+            <div class="tab"><svg><use href="#i-gallery"/></svg></div>
+            <div class="tab"><svg><use href="#i-user"/></svg></div>
+          </div>
+          <div class="scan"><svg><use href="#i-camera"/></svg></div>
+        </div>
+        <div class="home-bar"></div>
+      </div>
+      <figcaption>Dark · near-black glass</figcaption>
+    </figure>
+
+    <!-- ===================== LIGHT ===================== -->
+    <figure>
+      <div class="phone light">
+        <div class="status"><span>9:41</span><i>
+          <svg viewBox="0 0 24 24"><path d="M2 18h3v3H2zM7 14h3v7H7zM12 10h3v11h-3zM17 5h3v16h-3z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 19.5 1.6 8.7a14.6 14.6 0 0 1 20.8 0z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M3 8h15a2 2 0 0 1 2 2v1h1.5v3H20v1a2 2 0 0 1-2 2H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/></svg>
+        </i></div>
+
+        <div class="scroll">
+          <div class="head">
+            <div class="hello"><small>Good evening</small><b>Hanan</b></div>
+            <div class="tools">
+              <div class="round"><svg><use href="#i-search"/></svg></div>
+              <div class="round avatar">H</div>
+            </div>
+          </div>
+
+          <div class="scanstage">
+            <div class="viewfinder">
+              <img src="../assets/artworks/starry_night.jpg" alt="">
+              <div class="vf-vignette"></div>
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div class="scanline"></div>
+              <div class="vf-tag">Point at any painting</div>
+            </div>
+            <div class="stage-copy">
+              <div>
+                <h2>Every painting<br>has a <em>story.</em></h2>
+                <p>Scan a masterpiece and uncover the story behind every brushstroke.</p>
+              </div>
+              <div class="shutter"><svg><use href="#i-camera"/></svg></div>
+            </div>
+          </div>
+
+          <div class="quick">
+            <div class="qa">
+              <div class="polas">
+                <div class="pola a"><img src="../assets/artworks/great_wave.jpg" alt=""></div>
+                <div class="pola b"><img src="../assets/artworks/pearl_earring.jpg" alt=""></div>
+              </div>
+              <svg class="arrow"><use href="#i-arrow"/></svg>
+              <div class="copy"><b>Scan from Photos</b><small>Discover art from your gallery</small></div>
+            </div>
+            <div class="qa">
+              <div class="mini-wall">
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/the_kiss.jpg" alt=""></div></div></div>
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/milkmaid.jpg" alt=""></div></div></div>
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/great_wave.jpg" alt=""></div></div></div>
+              </div>
+              <div class="copy low"><b>My Collection</b><span class="pill">3 works saved</span></div>
+            </div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-head"><h3>In the gallery today</h3><a>See all <svg width="14" height="14" style="stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><use href="#i-chev"/></svg></a></div>
+            <div class="aotd">
+              <img src="../assets/artworks/impression_sunrise.jpg" alt="">
+              <span class="badge">Artwork of the day</span>
+              <span class="save"><svg viewBox="0 0 24 24"><use href="#i-mark"/></svg></span>
+              <div class="info">
+                <small>Claude Monet · 1872 · Musée Marmottan</small>
+                <h4>Impression, Sunrise</h4>
+                <p>The harbour at Le Havre in a quarter-hour of mist — the picture that gave a whole movement its name.</p>
+                <div class="row">
+                  <span class="btn solid">Read the story</span>
+                  <span class="btn ghost"><svg viewBox="0 0 24 24"><use href="#i-play"/></svg>Listen · 2 min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-head"><h3>Your wall</h3><span>3 works</span></div>
+            <div class="wall">
+              <div class="frames">
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/the_kiss.jpg" alt=""></div></div></div>
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/milkmaid.jpg" alt=""></div></div></div>
+                <div class="hang"><div class="nail"></div><div class="wire"></div><div class="fr"><div><img src="../assets/artworks/great_wave.jpg" alt=""></div></div></div>
+              </div>
+              <div class="caption">
+                <div><b>Saved from your scans</b><span>Newest first · hang up to three</span></div>
+                <div class="go"><svg viewBox="0 0 24 24"><use href="#i-right"/></svg></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sec recent">
+            <div class="sec-head"><h3>Recent scans</h3><span class="count"><b data-now>1</b> / <i data-total>5</i></span></div>
+            <div class="deck" data-deck tabindex="0" aria-label="Recent scans">
+              <div class="cards"></div>
+            </div>
+            <div class="dinfo" data-info></div>
+            <div class="dots" data-dots></div>
+          </div>
+
+          <div class="sec">
+            <div class="sec-head"><h3>Wander by movement</h3></div>
+            <div class="chips">
+              <span class="chip on">All</span><span class="chip">Impressionism</span><span class="chip">Baroque</span><span class="chip">Romanticism</span><span class="chip">Ukiyo-e</span><span class="chip">Post-Impressionism</span>
+            </div>
+            <div class="artists">
+              <div class="artist"><div class="ph"><img src="../assets/artworks/starry_night.jpg" alt=""></div>Van Gogh</div>
+              <div class="artist"><div class="ph"><img src="../assets/artworks/impression_sunrise.jpg" alt=""></div>Monet</div>
+              <div class="artist"><div class="ph"><img src="../assets/artworks/pearl_earring.jpg" alt=""></div>Vermeer</div>
+              <div class="artist"><div class="ph"><img src="../assets/artworks/fighting_temeraire.jpg" alt=""></div>Turner</div>
+              <div class="artist"><div class="ph"><img src="../assets/artworks/grande_jatte.jpg" alt=""></div>Seurat</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav">
+          <div class="pillbar"></div>
+          <div class="tabs">
+            <div class="tab on"><svg><use href="#i-home"/></svg></div>
+            <div class="tab"><svg><use href="#i-gallery"/></svg></div>
+            <div class="tab"><svg><use href="#i-user"/></svg></div>
+          </div>
+          <div class="scan"><svg><use href="#i-camera"/></svg></div>
+        </div>
+        <div class="home-bar"></div>
+      </div>
+      <figcaption>Light · warm paper</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="section">Why this layout suits ArtLore</h2>
+  <div class="notes">
+    <div class="note"><b>01 · Scan first</b><h3>The viewfinder is the hero</h3><p>Scanning is the app's reason to exist, so the first thing you see is the live scanning frame — corner brackets, a light passing over a painting — with the shutter right under your thumb. The nav's scan button stays too, so it is reachable from every tab.</p></div>
+    <div class="note"><b>02 · A reason to open it daily</b><h3>In the gallery today</h3><p>An editorial artwork of the day with a two-minute story and an audio option gives the home screen something new each visit, without asking the visitor to scan anything. It is where ArtLore's storytelling shows up before a scan ever happens.</p></div>
+    <div class="note"><b>03 · Yours</b><h3>The wall of saved works</h3><p>My Collection becomes a wall: up to three frames, newest first, hanging from a rail and swaying gently. It shows what the visitor has made of the app, and the same frames shrink into the quick-action card above.</p></div>
+    <div class="note"><b>04 · Continuity</b><h3>Recent scans and wandering</h3><p>Recent scans become a cover-flow deck: the latest scan sits in front, the earlier ones fan out behind it in depth, and each card that comes forward draws its match ring and is briefly re-scanned by the light. Swipe, tap a card, or let it turn by itself. Below it, movement chips and a row of artists open the door to browsing.</p></div>
+    <div class="note"><b>05 · Same identity</b><h3>Nothing borrowed, nothing lost</h3><p>Inter throughout, the app's near-black ground with ivory type and gold accents (and the warm-paper light mode), frosted-glass surfaces with a fine edge, the polaroid pair, the gilded hanging frames and the lamp navigation with its docked scan button.</p></div>
+    <div class="note"><b>06 · Motion</b><h3>Quiet, physical movement</h3><p>The scan light sweeps; the painting drifts slowly behind it; frames swing on their wires, each on its own beat; the lamp breathes; polaroids fan out on hover; recent scans fan out as you reach them and turn on their own, each card drawing its match ring as it comes forward. All of it stops with the system's reduced-motion setting.</p></div>
+  </div>
+
+
+  <section class="scan-sec" id="scan">
+    <div class="kicker">ArtLore · Scan screen redesign</div>
+    <h1>A camera that reads the wall in front of it.</h1>
+    <p class="lede">
+      The old screen was a frame on a blur. This one treats the camera as the start of the story:
+      it looks at a real room, finds the painting at whatever angle you hold the phone, traces it,
+      lifts its colours out, and hands you the answer as a card — all in the app's gold, ivory and frosted glass.
+      Click a step on the left, or let it play; it moves through the four moments of a scan on its own.
+    </p>
+    <div class="scan-wrap">
+      <div>
+        <div class="flow" id="flow">
+          <button class="on" data-go="0"><span class="n">1</span><span><h4>Aim</h4><p>A gallery wall drifts in the viewfinder like a hand-held camera. A focus ring hunts for the painting; nothing else asks for your attention.</p></span><i class="bar"></i></button>
+          <button data-go="1"><span class="n">2</span><span><h4>Lock</h4><p>The painting is found at its real angle. A gold outline draws itself around the frame, four nodes pop onto the corners, and the headline chip says so.</p></span><i class="bar"></i></button>
+          <button data-go="2"><span class="n">3</span><span><h4>Read</h4><p>A beam sweeps the canvas and feature points light up. Readouts float in — brushwork, colour, movement — and the five colours the camera pulled out of the painting drop below it.</p></span><i class="bar"></i></button>
+          <button data-go="3"><span class="n">4</span><span><h4>Answer</h4><p>A shutter flash, the painting glides up and settles, and a card rises with its name, artist, palette and the two ways in: read the story, or look closer.</p></span><i class="bar"></i></button>
+        </div>
+        <div class="flow-tools"><button id="flow-pause">Pause</button><button id="flow-next">Next step</button></div>
+      </div>
+      <figure>
+        <div class="phone sx" id="sx" data-stage="0">
+          <div class="status"><span>9:41</span><i>
+            <svg viewBox="0 0 24 24"><path d="M2 18h3v3H2zM7 14h3v7H7zM12 10h3v11h-3zM17 5h3v16h-3z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M12 19.5 1.6 8.7a14.6 14.6 0 0 1 20.8 0z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M3 8h15a2 2 0 0 1 2 2v1h1.5v3H20v1a2 2 0 0 1-2 2H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/></svg>
+          </i></div>
+
+          <div class="scene">
+            <div class="wall-bg"></div>
+            <div class="light"></div>
+            <div class="plane">
+              <div class="gilt"><div><img src="../assets/artworks/starry_night.jpg" alt=""></div></div>
+              <div class="beam"><i style="left:14%;top:20%;animation-delay:.1s"></i><i style="left:68%;top:14%;animation-delay:.35s"></i><i style="left:42%;top:46%;animation-delay:.6s"></i><i style="left:82%;top:58%;animation-delay:.85s"></i><i style="left:24%;top:72%;animation-delay:1.1s"></i><i style="left:58%;top:84%;animation-delay:1.3s"></i><i style="left:8%;top:52%;animation-delay:.5s"></i></div>
+              <i class="trace"></i>
+              <i class="node a"></i><i class="node b"></i><i class="node c"></i><i class="node d"></i>
+            </div>
+            <div class="focus"></div>
+          </div>
+
+          <div class="bar">
+            <div class="gb"><svg><use href="#i-x"/></svg></div>
+            <div class="seg"><span class="on">Painting</span><span>Photo</span></div>
+            <div class="gb"><svg><use href="#i-bolt"/></svg></div>
+          </div>
+
+          <div class="chip">
+            <i class="dot"></i>
+            <span class="txt">
+              <b class="s0">Point at a painting</b>
+              <b class="s1">Painting found</b>
+              <b class="s2">Reading the brushwork…</b>
+            </span>
+          </div>
+          <div class="tag t1">Impasto · thick, directional</div>
+          <div class="tag t2">Cobalt &amp; lemon yellow</div>
+          <div class="tag t3">Post-Impressionism</div>
+          <div class="palette"><i style="background:#1f3f7a"></i><i style="background:#2f6aa8"></i><i style="background:#e6c24a"></i><i style="background:#7fa0b8"></i><i style="background:#14202e"></i></div>
+          <div class="plabel">Palette from the painting</div>
+
+          <div class="zoomv"><span>5×</span><span>2×</span><span class="on">1×</span><span>.5</span></div>
+
+          <div class="dock">
+            <div class="thumb"><img src="../assets/artworks/the_kiss.jpg" alt=""><b><svg><use href="#i-image"/></svg></b></div>
+            <div class="shut">
+              <div class="ring"></div>
+              <svg class="arc" viewBox="0 0 90 90"><circle cx="45" cy="45" r="42"/></svg>
+              <div class="core"><svg><use href="#i-camera"/></svg></div>
+            </div>
+            <div class="reset"><svg><use href="#i-undo"/></svg></div>
+          </div>
+
+          <div class="sheet">
+            <div class="grab"></div>
+            <div class="k">Identified · 98% match</div>
+            <h3>The Starry Night</h3>
+            <div class="by">Vincent van Gogh · 1889</div>
+            <div class="meta"><span>Post-Impressionism</span><span>MoMA, New York</span></div>
+            <p>Painted from a barred window at the asylum in Saint-Rémy, just before dawn. The village is invented, the sky is remembered.</p>
+            <div class="sw">Palette <i style="background:#1f3f7a"></i><i style="background:#2f6aa8"></i><i style="background:#e6c24a"></i><i style="background:#7fa0b8"></i><i style="background:#14202e"></i></div>
+            <div class="acts"><b>Read the story <svg viewBox="0 0 24 24"><use href="#i-right"/></svg></b><b>Look closer <svg viewBox="0 0 24 24"><use href="#i-frame"/></svg></b></div>
+          </div>
+          <div class="flash"></div>
+          <div class="home-bar" style="background:rgba(245,239,229,.7);z-index:70"></div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="scan-sec" id="scan2">
+    <div class="kicker">ArtLore · Scan screen, second direction</div>
+    <h1>A framed viewfinder over a light tray.</h1>
+    <p class="lede">
+      Built from the reference layout and changed to suit a painting app: the same simple header and light tray,
+      but no mode tabs. A painting is the only thing it looks for, so the frame is a gallery-proportioned portrait
+      with gold corners and a slow beam, the hint speaks about the canvas, and the shutter is the app's gold.
+      Tap 1× 2× 3× to zoom the picture.
+    </p>
+    <div class="scan-wrap" style="grid-template-columns: 1fr;justify-items:center">
+      <figure>
+        <div class="phone sv" id="sv">
+          <div class="status"><span>9:41</span><i>
+            <svg viewBox="0 0 24 24"><path d="M2 18h3v3H2zM7 14h3v7H7zM12 10h3v11h-3zM17 5h3v16h-3z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M12 19.5 1.6 8.7a14.6 14.6 0 0 1 20.8 0z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M3 8h15a2 2 0 0 1 2 2v1h1.5v3H20v1a2 2 0 0 1-2 2H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/></svg>
+          </i></div>
+          <div class="feed"><img src="../assets/artworks/starry_night.jpg" alt=""></div>
+          <div class="top">
+            <div class="rb"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></div>
+            <h2>Scan a Painting</h2>
+            <div class="rb ghost"><svg><use href="#i-bolt"/></svg></div>
+            <div class="rb"><svg><use href="#i-x"/></svg></div>
+          </div>
+          <div class="frame"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><div class="sweep"></div></div>
+          <div class="hint">Center the painting within the frame</div>
+          <div class="tray">
+            <div class="zooms"><button class="on" data-z="1">1×</button><button data-z="2">2×</button><button data-z="3">3×</button></div>
+            <div class="ruler-wrap"><div class="ruler"></div><u style="left:50%"></u><u style="left:92%"></u><b></b></div>
+            <div class="dock2">
+              <div class="gal"><img src="../assets/artworks/the_kiss.jpg" alt=""></div>
+              <div class="shut2"><div class="core"><svg><use href="#i-camera"/></svg></div></div>
+              <div class="flip"><svg><use href="#i-undo"/></svg></div>
+            </div>
+          </div>
+          <div class="home-bar" style="background:rgba(43,36,32,.55);z-index:70"></div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="scan-sec" id="analyse2">
+    <div class="kicker">ArtLore · Analysing screen, second direction</div>
+    <h1>The canvas turns while a bar reads it.</h1>
+    <p class="lede">
+      Taken from the reference clip: the object spins on a turntable, a bar rides along it, and what the bar has
+      passed becomes readable. Here the object is the painting you just scanned. It arrives edge-on, turns a full
+      turn and three quarters (showing the back of a real canvas on the way), and lands square to you while a
+      gold bar climbs it and the colour floods in below. Then the analysis lands: brushwork is traced, points light up,
+      readouts and the palette appear, and the painting turns away to hand over to the story. It loops.
+    </p>
+    <div class="scan-wrap" style="grid-template-columns: 1fr;justify-items:center">
+      <figure>
+        <div class="phone an">
+          <div class="status"><span>9:41</span><i>
+            <svg viewBox="0 0 24 24"><path d="M2 18h3v3H2zM7 14h3v7H7zM12 10h3v11h-3zM17 5h3v16h-3z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M12 19.5 1.6 8.7a14.6 14.6 0 0 1 20.8 0z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M3 8h15a2 2 0 0 1 2 2v1h1.5v3H20v1a2 2 0 0 1-2 2H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/></svg>
+          </i></div>
+          <div class="floor"></div>
+          <div class="hdr">
+            <small>Analysing</small>
+            <div class="steps">
+              <b>Finding the canvas…</b><b>Reading colour…</b><b>Tracing brushwork…</b><b>Recognising the work…</b>
+            </div>
+          </div>
+          <div class="stage3d"><div class="sway"><div class="card">
+            <div class="face front">
+              <div class="gilt"><div><div class="art">
+                <img class="raw" src="../assets/artworks/starry_night.jpg" alt="">
+                <img class="lit" src="../assets/artworks/starry_night.jpg" alt="">
+                <svg class="trace" viewBox="0 0 226 292" preserveAspectRatio="none">
+                  <path pathLength="1" d="M20 70 C60 20 140 30 150 78 C158 118 100 128 92 96 C86 70 120 60 128 80"/>
+                  <path pathLength="1" d="M120 150 C150 118 212 130 210 176 C208 212 160 214 156 184 C154 166 178 158 184 170"/>
+                  <path pathLength="1" d="M0 232 C50 205 96 236 140 222 C176 210 200 228 226 214"/>
+                  <path pathLength="1" d="M44 292 C34 220 50 160 62 118 C72 160 80 220 74 292"/>
+                  <circle class="pt" cx="34" cy="70" r="3"/><circle class="pt" cx="150" cy="78" r="3"/><circle class="pt" cx="92" cy="96" r="3" style="animation-delay:.15s"/>
+                  <circle class="pt" cx="210" cy="176" r="3" style="animation-delay:.3s"/><circle class="pt" cx="156" cy="184" r="3" style="animation-delay:.45s"/>
+                  <circle class="pt" cx="62" cy="118" r="3" style="animation-delay:.6s"/><circle class="pt" cx="140" cy="222" r="3" style="animation-delay:.75s"/><circle class="pt" cx="190" cy="40" r="3" style="animation-delay:.9s"/>
+                </svg>
+              </div></div></div>
+              <div class="track"><div class="plank"><i class="fr"></i><i class="tp"></i></div></div>
+            </div>
+            <div class="face back"><div class="lbl">ArtLore<i></i><i></i><i style="width:60%"></i></div></div>
+          </div></div></div>
+          <div class="chipx c1">Impasto · thick, directional</div>
+          <div class="chipx c2">Cobalt &amp; lemon yellow</div>
+          <div class="chipx c3">Post-Impressionism</div>
+          <div class="pal"><i style="background:#1f3f7a"></i><i style="background:#2f6aa8"></i><i style="background:#e6c24a"></i><i style="background:#7fa0b8"></i><i style="background:#14202e"></i></div>
+          <div class="plab">Palette from the painting</div>
+          <div class="prog"><div class="bar"><i></i></div><p><span>Comparing with 2,400 masterworks</span><span class="pct"></span></p></div>
+          <div class="home-bar" style="background:rgba(245,239,229,.7);z-index:70"></div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+</div>
+<script>
+(() => {
+  const SCANS = [
+    { img: 'the_kiss.jpg',        title: 'The Kiss',                     artist: 'Gustav Klimt',   year: '1908', move: 'Symbolism',          where: 'Belvedere, Vienna',          when: '6M AGO',    match: .98 },
+    { img: 'great_wave.jpg',      title: 'The Great Wave',               artist: 'Hokusai',        year: '1831', move: 'Ukiyo-e',            where: 'The Met, New York',          when: '1H AGO',    match: .99 },
+    { img: 'wanderer.jpg',        title: 'Wanderer above the Sea of Fog', artist: 'C. D. Friedrich', year: '1818', move: 'Romanticism',      where: 'Kunsthalle, Hamburg',        when: 'YESTERDAY', match: .96 },
+    { img: 'sunflowers.jpg',      title: 'Sunflowers',                   artist: 'Vincent van Gogh', year: '1888', move: 'Post-Impressionism', where: 'National Gallery, London', when: '2D AGO',    match: .97 },
+    { img: 'pearl_earring.jpg',   title: 'Girl with a Pearl Earring',    artist: 'Johannes Vermeer', year: '1665', move: 'Dutch Golden Age', where: 'Mauritshuis, The Hague',     when: '3D AGO',    match: .95 },
+  ];
+  const INTERVAL = 3800;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cls = o => o === 0 ? 'p0' : o === 1 ? 'p1' : o === -1 ? 'pm1' : o === 2 ? 'p2' : o === -2 ? 'pm2' : 'ph';
+
+  document.querySelectorAll('.recent').forEach(root => {
+    const deck = root.querySelector('[data-deck]');
+    const stage = deck.querySelector('.cards');
+    const info = root.querySelector('[data-info]');
+    const dotsEl = root.querySelector('[data-dots]');
+    const now = root.querySelector('[data-now]');
+    root.querySelector('[data-total]').textContent = SCANS.length;
+    const n = SCANS.length;
+    let cur = 0, timer = null, held = false;
+
+    const cards = SCANS.map((s, i) => {
+      const el = document.createElement('div');
+      el.className = 'dcard';
+      el.style.setProperty('--match', s.match);
+      el.innerHTML =
+        `<img src="../assets/artworks/${s.img}" alt="${s.title}" draggable="false">` +
+        `<div class="sweep"></div>` +
+        `<div class="brk"><i></i><i></i><i></i><i></i></div>` +
+        `<span class="when">${s.when}</span>` +
+        `<div class="ring"><svg viewBox="0 0 40 40"><circle class="trk" cx="20" cy="20" r="16" /><circle class="val" cx="20" cy="20" r="16" pathLength="100.5" /></svg><b>${Math.round(s.match*100)}</b></div>` +
+        `<div class="name"><small>${s.artist}</small>${s.title}</div>`;
+      el.addEventListener('click', () => { if (!dragged) go(i, true); });
+      stage.appendChild(el);
+      return el;
+    });
+    const dots = SCANS.map((_, i) => {
+      const b = document.createElement('button');
+      b.setAttribute('aria-label', 'Scan ' + (i + 1));
+      b.addEventListener('click', () => go(i, true));
+      dotsEl.appendChild(b);
+      return b;
+    });
+
+    function offset(i) { let o = (i - cur) % n; if (o > n / 2) o -= n; if (o < -n / 2) o += n; return o; }
+
+    function render(first) {
+      cards.forEach((el, i) => {
+        const o = offset(i);
+        el.className = 'dcard ' + cls(o) + (o === 0 ? ' front' : '');
+        if (o === 0) { el.style.zIndex = 5; }
+      });
+      const s = SCANS[cur];
+      now.textContent = cur + 1;
+      info.innerHTML =
+        `<div class="swap"><h4>${s.title}</h4><p>${s.artist} · ${s.year}</p>` +
+        `<div class="tags"><span class="tag gold">${s.move}</span><span class="tag">${s.where}</span></div></div>`;
+      dots.forEach((d, i) => {
+        d.classList.remove('on'); void d.offsetWidth;
+        if (i === cur) d.classList.add('on');
+      });
+      dotsEl.style.setProperty('--dur', INTERVAL + 'ms');
+    }
+
+    function go(i, user) {
+      cur = ((i % n) + n) % n;
+      render();
+      if (user) restart();
+    }
+    function restart() {
+      clearInterval(timer);
+      if (reduce) return;
+      timer = setInterval(() => { if (!held) go(cur + 1); }, INTERVAL);
+    }
+
+    // swipe: drag the deck left or right
+    let sx = null, dragged = false;
+    deck.addEventListener('pointerdown', e => { sx = e.clientX; dragged = false; held = true; dotsEl.classList.add('paused'); deck.setPointerCapture(e.pointerId); });
+    deck.addEventListener('pointermove', e => { if (sx !== null && Math.abs(e.clientX - sx) > 8) dragged = true; });
+    const end = e => {
+      if (sx === null) return;
+      const dx = e.clientX - sx; sx = null;
+      if (Math.abs(dx) > 36) go(cur + (dx < 0 ? 1 : -1), true);
+      held = false; dotsEl.classList.remove('paused');
+      setTimeout(() => dragged = false, 0);
+    };
+    deck.addEventListener('pointerup', end);
+    deck.addEventListener('pointercancel', end);
+    deck.addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(cur + 1, true); if (e.key === 'ArrowLeft') go(cur - 1, true); });
+    deck.addEventListener('mouseenter', () => { held = true; dotsEl.classList.add('paused'); });
+    deck.addEventListener('mouseleave', () => { held = false; dotsEl.classList.remove('paused'); });
+
+    render();
+    // the deck fans out the first time it scrolls into view inside the phone
+    const scroller = root.closest('.scroll');
+    const io = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)) { deck.classList.add('in'); restart(); io.disconnect(); }
+    }, { root: scroller, threshold: .35 });
+    io.observe(deck);
+  });
+})();
+</script>
+<script>
+(() => {
+  const phone = document.getElementById('sx');
+  const flow = document.getElementById('flow');
+  if (!phone || !flow) return;
+  const items = [...flow.querySelectorAll('button')];
+  const DUR = [3200, 2200, 4200, 4600];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let stage = 0, timer = null, paused = false;
+  const pauseBtn = document.getElementById('flow-pause');
+
+  function show(i) {
+    stage = (i + items.length) % items.length;
+    phone.dataset.stage = stage;
+    phone.style.setProperty('--stage', DUR[stage] + 'ms');
+    items.forEach((b, k) => {
+      b.classList.remove('on'); void b.offsetWidth;
+      if (k === stage) { b.classList.add('on'); b.style.setProperty('--d', DUR[stage] + 'ms'); }
+    });
+    clearTimeout(timer);
+    if (!paused && !reduce) timer = setTimeout(() => show(stage + 1), DUR[stage]);
+  }
+  items.forEach((b, k) => b.addEventListener('click', () => show(k)));
+  document.getElementById('flow-next').addEventListener('click', () => show(stage + 1));
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    flow.classList.toggle('paused', paused);
+    pauseBtn.textContent = paused ? 'Play' : 'Pause';
+    if (paused) clearTimeout(timer); else show(stage);
+  });
+  // start when it scrolls into view, so the first loop is seen
+  const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { show(0); io.disconnect(); } }, { threshold: .3 });
+  io.observe(phone);
+  phone.dataset.stage = 0;
+})();
+</script>
+
+<script>
+(() => {
+  const root = document.getElementById('sv'); if (!root) return;
+  const pos = { 1: '8%', 2: '50%', 3: '92%' };
+  root.querySelectorAll('.zooms button').forEach(b => b.addEventListener('click', () => {
+    root.querySelectorAll('.zooms button').forEach(x => x.classList.toggle('on', x === b));
+    root.style.setProperty('--z', 1 + (b.dataset.z - 1) * .35);
+    root.querySelector('.ruler-wrap b').style.left = pos[b.dataset.z];
+  }));
+})();
+</script>
+</body>
+</html>

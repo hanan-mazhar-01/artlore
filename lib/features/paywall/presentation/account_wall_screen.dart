@@ -24,7 +24,12 @@ import 'premium_controller.dart';
 /// account or sign in before continuing, before the paywall ever appears.
 /// Pops `true` on success so the caller can resume the scan.
 class AccountWallScreen extends ConsumerStatefulWidget {
-  const AccountWallScreen({super.key});
+  const AccountWallScreen({super.key, this.reason});
+
+  /// Why a guest was sent here: `'save'` (saving a work) or `'wall'` (hanging
+  /// one on the wall). Guests can look around; keeping things needs an
+  /// account. Null means the free scans ran out.
+  final String? reason;
 
   @override
   ConsumerState<AccountWallScreen> createState() => _AccountWallScreenState();
@@ -143,26 +148,60 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
               padding: const EdgeInsets.fromLTRB(26, 20, 26, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  OutlineIconButton(
-                    onTap: () => _busy ? null : context.pop(false),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlineIconButton(
+                      onTap: () => _busy ? null : context.pop(false),
+                    ),
                   ),
-                  const SizedBox(height: 28),
-                  const GoldLabel('Free scans used', tracking: .28),
+                  const SizedBox(height: 44),
+                  GoldLabel(switch (widget.reason) {
+                    'save' => 'Saving needs an account',
+                    'wall' => 'Your wall needs an account',
+                    _ => 'Free scans used',
+                  }, tracking: .28),
                   const SizedBox(height: 14),
                   EditorialHeading(
                     lead: 'Create an account',
-                    emphasis: 'to keep exploring.',
+                    emphasis: switch (widget.reason) {
+                      'save' => 'to save your finds.',
+                      'wall' => 'to hang your favourites.',
+                      _ => 'to keep exploring.',
+                    },
                     style: AppTypography.title,
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    'You\'ve used your free scans as a guest. Sign up — it\'s '
-                    'free — and we\'ll give you a few more.',
-                    style: AppTypography.bodySmall.copyWith(color: p.muted),
-                  ),
+                  Text(switch (widget.reason) {
+                    'save' =>
+                      'Guests can look around, but saving needs an account. '
+                          'Sign up and what you save stays with you.',
+                    'wall' =>
+                      'Guests can look around, but your wall needs an account. '
+                          'Sign up and what you hang stays with you.',
+                    _ =>
+                      'You\'ve used your free scans as a guest. Sign up and '
+                          'we\'ll give you a few more.',
+                  }, style: AppTypography.bodySmall.copyWith(color: p.muted)),
                   const SizedBox(height: 28),
+                  // On iPhone Sign in with Apple comes first and is as
+                  // prominent as the other provider.
+                  if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                    PillButton(
+                      label: 'Continue with Apple',
+                      onTap: _busy ? null : _signInApple,
+                      style: PillStyle.inverse,
+                      leading: ArtIcon(
+                        ArtIcons.apple,
+                        size: 16,
+                        color: p.onInverse,
+                      ),
+                      loading:
+                          _busy && _loadingMessage?.contains('Apple') == true,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   PillButton(
                     label: 'Continue with Google',
                     onTap: _busy ? null : _signInGoogle,
@@ -171,17 +210,6 @@ class _AccountWallScreenState extends ConsumerState<AccountWallScreen> {
                     loading:
                         _busy && _loadingMessage?.contains('Google') == true,
                   ),
-                  if (defaultTargetPlatform == TargetPlatform.iOS) ...[
-                    const SizedBox(height: 10),
-                    PillButton(
-                      label: 'Continue with Apple',
-                      onTap: _busy ? null : _signInApple,
-                      style: PillStyle.outline,
-                      leading: ArtIcon(ArtIcons.apple, size: 16, color: p.ink),
-                      loading:
-                          _busy && _loadingMessage?.contains('Apple') == true,
-                    ),
-                  ],
                   const SizedBox(height: 10),
                   PillButton(
                     label: 'Continue with email',

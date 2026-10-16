@@ -175,13 +175,17 @@ class _PersonalityBody extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
-                                border: Border(top: BorderSide(color: p.line(.08))),
+                                border: Border(
+                                  top: BorderSide(color: p.line(.08)),
+                                ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         label,
@@ -232,20 +236,12 @@ class _PersonalityBody extends StatelessWidget {
                               value: journey.stats.artworks,
                               label: 'Artworks',
                             ),
-                            Container(
-                              width: 1,
-                              height: 32,
-                              color: p.line(.1),
-                            ),
+                            Container(width: 1, height: 32, color: p.line(.1)),
                             _StatBadge(
                               value: journey.stats.artists,
                               label: 'Artists',
                             ),
-                            Container(
-                              width: 1,
-                              height: 32,
-                              color: p.line(.1),
-                            ),
+                            Container(width: 1, height: 32, color: p.line(.1)),
                             _StatBadge(
                               value: journey.stats.movements,
                               label: 'Movements',
@@ -292,15 +288,18 @@ class _PersonalityBody extends StatelessWidget {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                for (var i = 0;
-                                    i < journey.painters.length;
-                                    i++) ...[
+                                for (
+                                  var i = 0;
+                                  i < journey.painters.length;
+                                  i++
+                                ) ...[
                                   if (i > 0) const SizedBox(width: 12),
                                   Expanded(
                                     child: _Painter(
                                       painter: journey.painters[i],
-                                      shape: _painterShapes[
-                                          i % _painterShapes.length],
+                                      shape:
+                                          _painterShapes[i %
+                                              _painterShapes.length],
                                     ),
                                   ),
                                 ],
@@ -322,7 +321,11 @@ class _PersonalityBody extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              ArtIcon(ArtIcons.brush, size: 18, color: p.accent),
+                              ArtIcon(
+                                ArtIcons.brush,
+                                size: 18,
+                                color: p.accent,
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
@@ -363,16 +366,18 @@ class _StatBadge extends StatelessWidget {
       children: [
         Text(
           '$value',
-          style: AppTypography.sans(20, weight: FontWeight.w500).copyWith(
-            color: p.ink,
-          ),
+          style: AppTypography.sans(
+            20,
+            weight: FontWeight.w500,
+          ).copyWith(color: p.ink),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: AppTypography.sans(11, weight: FontWeight.w500).copyWith(
-            color: p.muted,
-          ),
+          style: AppTypography.sans(
+            11,
+            weight: FontWeight.w500,
+          ).copyWith(color: p.muted),
         ),
       ],
     );
@@ -415,9 +420,10 @@ class _Painter extends StatelessWidget {
           painter.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.sans(13, weight: FontWeight.w500).copyWith(
-            color: p.ink,
-          ),
+          style: AppTypography.sans(
+            13,
+            weight: FontWeight.w500,
+          ).copyWith(color: p.ink),
         ),
         Text(
           painter.artwork.title,

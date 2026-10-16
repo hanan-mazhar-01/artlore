@@ -48,8 +48,9 @@ class ParallaxHero extends StatelessWidget {
             animation: scroll,
             child: image,
             builder: (context, child) {
-              final offset =
-                  scroll.positions.isNotEmpty ? scroll.positions.first.pixels : 0.0;
+              final offset = scroll.positions.isNotEmpty
+                  ? scroll.positions.first.pixels
+                  : 0.0;
               return Transform.translate(
                 offset: Offset(0, offset > 0 ? offset * .35 : 0),
                 child: Transform.scale(

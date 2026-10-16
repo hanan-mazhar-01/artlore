@@ -71,6 +71,25 @@ abstract final class ArtIcons {
     'M3 21V9a6 6 0 0 1 12 0v12z',
     'M18 21V12a3 3 0 0 1 3-3',
   ]);
+
+  /// A picture hanging from a nail by its two wires — "hang on the wall".
+  static const wall = ArtIconData(
+    [
+      'M12 3.8L6.4 9M12 3.8L17.6 9',
+      'M5.5 9h13a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z',
+      'M8 17l2.6-3 2 2.2 1.6-1.6L16 17',
+    ],
+    fills: ['M10.8 3.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0'],
+  );
+  static const info = ArtIconData(
+    ['M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0 -17 0', 'M12 11v5.2'],
+    fills: ['M10.9 7.9a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0'],
+  );
+  static const trash = ArtIconData([
+    'M4 7h16M10 11v6M14 11v6',
+    'M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12',
+    'M9 7V4h6v3',
+  ]);
   static const person = ArtIconData([
     'M8 8a4 4 0 1 0 8 0a4 4 0 1 0 -8 0',
     'M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5',
@@ -108,6 +127,8 @@ abstract final class ArtIcons {
   ]);
 
   static const arrowUpRight = ArtIconData(['M7 17L17 7M9 7h8v8']);
+
+  static const flip = ArtIconData(['M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5']);
 
   static const camera = ArtIconData([
     'M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z',

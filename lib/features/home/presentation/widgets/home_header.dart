@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/icons/art_icon.dart';
+import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/round_buttons.dart';
 import '../../../../core/widgets/tappable.dart';
 import '../../../profile/presentation/profile_providers.dart';
 import 'home_style.dart';
 
-/// "Hi, Name" over a one-line tagline, and the profile avatar on the right.
+/// "Hi, Name" over a one-line tagline, and the search button and profile avatar on the right.
 class HomeHeader extends ConsumerWidget {
   const HomeHeader({super.key});
 
@@ -20,58 +22,92 @@ class HomeHeader extends ConsumerWidget {
     final firstName = _firstName(profile);
     return Padding(
       padding: EdgeInsets.fromLTRB(22, context.topInset, 22, 0),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  firstName == null ? 'Hi' : 'Hi, $firstName',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.serif(
-                    34,
-                    weight: FontWeight.w700,
-                    height: 1.05,
-                    tracking: -.01,
-                  ).copyWith(color: s.ink),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      firstName == null ? 'Hi' : 'Hi, $firstName',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.serif(
+                        34,
+                        weight: FontWeight.w700,
+                        height: 1.05,
+                        tracking: -.01,
+                      ).copyWith(color: s.ink),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Every masterpiece has a story.',
-                  style: AppTypography.sans(
-                    13.5,
-                    weight: FontWeight.w500,
-                    height: 1.4,
-                  ).copyWith(color: s.muted),
+              ),
+              const SizedBox(width: 12),
+              Tappable(
+                onTap: () => context.push(AppRoutes.search),
+                semanticLabel: 'Search',
+                pressedScale: .92,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: s.surface,
+                  ),
+                  child: ArtIcon(ArtIcons.search, size: 19, color: s.ink),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              Tappable(
+                onTap: () => context.go(AppRoutes.profile),
+                semanticLabel: 'Your profile',
+                pressedScale: .92,
+                child: InitialsAvatar(
+                  initials: profile?.initials ?? '',
+                  imageUrl: profile?.photoUrl,
+                  size: 46,
+                  style: AppTypography.sans(18, weight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Tappable(
-            onTap: () => context.go(AppRoutes.profile),
-            semanticLabel: 'Your profile',
-            pressedScale: .92,
-            child: DecoratedBox(
-              // The design's double ring: a ground-coloured gap, then a hairline.
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: s.line, spreadRadius: 5),
-                  BoxShadow(color: s.ground, spreadRadius: 4),
+          const SizedBox(height: 18),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 290),
+            child: Text.rich(
+              TextSpan(
+                style: AppTypography.serif(
+                  32,
+                  weight: FontWeight.w700,
+                  height: 1.04,
+                ).copyWith(color: s.ink),
+                children: [
+                  const TextSpan(text: 'Every Painting Has a '),
+                  TextSpan(
+                    text: 'Story',
+                    style: TextStyle(color: s.gold),
+                  ),
                 ],
               ),
-              child: InitialsAvatar(
-                initials: profile?.initials ?? '',
-                imageUrl: profile?.photoUrl,
-                size: 46,
-                style: AppTypography.sans(18, weight: FontWeight.w600),
-              ),
             ),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(height: 9),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300),
+            child: Text(
+              'Scan a masterpiece and uncover the story behind every '
+              'brushstroke.',
+              style: AppTypography.sans(
+                13.5,
+                weight: FontWeight.w500,
+                height: 1.45,
+              ).copyWith(color: s.muted),
+            ),
+          ),
         ],
       ),
     );

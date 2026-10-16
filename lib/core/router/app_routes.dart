@@ -40,6 +40,8 @@ abstract final class AppRoutes {
   static const paywall = '/paywall';
   static const accountWall = '/account-wall';
   static const settings = '/settings';
+  static const privacy = '/privacy';
+  static const terms = '/terms';
 }
 
 /// Intent-level navigation helpers built on go_router.

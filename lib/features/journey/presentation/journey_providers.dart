@@ -51,7 +51,9 @@ final artJourneyProvider = FutureProvider<ArtJourney>((ref) async {
   }
   final sortedMovements = movementCounts.entries.toList()
     ..sort((a, b) => b.value.compareTo(a.value));
-  final topMovement = sortedMovements.isNotEmpty ? sortedMovements.first.key : 'Masterpiece';
+  final topMovement = sortedMovements.isNotEmpty
+      ? sortedMovements.first.key
+      : 'Masterpiece';
 
   final count = artworks.length;
   final basis =
@@ -62,30 +64,47 @@ final artJourneyProvider = FutureProvider<ArtJourney>((ref) async {
       .map((a) => ReturningPainter(a.artistShort, a))
       .toList();
 
-  final atmosphericCount = artworks.where((a) =>
-      a.movement.contains('Impression') ||
-      a.movement.contains('Romantic') ||
-      a.movement.contains('Dutch')).length;
-  final emotionalCount = artworks.where((a) =>
-      a.movement.contains('Post') ||
-      a.movement.contains('Expression') ||
-      a.movement.contains('Romantic')).length;
-  final compositionCount = artworks.where((a) =>
-      a.movement.contains('Pointillism') ||
-      a.movement.contains('Realism') ||
-      a.movement.contains('Dutch') ||
-      a.movement.contains('Renaissance')).length;
+  final atmosphericCount = artworks
+      .where(
+        (a) =>
+            a.movement.contains('Impression') ||
+            a.movement.contains('Romantic') ||
+            a.movement.contains('Dutch'),
+      )
+      .length;
+  final emotionalCount = artworks
+      .where(
+        (a) =>
+            a.movement.contains('Post') ||
+            a.movement.contains('Expression') ||
+            a.movement.contains('Romantic'),
+      )
+      .length;
+  final compositionCount = artworks
+      .where(
+        (a) =>
+            a.movement.contains('Pointillism') ||
+            a.movement.contains('Realism') ||
+            a.movement.contains('Dutch') ||
+            a.movement.contains('Renaissance'),
+      )
+      .length;
 
-  final atmosphericScore =
-      ((atmosphericCount / count) * 60 + 35).round().clamp(20, 96);
-  final emotionalScore =
-      ((emotionalCount / count) * 60 + 35).round().clamp(20, 96);
-  final compositionScore =
-      ((compositionCount / count) * 60 + 35).round().clamp(20, 96);
-  final rangeScore =
-      ((artists.length / count) * 50 + (movements.length * 10))
-          .round()
-          .clamp(30, 98);
+  final atmosphericScore = ((atmosphericCount / count) * 60 + 35).round().clamp(
+    20,
+    96,
+  );
+  final emotionalScore = ((emotionalCount / count) * 60 + 35).round().clamp(
+    20,
+    96,
+  );
+  final compositionScore = ((compositionCount / count) * 60 + 35).round().clamp(
+    20,
+    96,
+  );
+  final rangeScore = ((artists.length / count) * 50 + (movements.length * 10))
+      .round()
+      .clamp(30, 98);
 
   final traits = [
     TasteTrait('Atmospheric', atmosphericScore),

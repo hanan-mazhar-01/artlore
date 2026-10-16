@@ -157,11 +157,13 @@ class TextAction extends StatelessWidget {
     required this.onTap,
     this.color,
     this.fontSize = 13,
+    this.bold = false,
     this.padding = const EdgeInsets.symmetric(vertical: 12),
   });
 
   final String label;
   final VoidCallback? onTap;
+  final bool bold;
   final Color? color;
   final double fontSize;
   final EdgeInsets padding;
@@ -175,8 +177,10 @@ class TextAction extends StatelessWidget {
         padding: padding,
         child: Text(
           label,
-          style: AppTypography.sans(fontSize)
-              .copyWith(color: color ?? context.palette.muted),
+          style: AppTypography.sans(
+            fontSize,
+            weight: bold ? FontWeight.w700 : FontWeight.w400,
+          ).copyWith(color: color ?? context.palette.muted),
         ),
       ),
     );

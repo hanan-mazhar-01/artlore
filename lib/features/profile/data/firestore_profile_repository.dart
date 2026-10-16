@@ -7,14 +7,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../artwork/data/dynamic_artwork_storage.dart';
 import '../domain/user_profile.dart';
 
-
 /// Cloud Firestore implementation of [ProfileRepository] with offline fallback.
 class FirestoreProfileRepository implements ProfileRepository {
-  FirestoreProfileRepository({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _customFirestore = firestore,
-        _customAuth = auth;
+  FirestoreProfileRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _customFirestore = firestore,
+      _customAuth = auth;
 
   final FirebaseFirestore? _customFirestore;
   final FirebaseAuth? _customAuth;
@@ -56,7 +53,6 @@ class FirestoreProfileRepository implements ProfileRepository {
     return null;
   }
 
-
   static String _resolveInitialName(User? user) {
     if (user == null) return 'Art Visitor';
     final display = user.displayName?.trim();
@@ -82,8 +78,18 @@ class FirestoreProfileRepository implements ProfileRepository {
   static String _formatMemberSince(User? user) {
     final created = user?.metadata.creationTime ?? DateTime.now();
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[created.month - 1]} ${created.year}';
   }
@@ -102,8 +108,6 @@ class FirestoreProfileRepository implements ProfileRepository {
     try {
       final doc = await firestore.collection('users').doc(user.uid).get();
 
-
-
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         final storedName = (data['name'] as String?)?.trim();
@@ -114,24 +118,29 @@ class FirestoreProfileRepository implements ProfileRepository {
         final emailHandle = (user.email != null && user.email!.contains('@'))
             ? user.email!.split('@').first
             : null;
-        final isEmailHandle = emailHandle != null &&
+        final isEmailHandle =
+            emailHandle != null &&
             (storedName?.toLowerCase() == emailHandle.toLowerCase());
 
-        final isPlaceholder = storedName == null ||
+        final isPlaceholder =
+            storedName == null ||
             storedName.isEmpty ||
             storedName == 'Art Visitor' ||
             storedName == 'Guest Collector' ||
             isEmailHandle;
 
         final resolvedName =
-            (isPlaceholder && initialName != 'Art Visitor' && initialName != 'Guest Collector')
-                ? initialName
-                : (storedName != null && storedName.isNotEmpty ? storedName : initialName);
+            (isPlaceholder &&
+                initialName != 'Art Visitor' &&
+                initialName != 'Guest Collector')
+            ? initialName
+            : (storedName != null && storedName.isNotEmpty
+                  ? storedName
+                  : initialName);
 
         final resolvedPhoto = (storedPhoto != null && storedPhoto.isNotEmpty)
             ? storedPhoto
             : userPhoto;
-
 
         if (storedName != resolvedName || storedPhoto != resolvedPhoto) {
           await firestore.collection('users').doc(user.uid).set({
@@ -146,8 +155,8 @@ class FirestoreProfileRepository implements ProfileRepository {
           name: resolvedName,
           memberSince:
               data['memberSince'] as String? ?? _formatMemberSince(user),
-          listeningTime: data['listeningTime'] as String? ??
-              _defaultProfile.listeningTime,
+          listeningTime:
+              data['listeningTime'] as String? ?? _defaultProfile.listeningTime,
           photoUrl: resolvedPhoto,
         );
       } else {
@@ -168,7 +177,6 @@ class FirestoreProfileRepository implements ProfileRepository {
         listeningTime: '0 min',
         photoUrl: userPhoto,
       );
-
     }
   }
 
@@ -250,13 +258,16 @@ class FirestoreProfileRepository implements ProfileRepository {
 
       // 4. Delete dynamic_artworks subcollection
       try {
-        final dynamicArtworks =
-            await userDoc.collection('dynamic_artworks').get();
+        final dynamicArtworks = await userDoc
+            .collection('dynamic_artworks')
+            .get();
         for (final doc in dynamicArtworks.docs) {
           await doc.reference.delete();
         }
       } catch (e) {
-        debugPrint('FirestoreProfileRepository delete dynamic_artworks error: $e');
+        debugPrint(
+          'FirestoreProfileRepository delete dynamic_artworks error: $e',
+        );
       }
 
       // 5. Delete root user document
@@ -280,27 +291,34 @@ class FirestoreProfileRepository implements ProfileRepository {
       await DynamicArtworkStorage.clearAll();
     } catch (e) {
       debugPrint(
-          'FirestoreProfileRepository deleteAccount storage clear error: $e');
+        'FirestoreProfileRepository deleteAccount storage clear error: $e',
+      );
     }
 
     if (user != null) {
       try {
         await user.delete();
         debugPrint(
-            'FirestoreProfileRepository: user deleted successfully from FirebaseAuth');
+          'FirestoreProfileRepository: user deleted successfully from FirebaseAuth',
+        );
+        return;
       } on FirebaseAuthException catch (e) {
         if (e.code == 'requires-recent-login') {
           debugPrint(
-              'FirestoreProfileRepository: requires-recent-login detected, attempting reauthentication');
-          final isGoogle =
-              user.providerData.any((p) => p.providerId == 'google.com');
-          final isApple =
-              user.providerData.any((p) => p.providerId == 'apple.com');
+            'FirestoreProfileRepository: requires-recent-login detected, attempting reauthentication',
+          );
+          final isGoogle = user.providerData.any(
+            (p) => p.providerId == 'google.com',
+          );
+          final isApple = user.providerData.any(
+            (p) => p.providerId == 'apple.com',
+          );
 
           if (isGoogle) {
             try {
               final googleSignIn = GoogleSignIn(
-                clientId: (defaultTargetPlatform == TargetPlatform.iOS ||
+                clientId:
+                    (defaultTargetPlatform == TargetPlatform.iOS ||
                         defaultTargetPlatform == TargetPlatform.macOS)
                     ? '547369793339-699bhnh9luu389f2j6ero3o28ucr205o.apps.googleusercontent.com'
                     : null,
@@ -319,12 +337,14 @@ class FirestoreProfileRepository implements ProfileRepository {
                 await user.reauthenticateWithCredential(cred);
                 await user.delete();
                 debugPrint(
-                    'FirestoreProfileRepository: user successfully reauthenticated with Google and deleted');
+                  'FirestoreProfileRepository: user successfully reauthenticated with Google and deleted',
+                );
                 return;
               }
             } catch (reauthErr) {
               debugPrint(
-                  'FirestoreProfileRepository: Google re-authentication failed: $reauthErr');
+                'FirestoreProfileRepository: Google re-authentication failed: $reauthErr',
+              );
             }
           } else if (isApple) {
             try {
@@ -332,23 +352,40 @@ class FirestoreProfileRepository implements ProfileRepository {
               await user.reauthenticateWithProvider(appleProvider);
               await user.delete();
               debugPrint(
-                  'FirestoreProfileRepository: user successfully reauthenticated with Apple and deleted');
+                'FirestoreProfileRepository: user successfully reauthenticated with Apple and deleted',
+              );
               return;
             } catch (reauthErr) {
               debugPrint(
-                  'FirestoreProfileRepository: Apple re-authentication failed: $reauthErr');
+                'FirestoreProfileRepository: Apple re-authentication failed: $reauthErr',
+              );
             }
           }
           debugPrint(
-              'FirestoreProfileRepository: FirebaseAuth user delete skipped; data already purged.');
+            'FirestoreProfileRepository: FirebaseAuth user delete skipped; data already purged.',
+          );
         } else {
           debugPrint(
-              'FirestoreProfileRepository delete user FirebaseAuthException: $e');
+            'FirestoreProfileRepository delete user FirebaseAuthException: $e',
+          );
         }
       } catch (e) {
         debugPrint(
-            'FirestoreProfileRepository delete user unexpected error: $e');
+          'FirestoreProfileRepository delete user unexpected error: $e',
+        );
       }
+      // Reaching here means the sign-in itself was not deleted: say so, rather
+      // than letting the visitor believe the account is gone.
+      throw const AccountDeletionException();
     }
   }
+}
+
+/// The account's data was cleared but its sign-in could not be deleted (for
+/// example, the visitor did not complete re-authentication).
+class AccountDeletionException implements Exception {
+  const AccountDeletionException();
+
+  @override
+  String toString() => 'AccountDeletionException';
 }

@@ -56,7 +56,8 @@ class _ToastView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final style = AppTypography.sans(13, weight: FontWeight.w600);
+    final style = AppTypography.sans(13, weight: FontWeight.w600)
+        .copyWith(decoration: TextDecoration.none);
     return Positioned(
       left: 24,
       right: 24,

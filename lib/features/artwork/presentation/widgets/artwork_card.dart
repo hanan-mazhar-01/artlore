@@ -69,22 +69,23 @@ class ArtworkCard extends StatelessWidget {
                   tag: heroTag!,
                   createRectTween: (begin, end) =>
                       AppMotion.rectTween(begin, end),
-                  flightShuttleBuilder: (
-                    flightContext,
-                    animation,
-                    flightDirection,
-                    fromHeroContext,
-                    toHeroContext,
-                  ) {
-                    return AppMotion.heroShuttle(
-                      animation: animation,
-                      flightDirection: flightDirection,
-                      fromHeroContext: fromHeroContext,
-                      toHeroContext: toHeroContext,
-                      startRadius: radius,
-                      endRadius: BorderRadius.zero,
-                    );
-                  },
+                  flightShuttleBuilder:
+                      (
+                        flightContext,
+                        animation,
+                        flightDirection,
+                        fromHeroContext,
+                        toHeroContext,
+                      ) {
+                        return AppMotion.heroShuttle(
+                          animation: animation,
+                          flightDirection: flightDirection,
+                          fromHeroContext: fromHeroContext,
+                          toHeroContext: toHeroContext,
+                          startRadius: radius,
+                          endRadius: BorderRadius.zero,
+                        );
+                      },
                   child: image,
                 ),
         ),

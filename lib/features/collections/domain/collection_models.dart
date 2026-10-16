@@ -66,6 +66,5 @@ abstract interface class CollectionRepository {
   Future<void> clearLocalCache();
 }
 
-
 /// Maximum number of custom user galleries allowed (excluding default Favorites).
 const int maxCustomGalleries = 10;

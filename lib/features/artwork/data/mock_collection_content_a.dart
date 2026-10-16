@@ -38,8 +38,7 @@ final pearlEarringContent = ArtworkContent(
       opening:
           'Painted around 1665 in Delft, this enigmatic canvas was sold for a mere '
           'two guilders after Vermeer\'s death and rediscovered centuries later.',
-      quote:
-          'She turns as if caught between stepping into the room and turning away forever.',
+      quote: 'She turns as if caught between stepping into the room and turning away forever.',
       quoteSource: 'Mauritshuis Collection Archive',
       closing:
           'Vermeer left no diaries and fewer than forty paintings, leaving the '
@@ -65,10 +64,10 @@ final pearlEarringContent = ArtworkContent(
       opening:
           'Unlike traditional portraits commissioned by wealthy patrons, tronies were '
           'painted for the open art market to showcase expressive character.',
-      quote: 'An innocent glance that carries the weight of unspoken centuries.',
+      quote:
+          'An innocent glance that carries the weight of unspoken centuries.',
       quoteSource: 'Johannes Vermeer Monograph',
-      closing:
-          'Her gaze is direct yet guarded, confronting the viewer with timeless vulnerability.',
+      closing: 'Her gaze is direct yet guarded, confronting the viewer with timeless vulnerability.',
     ),
   ],
   comparison: ArtworkComparison(
@@ -173,8 +172,10 @@ final kissContent = ArtworkContent(
         label: 'Surface',
         focusA: focal(.5, .5),
         focusB: focal(.44, .3),
-        textA: 'Flawless gold leaf, delicate silver filigree, and floral mosaics.',
-        textB: 'Thick, churning sculptural impasto straight from the paint tube.',
+        textA:
+            'Flawless gold leaf, delicate silver filigree, and floral mosaics.',
+        textB:
+            'Thick, churning sculptural impasto straight from the paint tube.',
         verdict: 'Vienna luxury versus Provençal raw agony.',
       ),
     ],
@@ -188,8 +189,7 @@ final sunflowersContent = ArtworkContent(
       title: 'The Heavy Seed Heads',
       x: .52,
       y: .45,
-      description:
-          'Thick sculptural impasto builds seeds you can almost touch with your fingertips.',
+      description: 'Thick sculptural impasto builds seeds you can almost touch with your fingertips.',
     ),
     ArtworkDetail(
       title: 'The Yellow Harmony',
@@ -244,8 +244,7 @@ final sunflowersContent = ArtworkContent(
           'vitality, and the cycles of human existence.',
       quote: 'How lovely yellow is! It stands for the sun.',
       quoteSource: 'Van Gogh, letter to Emile Bernard',
-      closing:
-          'Each blossom possesses its own distinct personality — proud, bent, bursting, or serene.',
+      closing: 'Each blossom possesses its own distinct personality — proud, bent, bursting, or serene.',
     ),
   ],
   comparison: ArtworkComparison(

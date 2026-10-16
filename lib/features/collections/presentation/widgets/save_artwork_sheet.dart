@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/providers.dart';
 import '../../../../core/extensions/context_x.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -16,8 +17,24 @@ import '../collection_controller.dart';
 import 'gallery_picker.dart';
 
 /// Opens "Hang it in a gallery" for [artwork].
-Future<void> showSaveArtworkSheet(BuildContext context, Artwork artwork) {
-  return showArtSheet<void>(context, child: SaveArtworkSheet(artwork: artwork));
+///
+/// A guest is asked to make an account first: saving is for accounts.
+Future<void> showSaveArtworkSheet(BuildContext context, Artwork artwork) async {
+  final isGuest =
+      ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(authServiceProvider).currentUser?.isAnonymous ??
+      false;
+  if (isGuest) {
+    final signedUp = await context.push<bool>(
+      AppRoutes.accountWall,
+      extra: 'save',
+    );
+    if (signedUp != true || !context.mounted) return;
+  }
+  if (!context.mounted) return;
+  await showArtSheet<void>(context, child: SaveArtworkSheet(artwork: artwork));
 }
 
 class SaveArtworkSheet extends ConsumerStatefulWidget {

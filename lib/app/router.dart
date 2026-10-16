@@ -13,6 +13,7 @@ import '../features/collections/presentation/collection_screen.dart';
 import '../features/history/presentation/history_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/journey/presentation/personality_screen.dart';
+import '../features/legal/presentation/legal_screen.dart';
 import '../features/onboarding/presentation/email_auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/onboarding/presentation/splash_screen.dart';
@@ -22,6 +23,7 @@ import '../features/paywall/presentation/paywall_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/scan/presentation/analysis/analysis_screen.dart';
 import '../features/search/presentation/search_screen.dart';
+import '../features/scan/presentation/scan_arrival.dart';
 import '../features/scan/presentation/scan_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 
@@ -61,10 +63,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       _route(AppRoutes.splash, (_) => const SplashScreen(), ArtTransition.fade),
       _route(
         AppRoutes.search,
-        (s) => SearchScreen(openFilters: s.uri.queryParameters['filters'] == '1'),
+        (s) =>
+            SearchScreen(openFilters: s.uri.queryParameters['filters'] == '1'),
         ArtTransition.fade,
       ),
       _route(AppRoutes.onboarding, (_) => const OnboardingScreen()),
+      _route(AppRoutes.privacy, (_) => const LegalScreen.privacy()),
+      _route(AppRoutes.terms, (_) => const LegalScreen.terms()),
       _route(AppRoutes.welcome, (_) => const WelcomeScreen()),
       _route(AppRoutes.emailAuth, (_) => const EmailAuthScreen()),
       StatefulShellRoute.indexedStack(
@@ -111,8 +116,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (c, s) => artPage(
           s,
           ArtworkResultScreen(artworkId: s.pathParameters['id']!),
-          transition: ArtTransition.cardZoom,
-          duration: const Duration(milliseconds: 440),
+          // Arriving from a scan: a plain fade, long enough for the picture's
+          // glide and the sheet's rise. Anything else keeps the card zoom.
+          transition: ScanArrival.pending
+              ? ArtTransition.fade
+              : ArtTransition.cardZoom,
+          duration: Duration(milliseconds: ScanArrival.pending ? 800 : 440),
         ),
         routes: [
           GoRoute(
@@ -143,7 +152,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       _route(
         AppRoutes.accountWall,
-        (_) => const AccountWallScreen(),
+        (s) => AccountWallScreen(reason: s.extra as String?),
         ArtTransition.fade,
       ),
       _route(AppRoutes.settings, (_) => const SettingsScreen()),

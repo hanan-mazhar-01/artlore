@@ -8,8 +8,8 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 /// Wraps Firebase Authentication and Google Sign-In with safe fallbacks.
 class AuthService {
   AuthService([FirebaseAuth? auth, GoogleSignIn? googleSignIn])
-      : _customAuth = auth,
-        _customGoogleSignIn = googleSignIn;
+    : _customAuth = auth,
+      _customGoogleSignIn = googleSignIn;
 
   final FirebaseAuth? _customAuth;
   final GoogleSignIn? _customGoogleSignIn;
@@ -25,7 +25,8 @@ class AuthService {
   GoogleSignIn get _googleSignIn =>
       _customGoogleSignIn ??
       GoogleSignIn(
-        clientId: (defaultTargetPlatform == TargetPlatform.iOS ||
+        clientId:
+            (defaultTargetPlatform == TargetPlatform.iOS ||
                 defaultTargetPlatform == TargetPlatform.macOS)
             ? '547369793339-699bhnh9luu389f2j6ero3o28ucr205o.apps.googleusercontent.com'
             : null,
@@ -35,6 +36,10 @@ class AuthService {
 
   Stream<User?> get authStateChanges =>
       _auth?.authStateChanges() ?? const Stream.empty();
+
+  /// Also fires when a guest is upgraded to a real account in place, which
+  /// [authStateChanges] does not.
+  Stream<User?> get userChanges => _auth?.userChanges() ?? const Stream.empty();
 
   /// Signs in with Google. If the current session is a guest (anonymous)
   /// one, links this credential to it instead of replacing it — preserving
@@ -94,12 +99,14 @@ class AuthService {
                 .collection('users')
                 .doc(loggedInUser.uid)
                 .set({
-              if (gName != null && gName.isNotEmpty) 'name': gName,
-              if (gPhoto != null && gPhoto.isNotEmpty) 'photoUrl': gPhoto,
-              'updatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+                  if (gName != null && gName.isNotEmpty) 'name': gName,
+                  if (gPhoto != null && gPhoto.isNotEmpty) 'photoUrl': gPhoto,
+                  'updatedAt': FieldValue.serverTimestamp(),
+                }, SetOptions(merge: true));
           } catch (e) {
-            debugPrint('AuthService: error saving google profile to firestore: $e');
+            debugPrint(
+              'AuthService: error saving google profile to firestore: $e',
+            );
           }
         }
       }
@@ -160,13 +167,17 @@ class AuthService {
                 .collection('users')
                 .doc(loggedInUser.uid)
                 .set({
-              if (appleName != null && appleName.isNotEmpty) 'name': appleName,
-              if (loggedInUser.email != null && loggedInUser.email!.isNotEmpty)
-                'email': loggedInUser.email,
-              'updatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+                  if (appleName != null && appleName.isNotEmpty)
+                    'name': appleName,
+                  if (loggedInUser.email != null &&
+                      loggedInUser.email!.isNotEmpty)
+                    'email': loggedInUser.email,
+                  'updatedAt': FieldValue.serverTimestamp(),
+                }, SetOptions(merge: true));
           } catch (e) {
-            debugPrint('AuthService: error saving apple profile to firestore: $e');
+            debugPrint(
+              'AuthService: error saving apple profile to firestore: $e',
+            );
           }
         }
       }
@@ -262,10 +273,11 @@ class AuthService {
               .collection('users')
               .doc(loggedInUser.uid)
               .set({
-            if (trimmedName != null && trimmedName.isNotEmpty) 'name': trimmedName,
-            'email': email.trim(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+                if (trimmedName != null && trimmedName.isNotEmpty)
+                  'name': trimmedName,
+                'email': email.trim(),
+                'updatedAt': FieldValue.serverTimestamp(),
+              }, SetOptions(merge: true));
         } catch (e) {
           debugPrint('AuthService: error saving registered user profile: $e');
         }

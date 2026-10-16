@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
@@ -16,24 +17,33 @@ final premiumProvider = AsyncNotifierProvider<PremiumController, PremiumStatus>(
 class PremiumController extends AsyncNotifier<PremiumStatus> {
   PurchaseRepository get _repo => ref.read(purchaseRepositoryProvider);
 
+  /// Debug builds only, for testing: a guest can scan as often as they like,
+  /// and no free scans are spent on the real account. Release builds are
+  /// untouched — they always follow the store and the server.
+  static PremiumStatus _forTesting(PremiumStatus status) => kDebugMode
+      ? status.copyWith(freeScansLeft: 999, requiresAccount: false)
+      : status;
+
   @override
-  Future<PremiumStatus> build() =>
-      ref.watch(purchaseRepositoryProvider).fetchStatus();
+  Future<PremiumStatus> build() async =>
+      _forTesting(await ref.watch(purchaseRepositoryProvider).fetchStatus());
 
   /// Returns true when the visitor is premium afterwards.
   Future<bool> purchase(String planId) async {
-    final status = await _repo.purchase(planId);
+    final status = _forTesting(await _repo.purchase(planId));
     state = AsyncData(status);
     return status.isPremium;
   }
 
   Future<bool> restore() async {
-    final status = await _repo.restore();
+    final status = _forTesting(await _repo.restore());
     state = AsyncData(status);
     return status.isPremium;
   }
 
   Future<void> consumeScan() async {
+    // Testing in debug: don't spend the account's real free scans.
+    if (kDebugMode) return;
     state = AsyncData(await _repo.consumeScan());
   }
 
@@ -42,6 +52,6 @@ class PremiumController extends AsyncNotifier<PremiumStatus> {
   /// entitlement doc behind it) just changed.
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = AsyncData(await _repo.fetchStatus());
+    state = AsyncData(_forTesting(await _repo.fetchStatus()));
   }
 }

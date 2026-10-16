@@ -12,11 +12,9 @@ import '../domain/history_entry.dart';
 
 /// Cloud Firestore implementation of [HistoryRepository] with offline fallback.
 class FirestoreHistoryRepository implements HistoryRepository {
-  FirestoreHistoryRepository({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _customFirestore = firestore,
-        _customAuth = auth;
+  FirestoreHistoryRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _customFirestore = firestore,
+      _customAuth = auth;
 
   final FirebaseFirestore? _customFirestore;
   final FirebaseAuth? _customAuth;
@@ -82,7 +80,9 @@ class FirestoreHistoryRepository implements HistoryRepository {
           }
         }
       } catch (e) {
-        debugPrint('FirestoreHistoryRepository: dynamic_artworks sync note: $e');
+        debugPrint(
+          'FirestoreHistoryRepository: dynamic_artworks sync note: $e',
+        );
       }
 
       // 2. Fetch history entries
@@ -91,7 +91,7 @@ class FirestoreHistoryRepository implements HistoryRepository {
           .doc(user.uid)
           .collection('history')
           .orderBy('at', descending: true)
-          .limit(50)
+          .limit(500)
           .get();
 
       if (snap.docs.isEmpty) {
@@ -140,12 +140,12 @@ class FirestoreHistoryRepository implements HistoryRepository {
           .collection('history')
           .doc(entry.id)
           .set({
-        'artworkId': entry.artworkId,
-        'at': Timestamp.fromDate(entry.at),
-        'where': entry.where,
-        'activity': entry.activity,
-        'scanned': entry.scanned,
-      });
+            'artworkId': entry.artworkId,
+            'at': Timestamp.fromDate(entry.at),
+            'where': entry.where,
+            'activity': entry.activity,
+            'scanned': entry.scanned,
+          });
 
       // Persist the artwork metadata to the cloud if dynamic
       final art = getArtwork(entry.artworkId);
@@ -158,21 +158,21 @@ class FirestoreHistoryRepository implements HistoryRepository {
             .collection('dynamic_artworks')
             .doc(art.id)
             .set({
-          'id': art.id,
-          'title': art.title,
-          'artist': art.artist,
-          'artistShort': art.artistShort,
-          'artistLife': art.artistLife,
-          'year': art.year,
-          'medium': art.medium,
-          'dimensions': art.dimensions,
-          'museum': art.museum,
-          'city': art.city,
-          'movement': art.movement,
-          'summary': art.summary,
-          'imageBase64': ?b64,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+              'id': art.id,
+              'title': art.title,
+              'artist': art.artist,
+              'artistShort': art.artistShort,
+              'artistLife': art.artistLife,
+              'year': art.year,
+              'medium': art.medium,
+              'dimensions': art.dimensions,
+              'museum': art.museum,
+              'city': art.city,
+              'movement': art.movement,
+              'summary': art.summary,
+              'imageBase64': ?b64,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
       }
     } catch (e) {
       debugPrint('FirestoreHistoryRepository add error: $e');
@@ -184,4 +184,3 @@ class FirestoreHistoryRepository implements HistoryRepository {
     _fallbackEntries.clear();
   }
 }
-

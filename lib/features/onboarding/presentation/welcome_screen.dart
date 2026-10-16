@@ -1,3 +1,5 @@
+import '../../legal/open_legal.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart'
@@ -134,7 +136,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     ref.invalidate(historyProvider);
     ref.invalidate(artJourneyProvider);
     PaintingBinding.instance.imageCache.clear();
-    await ref.read(premiumProvider.notifier).refresh();
+    try {
+      await ref.read(premiumProvider.notifier).refresh();
+    } catch (_) {}
     if (mounted) _enter();
   }
 
@@ -349,21 +353,23 @@ class _WelcomeCopy extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
+        // On iPhone Sign in with Apple comes first and is as prominent as
+        // the other provider.
+        if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+          PillButton(
+            label: 'Continue with Apple',
+            onTap: busy ? null : onApple,
+            style: PillStyle.inverse,
+            leading: ArtIcon(ArtIcons.apple, size: 16, color: p.onInverse),
+          ),
+          const SizedBox(height: 10),
+        ],
         PillButton(
           label: 'Continue with Google',
           onTap: busy ? null : onGoogle,
           style: PillStyle.inverse,
           leading: const GoogleLogo(),
         ),
-        if (defaultTargetPlatform == TargetPlatform.iOS) ...[
-          const SizedBox(height: 10),
-          PillButton(
-            label: 'Continue with Apple',
-            onTap: busy ? null : onApple,
-            style: PillStyle.outline,
-            leading: ArtIcon(ArtIcons.apple, size: 16, color: p.ink),
-          ),
-        ],
         const SizedBox(height: 10),
         PillButton(
           label: 'Continue with email',
@@ -379,6 +385,37 @@ class _WelcomeCopy extends StatelessWidget {
             onTap: busy ? null : onGuest,
             padding: const EdgeInsets.all(10),
           ),
+        ),
+        // Before any account is made, where the rules live.
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                'By continuing you agree to the ',
+                style: AppTypography.caption.copyWith(color: p.muted),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextAction(
+              label: 'Terms of Use',
+              fontSize: 12,
+              onTap: () => openLegal(context, privacy: false),
+            ),
+            Text(
+              ' and ',
+              style: AppTypography.caption.copyWith(color: p.muted),
+            ),
+            TextAction(
+              label: 'Privacy Policy',
+              fontSize: 12,
+              onTap: () => openLegal(context, privacy: true),
+            ),
+          ],
         ),
       ],
     );

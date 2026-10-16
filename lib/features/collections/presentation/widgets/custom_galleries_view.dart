@@ -16,10 +16,7 @@ import 'custom_gallery_cards.dart';
 
 /// Shows user-curated custom galleries with a strict maximum limit of 2.
 class CustomGalleriesView extends ConsumerStatefulWidget {
-  const CustomGalleriesView({
-    super.key,
-    required this.startDelay,
-  });
+  const CustomGalleriesView({super.key, required this.startDelay});
 
   final Duration startDelay;
 
@@ -33,7 +30,10 @@ class _CustomGalleriesViewState extends ConsumerState<CustomGalleriesView> {
 
   void _createGalleryDialog(int currentCount) {
     if (currentCount >= maxCustomGalleries) {
-      ArtToast.show(context, 'Custom gallery limit reached (max $maxCustomGalleries)');
+      ArtToast.show(
+        context,
+        'Custom gallery limit reached (max $maxCustomGalleries)',
+      );
       return;
     }
     final controller = TextEditingController();
@@ -114,9 +114,7 @@ class _CustomGalleriesViewState extends ConsumerState<CustomGalleriesView> {
           TextButton(
             onPressed: () async {
               Navigator.of(dialogCtx).pop();
-              await ref
-                  .read(collectionProvider.notifier)
-                  .deleteGallery(g.id);
+              await ref.read(collectionProvider.notifier).deleteGallery(g.id);
               if (!mounted) return;
               setState(() => _selectedGalleryId = null);
               ArtToast.show(context, 'Deleted "${g.name}"');
@@ -137,8 +135,9 @@ class _CustomGalleriesViewState extends ConsumerState<CustomGalleriesView> {
     final snapshot = ref.watch(collectionProvider).value;
     if (snapshot == null) return const SizedBox.shrink();
 
-    final customGalleries =
-        snapshot.galleries.where((g) => g.id != 'favorites').toList();
+    final customGalleries = snapshot.galleries
+        .where((g) => g.id != 'favorites')
+        .toList();
 
     if (_selectedGalleryId != null) {
       final gallery = snapshot.galleries.firstWhere(
@@ -164,8 +163,10 @@ class _CustomGalleriesViewState extends ConsumerState<CustomGalleriesView> {
                       const SizedBox(width: 4),
                       Text(
                         'All Galleries',
-                        style: AppTypography.sans(14, weight: FontWeight.w600)
-                            .copyWith(color: p.accent),
+                        style: AppTypography.sans(
+                          14,
+                          weight: FontWeight.w600,
+                        ).copyWith(color: p.accent),
                       ),
                     ],
                   ),
@@ -219,16 +220,17 @@ class _CustomGalleriesViewState extends ConsumerState<CustomGalleriesView> {
             children: [
               Text(
                 'Custom Galleries (${customGalleries.length}/$maxCustomGalleries)',
-                style: AppTypography.sans(13, weight: FontWeight.w600)
-                    .copyWith(color: p.muted),
+                style: AppTypography.sans(
+                  13,
+                  weight: FontWeight.w600,
+                ).copyWith(color: p.muted),
               ),
               if (customGalleries.length < maxCustomGalleries)
                 TextAction(
                   label: '+ New Gallery',
                   color: p.accent,
                   fontSize: 13,
-                  onTap: () =>
-                      _createGalleryDialog(customGalleries.length),
+                  onTap: () => _createGalleryDialog(customGalleries.length),
                 )
               else
                 Text(
@@ -249,8 +251,7 @@ class _CustomGalleriesViewState extends ConsumerState<CustomGalleriesView> {
           ],
           if (customGalleries.length < maxCustomGalleries)
             CreateGalleryCard(
-              onTap: () =>
-                  _createGalleryDialog(customGalleries.length),
+              onTap: () => _createGalleryDialog(customGalleries.length),
             ),
         ],
       ),

@@ -4,7 +4,6 @@ import '../../../../core/extensions/context_x.dart';
 import '../../../../core/media/art_image_source.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_motion.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/art_image.dart';
 import '../../../../core/widgets/icons/art_icon.dart';
@@ -77,15 +76,13 @@ class ScanTopBar extends StatelessWidget {
   }
 }
 
-/// Gallery picker, shutter, zoom reset button.
+/// Gallery picker and the shutter.
 class ScanControls extends StatelessWidget {
   const ScanControls({
     super.key,
     required this.locked,
     required this.onCapture,
     required this.onGallery,
-    this.onResetZoom,
-    this.zoom = 1.0,
     this.lastCapture,
     this.busy = false,
   });
@@ -93,8 +90,6 @@ class ScanControls extends StatelessWidget {
   final bool locked;
   final VoidCallback onCapture;
   final VoidCallback onGallery;
-  final VoidCallback? onResetZoom;
-  final double zoom;
   final ArtImageSource? lastCapture;
   final bool busy;
 
@@ -176,32 +171,8 @@ class ScanControls extends StatelessWidget {
               ),
             ),
           ),
-          Tappable(
-            onTap: onResetZoom,
-            semanticLabel: 'Reset zoom to 1x',
-            pressedScale: .92,
-            child: AnimatedContainer(
-              duration: AppMotion.fast,
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: zoom > 1.05 ? p.accent.withValues(alpha: .2) : p.glass,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: zoom > 1.05 ? p.accent : p.line(.3),
-                  width: 1.2,
-                ),
-              ),
-              child: Text(
-                '1×',
-                style: AppTypography.metadata.copyWith(
-                  color: zoom > 1.05 ? p.accent : p.ink,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
+          // Keeps the shutter centred, balancing the gallery button.
+          const SizedBox(width: 48, height: 48),
         ],
       ),
     );

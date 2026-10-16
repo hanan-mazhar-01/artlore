@@ -1,10 +1,12 @@
+import '../../legal/open_legal.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../app/providers.dart';
 import '../../../core/extensions/context_x.dart';
 import '../../../core/router/app_routes.dart';
+import '../../scan/presentation/ai_consent.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/art_scaffold.dart';
 import '../../../core/widgets/art_sheet.dart';
@@ -23,16 +25,14 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(settingsProvider);
     final ctl = ref.read(settingsProvider.notifier);
-    final premiumStatus = ref.watch(
-      premiumProvider.select((v) => v.value),
-    );
+    final premiumStatus = ref.watch(premiumProvider.select((v) => v.value));
     final premium = premiumStatus?.isPremium ?? false;
     final planId = premiumStatus?.planId?.toLowerCase();
     final planLabel = planId == null
         ? null
         : (planId.contains('yearly') || planId.contains('annual')
-            ? 'Yearly Plan'
-            : (planId.contains('monthly') ? 'Monthly Plan' : null));
+              ? 'Yearly Plan'
+              : (planId.contains('monthly') ? 'Monthly Plan' : null));
     return ArtScaffold(
       body: ListView(
         padding: EdgeInsets.only(top: context.topInset, bottom: 60),
@@ -77,14 +77,31 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           SettingsGroup(
+            title: 'Privacy',
+            rows: [
+              SettingRow.toggle(
+                label: 'AI photo analysis',
+                hint: 'Send photos you scan to Google Gemini to identify them',
+                value: ref.watch(aiConsentProvider),
+                onTap: () async {
+                  if (ref.read(aiConsentProvider)) {
+                    ref.read(aiConsentProvider.notifier).set(false);
+                  } else {
+                    await ensureAiConsent(context, ref);
+                  }
+                },
+              ),
+            ],
+          ),
+          SettingsGroup(
             title: 'Account',
             rows: [
               SettingRow.value(
                 label: 'Subscription',
                 hint: premium
                     ? (planLabel != null
-                        ? '$planLabel · Manage in App Store'
-                        : 'Manage in App Store')
+                          ? '$planLabel · Manage in App Store'
+                          : 'Manage in App Store')
                     : 'ArtLore Premium',
                 trailing: premium ? 'Active' : 'Upgrade',
                 onTap: premium
@@ -105,27 +122,13 @@ class SettingsScreen extends ConsumerWidget {
                 label: 'Privacy Policy',
                 hint: 'What stays with you',
                 trailing: '',
-                onTap: () async {
-                  final url =
-                      ref.read(remoteConfigServiceProvider).privacyPolicyUrl;
-                  final uri = Uri.tryParse(url);
-                  if (uri != null && await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
+                onTap: () => openLegal(context, privacy: true),
               ),
               SettingRow.value(
                 label: 'Terms of Use',
                 hint: 'Conditions and EULA',
                 trailing: '',
-                onTap: () async {
-                  final url =
-                      ref.read(remoteConfigServiceProvider).termsOfServiceUrl;
-                  final uri = Uri.tryParse(url);
-                  if (uri != null && await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
+                onTap: () => openLegal(context, privacy: false),
               ),
               SettingRow.value(
                 label: 'About ArtLore',

@@ -20,6 +20,7 @@ class FloatingBottomNav extends StatefulWidget {
     required this.selectedIndex,
     required this.onSelected,
     required this.metrics,
+    this.extra = 0,
   });
 
   final List<ArtNavItem> items;
@@ -30,12 +31,16 @@ class FloatingBottomNav extends StatefulWidget {
   /// sizes off the exact same numbers — never recomputed in here.
   final FloatingNavMetrics metrics;
 
+  /// Extra pill past the tabs — the scan button's end — so the pill is
+  /// one piece and the lamp can reach right across it.
+  final double extra;
+
   @override
   State<FloatingBottomNav> createState() => _FloatingBottomNavState();
 }
 
 class _FloatingBottomNavState extends State<FloatingBottomNav>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   /// ≈300ms for a neighbour, a touch longer for far jumps (as in the reference).
   static const _base = Duration(milliseconds: 300);
   static const _perSlot = Duration(milliseconds: 40);
@@ -44,6 +49,12 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
     vsync: this,
     duration: _base,
     value: 1,
+  );
+
+  /// The lamp's slow breathing.
+  late final AnimationController _breath = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
   );
   late SpotlightMotion _motion = SpotlightMotion.at(
     widget.selectedIndex,
@@ -69,7 +80,18 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.reduced(context)) {
+      _breath.stop();
+    } else if (!_breath.isAnimating) {
+      _breath.repeat(reverse: true);
+    }
+  }
+
+  @override
   void dispose() {
+    _breath.dispose();
     _progress.dispose();
     super.dispose();
   }
@@ -83,7 +105,7 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
       explicitChildNodes: true,
       label: 'Main navigation',
       child: Container(
-        width: m.width,
+        width: m.width + widget.extra,
         height: m.height,
         // A fine glass edge, painted over the pill (not as a layout border)
         // so it can't eat into the width the icon row was measured against.
@@ -112,24 +134,28 @@ class _FloatingBottomNavState extends State<FloatingBottomNav>
                     motion: _motion,
                     metrics: m,
                     lamp: p.navLamp,
+                    breath: _breath,
                   ),
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: m.padding),
-              child: Row(
-                children: [
-                  for (var i = 0; i < widget.items.length; i++)
-                    _NavIcon(
-                      item: widget.items[i],
-                      metrics: m,
-                      selected: i == widget.selectedIndex,
-                      lit: () => _motion.weight(i, _progress.value),
-                      progress: _progress,
-                      onTap: () => widget.onSelected(i),
-                    ),
-                ],
+            SizedBox(
+              width: m.width,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: m.padding),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < widget.items.length; i++)
+                      _NavIcon(
+                        item: widget.items[i],
+                        metrics: m,
+                        selected: i == widget.selectedIndex,
+                        lit: () => _motion.weight(i, _progress.value),
+                        progress: _progress,
+                        onTap: () => widget.onSelected(i),
+                      ),
+                  ],
+                ),
               ),
             ),
           ],

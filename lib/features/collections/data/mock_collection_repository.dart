@@ -56,4 +56,3 @@ class MockCollectionRepository implements CollectionRepository {
     _saved.clear();
   }
 }
-

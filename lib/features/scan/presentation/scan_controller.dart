@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,8 +16,8 @@ class PendingFrameBytesNotifier extends Notifier<Uint8List?> {
 
 final pendingFrameBytesProvider =
     NotifierProvider<PendingFrameBytesNotifier, Uint8List?>(
-  PendingFrameBytesNotifier.new,
-);
+      PendingFrameBytesNotifier.new,
+    );
 
 /// Viewfinder states before recognition starts.
 enum ScanPhase {

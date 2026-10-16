@@ -260,9 +260,10 @@ class _HistoryTimelineItemState extends ConsumerState<HistoryTimelineItem>
                                     height: 90,
                                     child: ArtImage(
                                       artwork.image,
-                                      radius: _shapes[
-                                        widget.shapeIndex % _shapes.length
-                                      ].radius,
+                                      radius:
+                                          _shapes[widget.shapeIndex %
+                                                  _shapes.length]
+                                              .radius,
                                       alignment: artwork.heroFocus,
                                     ),
                                   ),
@@ -300,12 +301,9 @@ class _HistoryTimelineItemState extends ConsumerState<HistoryTimelineItem>
                                         progress: activityVal,
                                         child: Text(
                                           widget.entry.activity,
-                                          style: AppTypography.caption
-                                              .copyWith(
-                                                color: p.ink.withValues(
-                                                  alpha: .75,
-                                                ),
-                                              ),
+                                          style: AppTypography.caption.copyWith(
+                                            color: p.ink.withValues(alpha: .75),
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -330,10 +328,7 @@ class _HistoryTimelineItemState extends ConsumerState<HistoryTimelineItem>
 /// Editorial line-by-line reveal: unrolls from left to right like pen strokes,
 /// while keeping child text layout stable without re-wrapping jitter.
 class _WrittenLine extends StatelessWidget {
-  const _WrittenLine({
-    required this.progress,
-    required this.child,
-  });
+  const _WrittenLine({required this.progress, required this.child});
 
   final double progress;
   final Widget child;

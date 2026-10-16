@@ -124,11 +124,7 @@ class AnalysisScreen extends ConsumerWidget {
 }
 
 class _Failed extends StatelessWidget {
-  const _Failed({
-    required this.onRetry,
-    this.detail,
-    this.unsupportedSubject,
-  });
+  const _Failed({required this.onRetry, this.detail, this.unsupportedSubject});
 
   final VoidCallback onRetry;
   final String? detail;
@@ -157,10 +153,7 @@ class _Failed extends StatelessWidget {
         ],
         if (kDebugMode && detail != null) ...[
           const SizedBox(height: 8),
-          Text(
-            detail!,
-            style: AppTypography.caption.copyWith(color: p.muted),
-          ),
+          Text(detail!, style: AppTypography.caption.copyWith(color: p.muted)),
         ],
         const SizedBox(height: 18),
         PillButton(label: 'Try again', onTap: onRetry, trailingArrow: true),

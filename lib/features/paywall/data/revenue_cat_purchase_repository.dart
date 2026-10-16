@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../../core/services/device_id_service.dart';
@@ -20,8 +21,8 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
     required this.deviceIdService,
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
-  })  : _customAuth = auth,
-        _customFirestore = firestore;
+  }) : _customAuth = auth,
+       _customFirestore = firestore;
 
   final DeviceIdService deviceIdService;
   final FirebaseAuth? _customAuth;
@@ -51,14 +52,12 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
   DocumentReference<Map<String, dynamic>> _entitlementDoc(
     FirebaseFirestore firestore,
     String uid,
-  ) =>
-      firestore.collection('entitlements').doc(uid);
+  ) => firestore.collection('entitlements').doc(uid);
 
   DocumentReference<Map<String, dynamic>> _deviceDoc(
     FirebaseFirestore firestore,
     String deviceId,
-  ) =>
-      firestore.collection('deviceTrials').doc(deviceId);
+  ) => firestore.collection('deviceTrials').doc(deviceId);
 
   /// One free trial per device. Ignored in debug builds so test accounts on
   /// the same phone each get a fresh allowance.
@@ -75,18 +74,20 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
     final scansUsed = (data?['scansUsed'] as num?)?.toInt() ?? 0;
     final accountBonusGranted = data?['accountBonusGranted'] as bool? ?? false;
     final deviceBlocked = _isDeviceBlocked(data);
-    final firestorePremium = data?['isPremium'] as bool? ?? false;
-    final firestoreTrial = data?['isTrial'] as bool? ?? false;
 
-    final isPremium = isRevenueCatPremium || firestorePremium;
-    final activePlanId = planId ?? data?['planId'] as String?;
-    final activeTrial = isTrial || firestoreTrial;
+    // Premium comes from RevenueCat's entitlement and nowhere else — never
+    // from a value the visitor's own device could write, and it lapses the
+    // moment the entitlement does.
+    final isPremium = isRevenueCatPremium;
+    final activePlanId = isPremium ? planId : null;
+    final activeTrial = isPremium && isTrial;
 
     final allowance = deviceBlocked
         ? 0
         : guestAllowance + (accountBonusGranted ? accountBonusAllowance : 0);
-    final freeScansLeft =
-        isPremium ? 0 : (allowance - scansUsed).clamp(0, allowance);
+    final freeScansLeft = isPremium
+        ? 0
+        : (allowance - scansUsed).clamp(0, allowance);
     final requiresAccount = !isPremium && isAnonymous && freeScansLeft == 0;
 
     return PremiumStatus(
@@ -115,8 +116,6 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
     final fresh = <String, dynamic>{
       'scansUsed': 0,
       'accountBonusGranted': false,
-      'isPremium': false,
-      'planId': null,
       'deviceBlocked': alreadyConsumed,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -131,14 +130,16 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
     return fresh;
   }
 
-  Future<({bool isPremium, String? planId, bool isTrial})> _checkRevenueCatPremium() async {
+  Future<({bool isPremium, String? planId, bool isTrial})>
+  _checkRevenueCatPremium() async {
     if (kIsWeb) return (isPremium: false, planId: null, isTrial: false);
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       final ent = customerInfo.entitlements.all[entitlementId];
       final isPremium = ent?.isActive == true;
       final planId = isPremium ? ent?.productIdentifier : null;
-      final isTrial = isPremium &&
+      final isTrial =
+          isPremium &&
           (ent?.periodType == PeriodType.trial ||
               ent?.periodType == PeriodType.intro);
       return (isPremium: isPremium, planId: planId, isTrial: isTrial);
@@ -168,15 +169,19 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
       );
     }
 
-    final data = await _ensureEntitlementDoc(firestore, user.uid);
-    if (isRcPremium && (data['isPremium'] as bool? ?? false) == false) {
-      try {
-        await _entitlementDoc(firestore, user.uid).update({
-          'isPremium': true,
-          'planId': ?rcPlanId,
-          'isTrial': rcIsTrial,
-        });
-      } catch (_) {}
+    Map<String, dynamic> data;
+    try {
+      data = await _ensureEntitlementDoc(firestore, user.uid);
+    } catch (e) {
+      // The server refused or could not be reached: carry on with the free
+      // allowance rather than leaving the app waiting.
+      debugPrint('RevenueCat: entitlement read/create failed: $e');
+      return PremiumStatus(
+        isPremium: isRcPremium,
+        freeScansLeft: isRcPremium ? 0 : guestAllowance,
+        planId: rcPlanId,
+        isTrial: rcIsTrial,
+      );
     }
 
     return _statusFromData(
@@ -188,57 +193,59 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
     );
   }
 
+  /// Days in a store intro-offer period.
+  static int _days(int units, PeriodUnit unit) => switch (unit) {
+    PeriodUnit.day => units,
+    PeriodUnit.week => units * 7,
+    PeriodUnit.month => units * 30,
+    PeriodUnit.year => units * 365,
+    PeriodUnit.unknown => 0,
+  };
+
+  /// The plans exactly as the store sells them: price, period and — only
+  /// when the product really has a free introductory period *and* this
+  /// Apple ID is still eligible for it — the trial. Nothing is hard-coded;
+  /// if the store can't be reached there are no plans, and the paywall says
+  /// so rather than showing prices of its own.
   @override
   Future<List<SubscriptionPlan>> fetchPlans() async {
-    const fallbackPlans = [
-      SubscriptionPlan(
-        id: monthlyProductId,
-        label: 'Monthly',
-        price: r'$4.99',
-        period: '/ month',
-        renewalNote: r'3 days free, then $4.99/month · cancel anytime',
-        badge: '3 days free',
-        hasTrial: true,
-        trialDays: 3,
-      ),
-      SubscriptionPlan(
-        id: yearlyProductId,
-        label: 'Yearly',
-        price: r'$29.99',
-        period: '/ year',
-        renewalNote: r'Then $29.99/year · cancel anytime',
-        badge: 'Best value',
-        hasTrial: false,
-        trialDays: 0,
-      ),
-    ];
-
-    if (kIsWeb) return fallbackPlans;
-
+    if (kIsWeb) return const [];
     try {
       final offerings = await Purchases.getOfferings();
-      final current = offerings.current;
-      if (current == null || current.availablePackages.isEmpty) {
-        return fallbackPlans;
+      final packages = offerings.current?.availablePackages ?? const [];
+      if (packages.isEmpty) return const [];
+
+      final ids = [for (final p in packages) p.storeProduct.identifier];
+      Map<String, IntroEligibility> eligibility = const {};
+      try {
+        eligibility = await Purchases.checkTrialOrIntroductoryPriceEligibility(
+          ids,
+        );
+      } catch (e) {
+        debugPrint('RevenueCat: eligibility check failed: $e');
       }
 
       final plans = <SubscriptionPlan>[];
-      for (final package in current.availablePackages) {
+      for (final package in packages) {
         final p = package.storeProduct;
-        final isYearly = p.identifier.contains('yearly') ||
-            p.identifier.contains('annual') ||
-            package.packageType == PackageType.annual;
-        final isMonthly = p.identifier.contains('monthly') ||
-            package.packageType == PackageType.monthly;
+        final isYearly =
+            package.packageType == PackageType.annual ||
+            p.identifier.contains('yearly') ||
+            p.identifier.contains('annual');
 
-        final hasTrial = isMonthly || (p.introductoryPrice != null);
-        final trialDays = isMonthly ? 3 : 0;
-        final badge = isMonthly ? '3 days free' : (isYearly ? 'Best value' : null);
-        final renewalNote = hasTrial && trialDays > 0
-            ? '3 days free, then ${p.priceString}/month · cancel anytime'
-            : (isYearly
-                ? 'Then ${p.priceString}/year · cancel anytime'
-                : 'Then ${p.priceString}/month · cancel anytime');
+        final intro = p.introductoryPrice;
+        final eligible =
+            eligibility[p.identifier]?.status ==
+            IntroEligibilityStatus.introEligibilityStatusEligible;
+        final freeTrial = intro != null && intro.price == 0 && eligible;
+        final trialDays = freeTrial
+            ? _days(intro.periodNumberOfUnits, intro.periodUnit)
+            : 0;
+
+        final per = isYearly ? 'year' : 'month';
+        final renewalNote = trialDays > 0
+            ? '$trialDays days free, then ${p.priceString}/$per'
+            : '${p.priceString}/$per';
 
         plans.add(
           SubscriptionPlan(
@@ -247,28 +254,30 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
             price: p.priceString,
             period: isYearly ? '/ year' : '/ month',
             renewalNote: renewalNote,
-            badge: badge,
-            hasTrial: hasTrial,
+            badge: trialDays > 0
+                ? '$trialDays days free'
+                : (isYearly ? 'Best value' : null),
+            hasTrial: trialDays > 0,
             trialDays: trialDays,
           ),
         );
       }
 
-      // Sort so Monthly is first, Yearly is second
-      plans.sort((a, b) => a.id.contains('monthly') ? -1 : 1);
-      return plans.isNotEmpty ? plans : fallbackPlans;
+      // Monthly first, then yearly.
+      plans.sort(
+        (a, b) => (a.label == 'Monthly' ? 0 : 1).compareTo(
+          b.label == 'Monthly' ? 0 : 1,
+        ),
+      );
+      return plans;
     } catch (e) {
       debugPrint('RevenueCat: fetchPlans error: $e');
-      return fallbackPlans;
+      return const [];
     }
   }
 
   @override
   Future<PremiumStatus> purchase(String planId) async {
-    final auth = _auth;
-    final firestore = _firestore;
-    final user = auth?.currentUser;
-
     if (!kIsWeb) {
       try {
         final offerings = await Purchases.getOfferings();
@@ -285,35 +294,16 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
           }
         }
 
-        final CustomerInfo customerInfo;
         if (packageToBuy != null) {
-          final res = await Purchases.purchase(
-            PurchaseParams.package(packageToBuy),
-          );
-          customerInfo = res.customerInfo;
+          await Purchases.purchase(PurchaseParams.package(packageToBuy));
         } else {
           final products = await Purchases.getProducts([planId]);
-          if (products.isNotEmpty) {
-            final res = await Purchases.purchase(
-              PurchaseParams.storeProduct(products.first),
-            );
-            customerInfo = res.customerInfo;
-          } else {
-            return await fetchStatus();
-          }
+          if (products.isEmpty) return await fetchStatus();
+          await Purchases.purchase(PurchaseParams.storeProduct(products.first));
         }
 
-        final isPremium =
-            customerInfo.entitlements.all[entitlementId]?.isActive == true;
-
-        if (isPremium && firestore != null && user != null) {
-          await _entitlementDoc(firestore, user.uid).set({
-            'isPremium': true,
-            'planId': planId,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
-        }
-
+        // The purchase is confirmed by RevenueCat's customer info; nothing
+        // about it is stored on our side.
         return await fetchStatus();
       } catch (e) {
         debugPrint('RevenueCat: purchase error: $e');
@@ -328,24 +318,10 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
   Future<PremiumStatus> restore() async {
     if (!kIsWeb) {
       try {
-        final customerInfo = await Purchases.restorePurchases();
-        final ent = customerInfo.entitlements.all[entitlementId];
-        final isPremium = ent?.isActive == true;
-        final planId = isPremium ? ent?.productIdentifier : null;
-
-        final auth = _auth;
-        final firestore = _firestore;
-        final user = auth?.currentUser;
-
-        if (isPremium && firestore != null && user != null) {
-          await _entitlementDoc(firestore, user.uid).set({
-            'isPremium': true,
-            'planId': ?planId,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
-        }
-      } catch (e) {
+        await Purchases.restorePurchases();
+      } on PlatformException catch (e) {
         debugPrint('RevenueCat: restore error: $e');
+        rethrow;
       }
     }
 
@@ -377,15 +353,11 @@ class RevenueCatPurchaseRepository implements PurchaseRepository {
       final snap = await tx.get(ref);
       final data = snap.data();
       if (data == null) return;
-      final isPremium = data['isPremium'] as bool? ?? false;
-      if (isPremium) return;
       final deviceBlocked = _isDeviceBlocked(data);
-      final accountBonusGranted =
-          data['accountBonusGranted'] as bool? ?? false;
+      final accountBonusGranted = data['accountBonusGranted'] as bool? ?? false;
       final allowance = deviceBlocked
           ? 0
-          : guestAllowance +
-              (accountBonusGranted ? accountBonusAllowance : 0);
+          : guestAllowance + (accountBonusGranted ? accountBonusAllowance : 0);
       final current = (data['scansUsed'] as num?)?.toInt() ?? 0;
       if (current >= allowance) return;
       tx.update(ref, {'scansUsed': current + 1});

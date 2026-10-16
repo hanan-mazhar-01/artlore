@@ -30,9 +30,10 @@ class ArtLoreApp extends ConsumerWidget {
         // mini) scale type down a touch, and Dynamic Type is kept within a
         // range the layouts hold at.
         final widthFactor = (media.size.width / 390).clamp(.9, 1.0);
-        final system = media.textScaler
-            .clamp(minScaleFactor: .9, maxScaleFactor: 1.15)
-            .scale(100) /
+        final system =
+            media.textScaler
+                .clamp(minScaleFactor: .9, maxScaleFactor: 1.15)
+                .scale(100) /
             100;
         return MediaQuery(
           data: media.copyWith(

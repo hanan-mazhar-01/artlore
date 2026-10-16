@@ -9,9 +9,13 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/art_scaffold.dart';
+import '../../artwork/data/mock_catalog.dart';
+import '../../home/presentation/widgets/home_style.dart';
+import '../../home/presentation/widgets/scan_frame.dart';
+import '../../home/presentation/widgets/splash_handoff.dart';
 import '../../settings/presentation/settings_controller.dart';
 
-/// A single gold point, then the wordmark settles out of a blur.
+/// The scan frame, then the wordmark settles out of a blur.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -23,11 +27,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   late final _intro = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 3100),
+    duration: const Duration(milliseconds: 2700),
   );
-  late final _glow = AnimationController(
+
+  /// The scanning light over the frame.
+  late final _scan = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1500),
+    duration: const Duration(milliseconds: 2600),
   );
   late final _dot = CurvedAnimation(
     parent: _intro,
@@ -42,27 +48,47 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     curve: const Interval(.61, 1, curve: Curves.ease),
   );
   Timer? _next;
+  final _frameKey = GlobalKey();
   bool _left = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Decode the painting before the first frame, so the splash never stalls.
+    precacheImage(
+      ResizeImage.resizeIfNeeded(
+        720,
+        null,
+        mockCatalog[ArtworkIds.starryNight]!.image.provider(),
+      ),
+      context,
+    );
+  }
 
   @override
   void initState() {
     super.initState();
     _intro.forward();
-    _intro.addListener(_startGlow);
-    _next = Timer(const Duration(milliseconds: 3400), _continue);
-  }
-
-  void _startGlow() {
-    if (_intro.value > .45 && !_glow.isAnimating && mounted) {
-      _intro.removeListener(_startGlow);
-      if (!AppMotion.reduced(context)) _glow.repeat(reverse: true);
-    }
+    _scan.repeat();
+    _next = Timer(const Duration(milliseconds: 3000), _continue);
   }
 
   void _continue() {
     if (_left || !mounted) return;
     _left = true;
     final done = ref.read(settingsProvider).onboardingComplete;
+    // Going Home: the scan frame flies into the banner.
+    if (done) {
+      final box = _frameKey.currentContext?.findRenderObject() as RenderBox?;
+      if (box != null && box.attached) {
+        SplashHandoff.begin(
+          context,
+          from: box.localToGlobal(Offset.zero) & box.size,
+          artwork: mockCatalog[ArtworkIds.starryNight]!,
+          style: HomeStyle.of(context),
+        );
+      }
+    }
     context.go(done ? AppRoutes.home : AppRoutes.onboarding);
   }
 
@@ -70,7 +96,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void dispose() {
     _next?.cancel();
     _intro.dispose();
-    _glow.dispose();
+    _scan.dispose();
     super.dispose();
   }
 
@@ -84,12 +110,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         onTap: _continue,
         child: Center(
           child: AnimatedBuilder(
-            animation: Listenable.merge([_intro, _glow]),
+            animation: _intro,
             builder: (context, _) => Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _GoldPoint(appear: _dot.value, glow: _glow.value),
-                const SizedBox(height: 28),
+                _SplashFrame(key: _frameKey, appear: _dot.value, scan: _scan),
+                const SizedBox(height: 26),
                 _Wordmark(t: _word.value),
                 const SizedBox(height: 10),
                 Opacity(
@@ -111,33 +137,34 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 }
 
-class _GoldPoint extends StatelessWidget {
-  const _GoldPoint({required this.appear, required this.glow});
+/// The banner's scan frame, rising in where the gold point used to be. It is
+/// the same frame the banner shows, and flies there when the splash ends.
+class _SplashFrame extends StatelessWidget {
+  const _SplashFrame({super.key, required this.appear, required this.scan});
 
   final double appear;
-  final double glow;
+  final Animation<double> scan;
+
+  static const _width = 150.0;
+  static const _height = 144.0;
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
-    final g = Curves.easeInOut.transform(glow);
+    final style = HomeStyle.of(context);
+    final artwork = mockCatalog[ArtworkIds.starryNight]!;
     return Opacity(
       opacity: appear,
       child: Transform.scale(
-        scale: appear,
-        child: Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: p.accent,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: p.accentAlpha(.35 + .2 * g),
-                blurRadius: 18 + 16 * g,
-                spreadRadius: 4 + 6 * g,
-              ),
-            ],
+        scale: .9 + .1 * appear,
+        child: SizedBox(
+          width: _width,
+          height: _height,
+          child: ScanFrame(
+            artwork: artwork,
+            style: style,
+            scan: scan,
+            cropBox: const Size(_height * 2.7, _height),
+            backdrop: 1,
           ),
         ),
       ),

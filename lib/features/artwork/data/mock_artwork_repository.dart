@@ -93,8 +93,7 @@ class MockArtworkRepository implements ArtworkRepository {
               'An enduring testament to the visual heritage of ${a.movement}.',
           quote: 'Art is the lie that enables us to realize the truth.',
           quoteSource: 'Editorial Anthology',
-          closing:
-              'A defining pillar of the ${a.museum} permanent collection.',
+          closing: 'A defining pillar of the ${a.museum} permanent collection.',
         ),
       ],
     );

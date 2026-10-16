@@ -15,15 +15,12 @@ import 'collection_controller.dart';
 import 'collection_views.dart';
 import 'widgets/collection_empty.dart';
 import 'widgets/collection_group_list.dart';
+import 'widgets/collection_landing.dart';
 import 'widgets/collection_masonry.dart';
 import 'widgets/custom_galleries_view.dart';
 import 'widgets/remove_artwork_sheet.dart';
 
-const _tabs = [
-  'Favorites',
-  'Galleries',
-  'Museums',
-];
+const _tabs = ['Favorites', 'Galleries', 'Museums'];
 
 /// The visitor's private museum with a fluid, editorial entrance choreography.
 class CollectionScreen extends ConsumerStatefulWidget {
@@ -34,10 +31,21 @@ class CollectionScreen extends ConsumerStatefulWidget {
 }
 
 class _CollectionScreenState extends ConsumerState<CollectionScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int _tab = 0;
   bool _wasActive = false;
   int _entranceEpoch = 0;
+
+  final _scroll = ScrollController();
+
+  /// This visit started from Home's "My Collection" card (not the nav bar):
+  /// the page rises into place while the covers come down onto it.
+  bool _fromHome = false;
+
+  late final AnimationController _rise = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
 
   late final AnimationController _entranceController = AnimationController(
     vsync: this,
@@ -46,20 +54,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
 
   late final Animation<double> _headerAnimation = CurvedAnimation(
     parent: _entranceController,
-    curve: const Interval(
-      0.00,
-      0.55,
-      curve: Cubic(0.12, 0.98, 0.24, 1.0),
-    ),
+    curve: const Interval(0.00, 0.55, curve: Cubic(0.12, 0.98, 0.24, 1.0)),
   );
 
   late final Animation<double> _tabsAnimation = CurvedAnimation(
     parent: _entranceController,
-    curve: const Interval(
-      0.10,
-      0.65,
-      curve: Cubic(0.12, 0.98, 0.24, 1.0),
-    ),
+    curve: const Interval(0.10, 0.65, curve: Cubic(0.12, 0.98, 0.24, 1.0)),
   );
 
   @override
@@ -72,6 +72,21 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
       if (!_wasActive) {
         _wasActive = true;
         _entranceEpoch++;
+        _fromHome = CollectionLanding.flying;
+        if (_fromHome) {
+          // The covers land on the first cards of Favorites, from the top.
+          _tab = 0;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scroll.hasClients) _scroll.jumpTo(0);
+          });
+          if (AppMotion.reduced(context)) {
+            _rise.value = 1;
+          } else {
+            _rise.forward(from: 0).whenComplete(() {
+              if (mounted) setState(() => _fromHome = false);
+            });
+          }
+        }
         if (AppMotion.reduced(context)) {
           _entranceController.value = 1.0;
         } else {
@@ -81,6 +96,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
     } else {
       if (_wasActive) {
         _wasActive = false;
+        _fromHome = false;
+        _rise.reset();
         _entranceController.reset();
       }
     }
@@ -88,6 +105,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
 
   @override
   void dispose() {
+    _rise.dispose();
+    _scroll.dispose();
     _entranceController.dispose();
     super.dispose();
   }
@@ -110,8 +129,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
         return v == null ? null : (v.saved.length, v.galleries.length);
       }),
     );
-    return ArtScaffold(
+    final page = ArtScaffold(
       body: CustomScrollView(
+        controller: _scroll,
         slivers: [
           SliverToBoxAdapter(
             child: AnimatedBuilder(
@@ -153,8 +173,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
                                 ? ' '
                                 : '${_works(summary.$1)} · '
                                       '${summary.$2} galleries',
-                            style:
-                                AppTypography.caption.copyWith(color: p.muted),
+                            style: AppTypography.caption.copyWith(
+                              color: p.muted,
+                            ),
                           ),
                         ],
                       ),
@@ -205,6 +226,30 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
         ],
       ),
     );
+    if (!_fromHome) return page;
+    // Arriving from Home's card: the page rises and settles, a touch of depth
+    // in the scale, in step with the sheet-style entrance of the picker.
+    // The page's own ground sits underneath, so the fade starts from the page
+    // colour rather than from the black behind the app.
+    return ColoredBox(
+      color: p.background,
+      child: AnimatedBuilder(
+        animation: _rise,
+        child: page,
+        builder: (context, child) {
+          final t = const Cubic(.16, 1, .3, 1).transform(_rise.value);
+          return Opacity(
+            opacity: Curves.easeOut.transform(
+              (_rise.value * 2.2).clamp(0.0, 1.0),
+            ),
+            child: Transform.translate(
+              offset: Offset(0, 90 * (1 - t)),
+              child: Transform.scale(scale: .965 + .035 * t, child: child),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   List<Widget> _body() {
@@ -230,9 +275,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen>
       ];
     } else if (_tab == 1) {
       return [
-        SliverToBoxAdapter(
-          child: CustomGalleriesView(startDelay: startDelay),
-        ),
+        SliverToBoxAdapter(child: CustomGalleriesView(startDelay: startDelay)),
       ];
     }
 

@@ -62,12 +62,16 @@ class CollectionController extends AsyncNotifier<CollectionSnapshot> {
   /// against the gallery not existing yet in local state.
   Future<Gallery> createGallery(String name) async {
     final current = state.value;
-    final customCount = current?.galleries.where((g) => g.id != 'favorites').length ?? 0;
+    final customCount =
+        current?.galleries.where((g) => g.id != 'favorites').length ?? 0;
     if (customCount >= maxCustomGalleries) {
       throw StateError('Maximum $maxCustomGalleries custom galleries allowed.');
     }
     final slug = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-    final gallery = Gallery(id: '$slug-${DateTime.now().microsecondsSinceEpoch}', name: name);
+    final gallery = Gallery(
+      id: '$slug-${DateTime.now().microsecondsSinceEpoch}',
+      name: name,
+    );
     if (current != null) {
       state = AsyncData(
         current.copyWith(galleries: [...current.galleries, gallery]),
@@ -151,4 +155,3 @@ class RecentlyViewedController extends Notifier<List<String>> {
     } catch (_) {}
   }
 }
-

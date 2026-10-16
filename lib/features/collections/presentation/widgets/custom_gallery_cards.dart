@@ -113,8 +113,10 @@ class CreateGalleryCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Create Custom Gallery (up to $maxCustomGalleries)',
-                style: AppTypography.sans(14, weight: FontWeight.w600)
-                    .copyWith(color: p.accent),
+                style: AppTypography.sans(
+                  14,
+                  weight: FontWeight.w600,
+                ).copyWith(color: p.accent),
               ),
             ],
           ),
@@ -126,10 +128,7 @@ class CreateGalleryCard extends StatelessWidget {
 
 /// Staggered two-column artwork grid suitable for Box (RenderFlex) contexts.
 class GalleryArtworksBoxGrid extends StatelessWidget {
-  const GalleryArtworksBoxGrid({
-    super.key,
-    required this.artworks,
-  });
+  const GalleryArtworksBoxGrid({super.key, required this.artworks});
 
   final List<Artwork> artworks;
 

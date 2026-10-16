@@ -8,6 +8,7 @@ import '../../../core/widgets/art_scaffold.dart';
 import '../../../core/widgets/async_view.dart';
 import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/round_buttons.dart';
+import '../../collections/presentation/collection_controller.dart';
 import 'history_controller.dart';
 import 'widgets/history_timeline_item.dart';
 
@@ -18,11 +19,14 @@ class HistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = context.palette;
-    final history = ref.watch(historyProvider);
+    final history = ref.watch(fullHistoryProvider);
     return ArtScaffold(
       body: AsyncView(
         value: history,
-        onRetry: () => ref.invalidate(historyProvider),
+        onRetry: () {
+          ref.invalidate(historyProvider);
+          ref.invalidate(collectionProvider);
+        },
         data: (entries) => CustomScrollView(
           slivers: [
             SliverPadding(
@@ -65,8 +69,10 @@ class HistoryScreen extends ConsumerWidget {
                 sliver: SliverToBoxAdapter(
                   child: Text(
                     'No artworks explored yet. Tap the scanner to capture and uncover your first masterpiece.',
-                    style: AppTypography.sans(14, height: 1.5)
-                        .copyWith(color: p.muted),
+                    style: AppTypography.sans(
+                      14,
+                      height: 1.5,
+                    ).copyWith(color: p.muted),
                   ),
                 ),
               )

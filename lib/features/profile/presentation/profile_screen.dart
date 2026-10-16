@@ -7,14 +7,16 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/art_scaffold.dart';
+import '../../../core/widgets/art_toast.dart';
 import '../../artwork/data/dynamic_artwork_storage.dart';
 import '../../collections/presentation/collection_controller.dart';
-
 
 import '../../history/presentation/history_controller.dart';
 import '../../journey/presentation/journey_providers.dart';
 import '../../paywall/presentation/premium_controller.dart';
 import '../../settings/presentation/settings_controller.dart';
+import '../../scan/presentation/ai_consent.dart';
+import '../../wall/wall_controller.dart';
 import 'profile_providers.dart';
 import 'widgets/profile_widgets.dart';
 
@@ -42,8 +44,8 @@ class ProfileScreen extends ConsumerWidget {
     final planLabel = planId == null
         ? null
         : (planId.contains('yearly') || planId.contains('annual')
-            ? 'Yearly Plan'
-            : (planId.contains('monthly') ? 'Monthly Plan' : null));
+              ? 'Yearly Plan'
+              : (planId.contains('monthly') ? 'Monthly Plan' : null));
 
     final String statusLabel;
     if (premium) {
@@ -101,10 +103,10 @@ class ProfileScreen extends ConsumerWidget {
             title: 'Premium',
             subtitle: premium
                 ? (isTrial
-                    ? 'Free Trial · Active'
-                    : (planLabel != null
-                        ? '$planLabel · Active'
-                        : 'Active — thank you for supporting ArtLore'))
+                      ? 'Free Trial · Active'
+                      : (planLabel != null
+                            ? '$planLabel · Active'
+                            : 'Active — thank you for supporting ArtLore'))
                 : 'See beyond the painting',
             highlight: true,
             onTap: () => context.push(AppRoutes.paywall),
@@ -114,17 +116,35 @@ class ProfileScreen extends ConsumerWidget {
             subtitle: 'Appearance, privacy, preferences',
             onTap: () => context.push(AppRoutes.settings),
           ),
-          ProfileRow(
-            title: 'Sign Out',
-            subtitle: 'Sign out of your account',
-            onTap: () => _confirmSignOut(context, ref),
-          ),
-          ProfileRow(
-            title: 'Delete Account',
-            subtitle: 'Permanently remove your profile and collection',
-            danger: true,
-            onTap: () => _confirmDeleteAccount(context, ref),
-          ),
+          // A guest has no account to sign out of or delete: they are offered
+          // one instead.
+          if (ref.watch(isGuestProvider).value ??
+              (ref.read(authServiceProvider).currentUser?.isAnonymous ?? false))
+            ProfileRow(
+              title: 'Sign in to save',
+              subtitle: 'Create an account to keep your collection',
+              highlight: true,
+              onTap: () async {
+                final done = await context.push<bool>(
+                  AppRoutes.accountWall,
+                  extra: 'save',
+                );
+                if (done == true) ref.invalidate(userProfileProvider);
+              },
+            )
+          else ...[
+            ProfileRow(
+              title: 'Sign Out',
+              subtitle: 'Sign out of your account',
+              onTap: () => _confirmSignOut(context, ref),
+            ),
+            ProfileRow(
+              title: 'Delete Account',
+              subtitle: 'Permanently remove your profile and collection',
+              danger: true,
+              onTap: () => _confirmDeleteAccount(context, ref),
+            ),
+          ],
         ],
       ),
     );
@@ -214,13 +234,15 @@ class ProfileScreen extends ConsumerWidget {
             },
             child: Text('Sign Out', style: TextStyle(color: p.danger)),
           ),
-
         ],
       ),
     );
   }
 
-  Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmDeleteAccount(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
@@ -259,7 +281,10 @@ class ProfileScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'Deleting account…',
-                    style: AppTypography.sans(14, weight: FontWeight.w500).copyWith(color: p.ink),
+                    style: AppTypography.sans(
+                      14,
+                      weight: FontWeight.w500,
+                    ).copyWith(color: p.ink),
                   ),
                 ),
               ],
@@ -273,6 +298,18 @@ class ProfileScreen extends ConsumerWidget {
       await ref.read(userProfileProvider.notifier).deleteAccount();
     } catch (e) {
       debugPrint('Error deleting account: $e');
+      // Tell the visitor, and keep them signed in: the account still exists.
+      if (context.mounted) {
+        if (Navigator.of(context, rootNavigator: true).canPop()) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+        ArtToast.show(
+          context,
+          "We couldn't finish deleting your account. Please sign in again "
+          'when asked, and try once more.',
+        );
+      }
+      return;
     }
 
     try {
@@ -283,6 +320,18 @@ class ProfileScreen extends ConsumerWidget {
     await ref.read(recentlyViewedProvider.notifier).clear();
     await DynamicArtworkStorage.clearAll();
     PaintingBinding.instance.imageCache.clear();
+
+    // Everything else the app remembered on this phone — the wall, the AI
+    // agreement, the settings, the theme — goes too, so a new account starts
+    // as a first visit. Only the device id stays: it guards the free scans.
+    final prefs = ref.read(sharedPreferencesProvider);
+    for (final key in prefs.getKeys().toList()) {
+      if (!key.startsWith('artlore.') || key == 'artlore.device_id') continue;
+      await prefs.remove(key);
+    }
+    ref.invalidate(wallProvider);
+    ref.invalidate(aiConsentProvider);
+    ref.invalidate(settingsProvider);
 
     ref.invalidate(premiumProvider);
     ref.invalidate(collectionProvider);
@@ -351,14 +400,18 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           children: [
             Text(
               'This will permanently delete your profile, saved collections, and exploration history. This action cannot be undone.',
-              style: AppTypography.sans(14, height: 1.4).copyWith(color: p.muted),
+              style: AppTypography.sans(
+                14,
+                height: 1.4,
+              ).copyWith(color: p.muted),
             ),
             const SizedBox(height: 18),
             Text(
               'To confirm, type "delete" below:',
-              style: AppTypography.sans(13, weight: FontWeight.w600).copyWith(
-                color: p.ink,
-              ),
+              style: AppTypography.sans(
+                13,
+                weight: FontWeight.w600,
+              ).copyWith(color: p.ink),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -368,9 +421,8 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               style: AppTypography.sans(14).copyWith(color: p.ink),
               decoration: InputDecoration(
                 hintText: 'delete',
-                hintStyle: AppTypography.sans(14).copyWith(
-                  color: p.muted.withValues(alpha: 0.5),
-                ),
+                hintStyle: AppTypography.sans(14)
+                    .copyWith(color: p.muted.withValues(alpha: 0.5)),
                 filled: true,
                 fillColor: p.surfaceAlt,
                 contentPadding: const EdgeInsets.symmetric(
@@ -404,9 +456,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           child: Text(
             'Delete Account',
             style: TextStyle(
-              color: _isConfirmed
-                  ? p.danger
-                  : p.muted.withValues(alpha: 0.35),
+              color: _isConfirmed ? p.danger : p.muted.withValues(alpha: 0.35),
             ),
           ),
         ),

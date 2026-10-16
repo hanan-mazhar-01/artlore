@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/services/auth_service.dart';
-import '../core/services/cloudinary_service.dart';
 import '../core/services/device_id_service.dart';
 import '../core/services/remote_config_service.dart';
 import '../features/artwork/data/mock_artwork_repository.dart';
@@ -35,22 +34,22 @@ final sharedPreferencesProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('Override in main() with an instance.'),
 );
 
-final authServiceProvider = Provider<AuthService>(
-  (ref) => AuthService(),
-);
+final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
 });
 
+/// Whether the visitor is a guest right now — flips the moment they sign up.
+final isGuestProvider = StreamProvider<bool>((ref) {
+  return ref
+      .watch(authServiceProvider)
+      .userChanges
+      .map((u) => u?.isAnonymous ?? false);
+});
+
 final remoteConfigServiceProvider = Provider<RemoteConfigService>(
   (ref) => RemoteConfigService(),
-);
-
-final cloudinaryServiceProvider = Provider<CloudinaryService>(
-  (ref) => CloudinaryService(
-    remoteConfig: ref.watch(remoteConfigServiceProvider),
-  ),
 );
 
 final settingsRepositoryProvider = Provider<SettingsRepository>(
@@ -90,7 +89,6 @@ final purchaseRepositoryProvider = Provider<PurchaseRepository>(
 final recognitionRepositoryProvider = Provider<RecognitionRepository>(
   (ref) => GeminiRecognitionRepository(
     remoteConfig: ref.watch(remoteConfigServiceProvider),
-    cloudinaryService: ref.watch(cloudinaryServiceProvider),
   ),
 );
 

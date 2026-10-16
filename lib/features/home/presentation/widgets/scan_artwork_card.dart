@@ -3,30 +3,37 @@ import 'package:flutter/widgets.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/haptics.dart';
-import '../../../../core/widgets/art_image.dart';
-import '../../../../core/widgets/design_stage.dart';
 import '../../../../core/widgets/icons/art_icon.dart';
 import '../../../../core/widgets/icons/art_icons.dart';
 import '../../../../core/widgets/tappable.dart';
 import '../../../artwork/domain/artwork.dart';
 import 'home_style.dart';
+import 'scan_frame.dart';
+import 'splash_handoff.dart';
 
 /// The hero. A short film plays on loop: a painting fills the width under a
 /// light that scans down it, then slides to the left while the painting's
 /// story — title, artist, year, museum — writes itself in on the right, then
 /// it all folds back. Under it the headline, copy and "Scan a Painting" pill
-/// stay put. The whole card opens the scanner.
+/// stay put. Tapping the card opens the painting's own page — its story, Look
+/// Closer and the deep dive — to show how the app works; the "Scan a Painting"
+/// pill opens the scanner.
 class ScanArtworkCard extends StatefulWidget {
   const ScanArtworkCard({
     super.key,
     required this.artwork,
     required this.onTap,
+    required this.onScan,
   });
 
   /// The sample painting the banner scans and describes.
   final Artwork artwork;
 
+  /// The card was tapped: open the painting.
   final VoidCallback onTap;
+
+  /// The "Scan a Painting" pill was tapped: open the scanner.
+  final VoidCallback onScan;
 
   @override
   State<ScanArtworkCard> createState() => _ScanArtworkCardState();
@@ -64,83 +71,103 @@ class _ScanArtworkCardState extends State<ScanArtworkCard>
     super.dispose();
   }
 
+  /// Rounded on three corners; the top-right is nearly square, because the
+  /// gilded frame corner sits on it.
+  static BorderRadius _corners(double r) => BorderRadius.only(
+    topLeft: Radius.circular(r),
+    bottomLeft: Radius.circular(r),
+    bottomRight: Radius.circular(r),
+    topRight: const Radius.circular(6),
+  );
+
   @override
   Widget build(BuildContext context) {
     final s = HomeStyle.of(context);
     return Tappable(
       onTap: widget.onTap,
-      semanticLabel: 'Scan an artwork',
+      semanticLabel:
+          'Open ${widget.artwork.title} — see how ArtLore tells its story',
       haptic: HapticKind.light,
       pressedScale: .985,
-      child: Container(
-        decoration: BoxDecoration(
-          color: s.bannerBg,
-          gradient: s.bannerGradient,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: s.bannerBorder),
-          boxShadow: [
-            BoxShadow(
-              color: s.shadow(.55),
-              offset: const Offset(0, 24),
-              blurRadius: 40,
-              spreadRadius: -22,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(29),
-          child: Stack(
-            children: [
-              // A soft glow behind the frame.
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(0, -.35),
-                      radius: .95,
-                      colors: [s.bannerGlow, s.bannerGlow.withValues(alpha: 0)],
-                    ),
-                  ),
-                ),
+      child: _GildedCorner(
+        child: Container(
+          decoration: BoxDecoration(
+            color: s.bannerBg,
+            gradient: s.bannerGradient,
+            borderRadius: _corners(30),
+            border: Border.all(color: s.bannerBorder),
+            boxShadow: [
+              BoxShadow(
+                color: s.shadow(.55),
+                offset: const Offset(0, 24),
+                blurRadius: 40,
+                spreadRadius: -22,
               ),
-              // Motes drifting up behind the content.
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: AnimatedBuilder(
-                    animation: _motes,
-                    builder: (context, _) => LayoutBuilder(
-                      builder: (context, c) => Stack(
-                        children: [
-                          for (final (x, y, delay) in _moteSpec)
-                            _mote(c.maxWidth * x / 100, y, delay, s.bannerMote),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: _corners(29),
+            child: Stack(
+              children: [
+                // A soft glow behind the frame.
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(0, -.35),
+                        radius: .95,
+                        colors: [
+                          s.bannerGlow,
+                          s.bannerGlow.withValues(alpha: 0),
                         ],
                       ),
                     ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'DISCOVER THE STORY',
-                      style: AppTypography.sans(
-                        10.5,
-                        weight: FontWeight.w700,
-                        tracking: .23,
-                      ).copyWith(color: s.bannerAccent),
+                // Motes drifting up behind the content.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _motes,
+                      builder: (context, _) => LayoutBuilder(
+                        builder: (context, c) => Stack(
+                          children: [
+                            for (final (x, y, delay) in _moteSpec)
+                              _mote(
+                                c.maxWidth * x / 100,
+                                y,
+                                delay,
+                                s.bannerMote,
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _ScanStage(artwork: widget.artwork, style: s),
-                    const SizedBox(height: 14),
-                    _Copy(style: s),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'DISCOVER THE STORY',
+                        style: AppTypography.sans(
+                          10.5,
+                          weight: FontWeight.w700,
+                          tracking: .23,
+                        ).copyWith(color: s.bannerAccent),
+                      ),
+                      const SizedBox(height: 12),
+                      _ScanStage(artwork: widget.artwork, style: s),
+                      const SizedBox(height: 14),
+                      _Copy(style: s, onScan: widget.onScan),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -186,10 +213,24 @@ class _ScanStage extends StatefulWidget {
 }
 
 class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
-  static const _height = 124.0;
+  static const _height = 108.0;
 
   /// Width the painting shrinks to once it has slid left.
-  static const _smallWidth = 132.0;
+  /// The painting's width once the story opens beside it, as a share of the
+  /// banner's inner width (kept within a range).
+  static double _smallWidthFor(double full) => (full * .41).clamp(84.0, 124.0);
+
+  /// True while this banner is receiving the splash's frame: the frame flies
+  /// in and lands square, then opens out before the film begins.
+  late bool _handoff = SplashHandoff.active;
+
+  /// The frame opening out from the square to the full strip.
+  late final AnimationController _open = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+
+  final _stageKey = GlobalKey();
 
   /// The scanning light: one pass every 2.6 s, throughout.
   late final AnimationController _scan = AnimationController(
@@ -204,8 +245,50 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
   );
 
   @override
+  void initState() {
+    super.initState();
+    if (_handoff) {
+      // Tell the flying frame where to land, and wait for it.
+      SplashHandoff.targetProvider = _frameRect;
+      SplashHandoff.landed.addListener(_onLanded);
+    }
+  }
+
+  /// Where the square frame sits on screen right now, for the flight to aim at.
+  Rect? _frameRect() {
+    final box = _stageKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached || !box.hasSize) return null;
+    final origin = box.localToGlobal(Offset.zero);
+    return Rect.fromLTWH(
+      origin.dx,
+      origin.dy,
+      _smallWidthFor(box.size.width),
+      _height,
+    );
+  }
+
+  void _onLanded() {
+    if (!SplashHandoff.landed.value) return;
+    SplashHandoff.landed.removeListener(_onLanded);
+    SplashHandoff.targetProvider = null;
+    if (!mounted) return;
+    // The frame has landed: open it out straight away, then let the film run.
+    setState(() {});
+    _open.forward().then((_) {
+      if (!mounted) return;
+      setState(() => _handoff = false);
+      if (!AppMotion.reduced(context)) _film.repeat();
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_handoff && !AppMotion.reduced(context)) {
+      // The film waits for the frame to open out.
+      if (!_scan.isAnimating) _scan.repeat();
+      return;
+    }
     if (AppMotion.reduced(context)) {
       _scan.stop();
       _film
@@ -219,6 +302,11 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    SplashHandoff.landed.removeListener(_onLanded);
+    if (SplashHandoff.targetProvider == _frameRect) {
+      SplashHandoff.targetProvider = null;
+    }
+    _open.dispose();
     _scan.dispose();
     _film.dispose();
     super.dispose();
@@ -233,20 +321,25 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
     final s = widget.style;
     final a = widget.artwork;
     return SizedBox(
+      key: _stageKey,
       height: _height,
       width: double.infinity,
       child: LayoutBuilder(
         builder: (context, c) {
           final full = c.maxWidth;
+          final small = _smallWidthFor(full);
           return AnimatedBuilder(
-            animation: Listenable.merge([_film, _scan]),
+            animation: Listenable.merge([_film, _scan, _open]),
             builder: (context, _) {
               final t = _film.value;
               // Slide left, hold, fold back.
               final move = Curves.easeInOutCubic.transform(
                 _span(t, .16, .28) - _span(t, .86, .96),
               );
-              final width = full + (_smallWidth - full) * move;
+              final opened = Curves.easeInOutCubic.transform(_open.value);
+              final width = _handoff
+                  ? small + (full - small) * opened
+                  : full + (small - full) * move;
               // The story leaves quickly, just before the fold-back.
               final storyOut = 1 - _span(t, .80, .85);
 
@@ -269,7 +362,7 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
                 children: [
                   // The story, to the right of the painting.
                   Positioned(
-                    left: _smallWidth + 16,
+                    left: small + 14,
                     right: 0,
                     top: 0,
                     bottom: 0,
@@ -284,7 +377,7 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.serif(
-                              20,
+                              17.5,
                               weight: FontWeight.w700,
                               height: 1.1,
                             ).copyWith(color: s.bannerText),
@@ -311,7 +404,7 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.sans(
-                              11.5,
+                              10.5,
                               weight: FontWeight.w500,
                             ).copyWith(color: s.bannerBody(.78)),
                           ),
@@ -324,7 +417,7 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.sans(
-                              11.5,
+                              10.5,
                               weight: FontWeight.w500,
                               height: 1.25,
                             ).copyWith(color: s.bannerBody(.6)),
@@ -339,61 +432,18 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
                     top: 0,
                     width: width,
                     height: _height,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Padding(
-                            padding: const EdgeInsets.all(3),
-                            child: Opacity(
-                              opacity: s.bannerImageOpacity,
-                              child: Hero(
-                                tag: 'scan-viewfinder-hero',
-                                createRectTween: (b, e) =>
-                                    AppMotion.rectTween(b, e),
-                                flightShuttleBuilder:
-                                    (ctx, animation, direction, from, to) {
-                                      return AppMotion.heroShuttle(
-                                        animation: animation,
-                                        flightDirection: direction,
-                                        fromHeroContext: from,
-                                        toHeroContext: to,
-                                        startRadius: BorderRadius.circular(6),
-                                        endRadius: BorderRadius.zero,
-                                      );
-                                    },
-                                // Decoded once at full size and scaled by the strip, so the
-                                // picture never reloads while it slides.
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: FittedBox(
-                                    fit: BoxFit.cover,
-                                    alignment: a.heroFocus,
-                                    child: SizedBox(
-                                      width: full - 6,
-                                      height: _height - 6,
-                                      child: ArtImage(
-                                        a.image,
-                                        alignment: a.heroFocus,
-                                        semanticLabel:
-                                            'Starry Night, sample scan',
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: CornerBrackets(
-                            color: s.bannerAccent,
-                            size: 18,
-                            stroke: 2,
-                            radius: 6,
-                          ),
-                        ),
-                        _ScanLine(t: _scan.value, frameHeight: _height),
-                      ],
+                    child: Opacity(
+                      // While the splash's frame is still flying in, it is the
+                      // one on show; this one waits underneath.
+                      opacity: _handoff && !SplashHandoff.landed.value ? 0 : 1,
+                      child: ScanFrame(
+                        artwork: a,
+                        style: s,
+                        scan: _scan,
+                        cropBox: Size(full - 6, _height - 6),
+                        backdrop: _handoff ? 1 - opened : 0,
+                        heroEnabled: !_handoff,
+                      ),
                     ),
                   ),
                 ],
@@ -406,51 +456,11 @@ class _ScanStageState extends State<_ScanStage> with TickerProviderStateMixin {
   }
 }
 
-/// The light bar that scans down the frame, top to bottom.
-class _ScanLine extends StatelessWidget {
-  const _ScanLine({required this.t, required this.frameHeight});
-
-  final double t;
-  final double frameHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    // 8% → 88% of the frame's height, fading in over the first tenth and out
-    // over the last, on an ease-in-out.
-    final eased = const Cubic(.45, 0, .55, 1).transform(t);
-    final top = frameHeight * (.08 + .80 * eased);
-    final opacity = t < .1 ? t / .1 : (t > .9 ? (1 - t) / .1 : 1.0);
-    return Positioned(
-      left: 4,
-      right: 4,
-      top: top,
-      child: Opacity(
-        opacity: opacity.clamp(0.0, 1.0),
-        child: Container(
-          height: 2,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(2),
-            gradient: const LinearGradient(
-              colors: [Color(0x00E2C27F), Color(0xFFF0D9A6), Color(0x00E2C27F)],
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x99E2C27F),
-                blurRadius: 12,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _Copy extends StatelessWidget {
-  const _Copy({required this.style});
+  const _Copy({required this.style, required this.onScan});
 
   final HomeStyle style;
+  final VoidCallback onScan;
 
   @override
   Widget build(BuildContext context) {
@@ -459,90 +469,119 @@ class _Copy extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 215),
-          child: Text.rich(
-            TextSpan(
-              style: AppTypography.serif(
-                32,
-                weight: FontWeight.w700,
-                height: 1.04,
-              ).copyWith(color: s.bannerText),
+        Tappable(
+          onTap: onScan,
+          semanticLabel: 'Scan a painting',
+          haptic: HapticKind.light,
+          pressedScale: .96,
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.only(left: 18, right: 8),
+            decoration: BoxDecoration(
+              color: s.bannerBtnBg,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: s.bannerBtnBg.withValues(alpha: .4),
+                  offset: const Offset(0, 10),
+                  blurRadius: 22,
+                  spreadRadius: -10,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const TextSpan(text: 'Every Painting Has a '),
-                TextSpan(
-                  text: 'Story',
-                  style: TextStyle(color: s.bannerAccentSoft),
+                ArtIcon(
+                  ArtIcons.camera,
+                  size: 18,
+                  color: s.bannerBtnInk,
+                  strokeWidth: 1.9,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Scan a Painting',
+                  style: AppTypography.sans(
+                    14.5,
+                    weight: FontWeight.w700,
+                  ).copyWith(color: s.bannerBtnInk),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: s.bannerBtnDisc,
+                    shape: BoxShape.circle,
+                  ),
+                  child: ArtIcon(
+                    ArtIcons.arrowRight,
+                    size: 16,
+                    color: s.bannerBtnArrow,
+                    strokeWidth: 2,
+                  ),
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 9),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 240),
-          child: Text(
-            'Scan a masterpiece and uncover the story behind every brushstroke.',
-            style: AppTypography.sans(
-              13,
-              weight: FontWeight.w500,
-              height: 1.45,
-            ).copyWith(color: s.bannerBody(.82)),
-          ),
-        ),
-        const SizedBox(height: 15),
-        Container(
-          height: 48,
-          padding: const EdgeInsets.only(left: 18, right: 8),
-          decoration: BoxDecoration(
-            color: s.bannerBtnBg,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: s.bannerBtnBg.withValues(alpha: .4),
-                offset: const Offset(0, 10),
-                blurRadius: 22,
-                spreadRadius: -10,
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ArtIcon(
-                ArtIcons.camera,
-                size: 18,
-                color: s.bannerBtnInk,
-                strokeWidth: 1.9,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Scan a Painting',
-                style: AppTypography.sans(
-                  14.5,
-                  weight: FontWeight.w700,
-                ).copyWith(color: s.bannerBtnInk),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                width: 32,
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: s.bannerBtnDisc,
-                  shape: BoxShape.circle,
-                ),
-                child: ArtIcon(
-                  ArtIcons.arrowRight,
-                  size: 16,
-                  color: s.bannerBtnArrow,
-                  strokeWidth: 2,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
+    );
+  }
+}
+
+/// The gilded frame corner, laid over the banner's top-right corner so the
+/// banner's rounded corner is hidden beneath it. Drawn outside the banner's
+/// clip, sized by the banner's width and placed from the ornament's own
+/// proportions (its arms run just inside the banner's edges), so it fits the
+/// corner the same on every phone.
+class _GildedCorner extends StatelessWidget {
+  const _GildedCorner({required this.child});
+
+  final Widget child;
+
+  /// The asset's size, and where its arms' centre lines sit within it.
+  static const _imageWidth = 430.0;
+  static const _armFromTop = 48.5;
+  static const _armFromRight = 68.0;
+
+  /// Ornament width as a share of the banner's width, kept within a range so
+  /// it neither crowds the label on a narrow phone nor balloons on a wide one.
+  static const _share = .34;
+  static const _minWidth = 90.0;
+  static const _maxWidth = 112.0;
+
+  /// How far inside the banner's edges the arms run (logical px).
+  static const _inset = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) {
+        final w = (box.maxWidth * _share).clamp(_minWidth, _maxWidth);
+        final k = w / _imageWidth;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            child,
+            Positioned(
+              top: _inset - _armFromTop * k,
+              right: _inset - _armFromRight * k,
+              width: w,
+              child: IgnorePointer(
+                child: Image.asset(
+                  'assets/frame/corner.png',
+                  fit: BoxFit.contain,
+                  cacheWidth: (w * 3).round(),
+                  filterQuality: FilterQuality.medium,
+                  excludeFromSemantics: true,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

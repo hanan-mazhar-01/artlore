@@ -1,10 +1,10 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/media/art_image_source.dart';
-import '../../../core/services/cloudinary_service.dart';
 import '../../../core/services/remote_config_service.dart';
 import '../../artwork/data/dynamic_artwork_storage.dart';
 import '../../artwork/data/mock_catalog.dart';
@@ -12,32 +12,22 @@ import '../../artwork/domain/artwork.dart';
 import '../../artwork/domain/artwork_content.dart';
 import '../domain/recognition.dart';
 
-/// Production recognition repository powered by Gemini Vision & Cloudinary.
+/// Production recognition repository powered by Gemini Vision.
 class GeminiRecognitionRepository implements RecognitionRepository {
-  GeminiRecognitionRepository({
-    required this.remoteConfig,
-    required this.cloudinaryService,
-    http.Client? client,
-  }) : _client = client ?? http.Client();
+  GeminiRecognitionRepository({required this.remoteConfig, http.Client? client})
+    : _client = client ?? http.Client();
 
   final RemoteConfigService remoteConfig;
-  final CloudinaryService cloudinaryService;
   final http.Client _client;
 
-  static const _models = [
-    'gemini-3.1-flash-lite',
-    'gemini-3.8-flash',
-    'gemini-flash-latest',
-  ];
+  /// The model, then a stable free-tier fallback in case it is busy.
+  static const _models = ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
 
   @override
   Future<Identification> identify(CapturedFrame frame) async {
     final picked = frame.photoId;
     if (picked != null && mockCatalog.containsKey(picked)) {
-      return Identification(
-        artworkId: picked,
-        where: 'Scanned from a photo',
-      );
+      return Identification(artworkId: picked, where: 'Scanned from a photo');
     }
 
     final bytes = frame.bytes;
@@ -45,18 +35,28 @@ class GeminiRecognitionRepository implements RecognitionRepository {
       final hash = DynamicArtworkStorage.hashOf(bytes);
       final cachedId = DynamicArtworkStorage.artworkIdForHash(hash);
       if (cachedId != null && hasArtwork(cachedId)) {
-        return Identification(artworkId: cachedId, where: 'Scanned from a photo');
+        return Identification(
+          artworkId: cachedId,
+          where: 'Scanned from a photo',
+        );
       }
 
       final apiKey = remoteConfig.geminiApiKey;
       if (apiKey.isEmpty) {
-        debugPrint('Gemini vision identification error: no API key from Remote Config.');
+        debugPrint(
+          'Gemini vision identification error: no API key from Remote Config.',
+        );
         throw const RecognitionFailedException('No Gemini API key configured.');
       }
 
       final failures = <String>[];
       try {
-        final result = await _recognizeWithGemini(bytes, apiKey, hash, failures);
+        final result = await _recognizeWithGemini(
+          bytes,
+          apiKey,
+          hash,
+          failures,
+        );
         if (result != null) {
           return result;
         }
@@ -68,7 +68,9 @@ class GeminiRecognitionRepository implements RecognitionRepository {
       }
 
       throw RecognitionFailedException(
-        failures.isEmpty ? 'Artwork could not be recognized.' : failures.join(' | '),
+        failures.isEmpty
+            ? 'Artwork could not be recognized.'
+            : failures.join(' | '),
       );
     }
 
@@ -154,30 +156,39 @@ Catalog IDs: 'starry-night', 'fighting-temeraire', 'great-wave', 'pearl-earring'
           'parts': [
             {'text': prompt},
             {
-              'inline_data': {
-                'mime_type': 'image/jpeg',
-                'data': base64Image,
-              }
-            }
-          ]
-        }
+              'inline_data': {'mime_type': 'image/jpeg', 'data': base64Image},
+            },
+          ],
+        },
       ],
-      'generationConfig': {
-        'response_mime_type': 'application/json',
-      }
+      'generationConfig': {'response_mime_type': 'application/json'},
     });
 
     for (final model in _models) {
       try {
+        // The key comes from Remote Config (never from the app's source) and
+        // travels in a header, so it never appears in a URL or a log line.
         final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey',
+          'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent',
         );
 
-        final res = await _client.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: body,
-        ).timeout(const Duration(seconds: 15));
+        Future<http.Response> send() => _client
+            .post(
+              url,
+              headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': apiKey,
+              },
+              body: body,
+            )
+            .timeout(const Duration(seconds: 25));
+
+        var res = await send();
+        // "High demand" (503) is usually over in a moment: once more, then on.
+        if (res.statusCode == 503) {
+          await Future<void>.delayed(const Duration(milliseconds: 1500));
+          res = await send();
+        }
 
         if (res.statusCode != 200) {
           final reason = '$model: HTTP ${res.statusCode} ${_shorten(res.body)}';
@@ -229,7 +240,8 @@ Catalog IDs: 'starry-night', 'fighting-temeraire', 'great-wave', 'pearl-earring'
     return null;
   }
 
-  static String _shorten(String s) => s.length > 200 ? '${s.substring(0, 200)}…' : s;
+  static String _shorten(String s) =>
+      s.length > 200 ? '${s.substring(0, 200)}…' : s;
 
   Identification? _parseIdentification(
     String rawText,
@@ -250,7 +262,9 @@ Catalog IDs: 'starry-night', 'fighting-temeraire', 'great-wave', 'pearl-earring'
 
       if (parsed['isArtwork'] == false) {
         final reason = (parsed['notArtworkReason'] as String?)?.trim();
-        throw UnsupportedSubjectException(reason?.isNotEmpty == true ? reason : null);
+        throw UnsupportedSubjectException(
+          reason?.isNotEmpty == true ? reason : null,
+        );
       }
 
       final rawId = (parsed['artworkId'] as String? ?? '').toLowerCase().trim();
@@ -263,7 +277,9 @@ Catalog IDs: 'starry-night', 'fighting-temeraire', 'great-wave', 'pearl-earring'
           ? rawId
           : title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-');
 
-      debugPrint('ArtLore Gemini recognized: "$title" by "$artist" (id: $dynamicId)');
+      debugPrint(
+        'ArtLore Gemini recognized: "$title" by "$artist" (id: $dynamicId)',
+      );
 
       final newArtwork = Artwork(
         id: dynamicId,
@@ -277,7 +293,8 @@ Catalog IDs: 'starry-night', 'fighting-temeraire', 'great-wave', 'pearl-earring'
         museum: museum,
         city: city,
         movement: parsed['movement'] as String? ?? 'Unknown',
-        summary: parsed['summary'] as String? ??
+        summary:
+            parsed['summary'] as String? ??
             'A compelling artwork discovered and analyzed with ArtLore.',
         image: ArtImageSource.memory(bytes),
       );
@@ -290,15 +307,17 @@ Catalog IDs: 'starry-night', 'fighting-temeraire', 'great-wave', 'pearl-earring'
       if (rawStory != null) {
         for (final ch in rawStory) {
           if (ch is Map<String, dynamic>) {
-            chapters.add(StoryChapter(
-              label: ch['label'] as String? ?? 'Context',
-              focus: Alignment.center,
-              heading: ch['heading'] as String? ?? title,
-              opening: ch['opening'] as String? ?? '',
-              quote: ch['quote'] as String? ?? '',
-              quoteSource: ch['quoteSource'] as String? ?? artist,
-              closing: ch['closing'] as String? ?? '',
-            ));
+            chapters.add(
+              StoryChapter(
+                label: ch['label'] as String? ?? 'Context',
+                focus: Alignment.center,
+                heading: ch['heading'] as String? ?? title,
+                opening: ch['opening'] as String? ?? '',
+                quote: ch['quote'] as String? ?? '',
+                quoteSource: ch['quoteSource'] as String? ?? artist,
+                closing: ch['closing'] as String? ?? '',
+              ),
+            );
           }
         }
       }
@@ -310,12 +329,14 @@ Catalog IDs: 'starry-night', 'fighting-temeraire', 'great-wave', 'pearl-earring'
           if (d is Map<String, dynamic>) {
             final x = (d['x'] as num?)?.toDouble() ?? 0.5;
             final y = (d['y'] as num?)?.toDouble() ?? 0.5;
-            details.add(ArtworkDetail(
-              title: d['title'] as String? ?? 'Visual Focus',
-              x: x.clamp(0.0, 1.0),
-              y: y.clamp(0.0, 1.0),
-              description: d['description'] as String? ?? '',
-            ));
+            details.add(
+              ArtworkDetail(
+                title: d['title'] as String? ?? 'Visual Focus',
+                x: x.clamp(0.0, 1.0),
+                y: y.clamp(0.0, 1.0),
+                description: d['description'] as String? ?? '',
+              ),
+            );
           }
         }
       }

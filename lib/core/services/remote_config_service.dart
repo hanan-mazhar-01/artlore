@@ -2,7 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 
-/// Service to fetch and manage dynamic configuration like Gemini API Key & Cloudinary settings.
+/// Service to fetch and manage dynamic configuration: the Gemini API key and
+/// the share-link base URL. Nothing secret lives in the app's source.
 class RemoteConfigService {
   RemoteConfigService([FirebaseRemoteConfig? remoteConfig])
       : _customRemoteConfig = remoteConfig;
@@ -10,8 +11,6 @@ class RemoteConfigService {
   final FirebaseRemoteConfig? _customRemoteConfig;
 
   static const String geminiKeyParam = 'gemini_api_key';
-  static const String cloudinaryCloudNameParam = 'cloudinary_cloud_name';
-  static const String cloudinaryPresetParam = 'cloudinary_upload_preset';
   static const String shareArtworkBaseUrlParam = 'share_artwork_base_url';
   static const String privacyPolicyUrlParam = 'privacy_policy_url';
   static const String termsOfServiceUrlParam = 'terms_of_service_url';
@@ -36,32 +35,18 @@ class RemoteConfigService {
       );
       await config.setDefaults(const {
         geminiKeyParam: '',
-        cloudinaryCloudNameParam: 'vz6euzlq',
-        cloudinaryPresetParam: 'artlore_preset',
         shareArtworkBaseUrlParam: 'https://artlore.app/artwork',
         privacyPolicyUrlParam: 'https://artlore.app/privacy',
         termsOfServiceUrlParam: 'https://artlore.app/terms',
       });
       final activated = await config.fetchAndActivate();
       debugPrint('RemoteConfigService: fetchAndActivate activated=$activated');
-      debugPrint('RemoteConfigService: privacy_policy_url = ${config.getString(privacyPolicyUrlParam)}');
-      debugPrint('RemoteConfigService: terms_of_service_url = ${config.getString(termsOfServiceUrlParam)}');
     } catch (e) {
       debugPrint('RemoteConfigService: initialization failed: $e');
     }
   }
 
   String get geminiApiKey => getString(geminiKeyParam).trim();
-
-  String get cloudinaryCloudName {
-    final v = getString(cloudinaryCloudNameParam).trim();
-    return v.isEmpty ? 'vz6euzlq' : v;
-  }
-
-  String get cloudinaryUploadPreset {
-    final v = getString(cloudinaryPresetParam).trim();
-    return v.isEmpty ? 'artlore_preset' : v;
-  }
 
   String get shareArtworkBaseUrl {
     final v = getString(shareArtworkBaseUrlParam).trim();
