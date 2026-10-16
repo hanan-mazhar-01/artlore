@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -10,6 +12,7 @@ import '../../../core/widgets/art_scaffold.dart';
 import '../../../core/widgets/art_toast.dart';
 import '../../../core/widgets/fade_slide_in.dart';
 import '../../artwork/data/mock_catalog.dart';
+import '../../artwork/domain/artwork.dart';
 import '../../collections/presentation/collection_controller.dart';
 import '../../wall/wall_controller.dart';
 import '../../scan/presentation/scan_launcher.dart';
@@ -85,6 +88,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (active && !_wasActive) {
       ref.invalidate(latestPhotoProvider);
       _askForPhotos();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
     }
     _wasActive = active;
     // Home sits paused under any page opened over it (a painting's page, the
@@ -116,121 +122,165 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget build(BuildContext context) {
     // An account that signs in after Home is up is asked then.
     ref.listen(authStateProvider, (_, _) => _askForPhotos());
-    final savedCount = ref.watch(
-      collectionProvider.select((c) => c.value?.saved.length),
-    );
+    ref.watch(collectionProvider.select((c) => c.value?.saved.length));
+    final savedCount = ref.read(collectionProvider).value?.saved.length;
     // The three newest saved works, looked up straight from the catalogue so
     // the My Collection card follows a save or a removal at once.
-    final newestSaved = ref.watch(
+    ref.watch(
       collectionProvider.select(
-        (c) => (c.value?.savedIds ?? const <String>[]).take(3).toList(),
+        (c) => (c.value?.savedIds ?? const <String>[]).take(3).join(','),
       ),
     );
+    final newestSaved =
+        (ref.read(collectionProvider).value?.savedIds ?? const <String>[])
+            .take(3)
+            .toList();
     final latestPhotos = ref.watch(latestPhotoProvider).value ?? const [];
     // The wall's paintings, newest hung first — looked up straight from the
     // catalogue, so a painting hung a moment ago is on the wall at once.
-    final wallIds = ref.watch(wallProvider);
+    // Watched for changes while Home is in view, but the value is read fresh:
+    // while Home sits paused under another page the watched value can lag
+    // behind (Riverpod pauses listeners of hidden widgets).
+    ref.watch(wallProvider);
+    final wallIds = ref.read(wallProvider);
     final wallWorks = [for (final id in wallIds) ?getArtwork(id)];
     final hero = mockCatalog[ArtworkIds.starryNight]!;
-    final style = HomeStyle.of(context);
     void scan() => ScanLauncher.camera(context);
     final bannerHeight = _bannerHeight;
 
+    // The theme-dependent part lives in its own context, so a theme change
+    // rebuilds it directly (this State's own build can sit still while the
+    // page is paused under another).
+    return Builder(
+      builder: (context) {
+        final style = HomeStyle.of(context);
+        return _page(
+          context,
+          style,
+          savedCount,
+          newestSaved,
+          latestPhotos,
+          wallWorks,
+          hero,
+          scan,
+          bannerHeight,
+        );
+      },
+    );
+  }
+
+  Widget _page(
+    BuildContext context,
+    HomeStyle style,
+    int? savedCount,
+    List<String> newestSaved,
+    List<Uint8List> latestPhotos,
+    List<Artwork> wallWorks,
+    Artwork hero,
+    VoidCallback scan,
+    double? bannerHeight,
+  ) {
     return ArtScaffold(
       background: style.ground,
-      body: NotificationListener<SizeChangedLayoutNotification>(
-        // The banner settles after its first frame: lay the sheet out again
-        // whenever its height changes.
-        onNotification: (_) {
-          _scheduleMeasure();
-          return false;
-        },
-        child: CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(child: FadeSlideIn(child: HomeHeader())),
-            SliverToBoxAdapter(
-              child: Stack(
-                children: [
-                  // The sheet, starting part-way down the banner.
-                  if (bannerHeight != null)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: bannerHeight * _above + 14,
-                      bottom: 0,
-                      child: _SheetSurface(style: style),
-                    ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 14),
-                      SizeChangedLayoutNotifier(
-                        child: Padding(
-                          key: _bannerKey,
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
-                          child: ScanArtworkCard(
-                            artwork: hero,
-                            // The card shows the painting's own page — story, Look
-                            // Closer, deep dive; the pill inside it scans.
-                            onTap: () => context.openArtwork(hero.id),
-                            onScan: scan,
+      // Rebuilt from scratch when the theme flips, so nothing on Home can hold
+      // on to the other theme's colours.
+      body: KeyedSubtree(
+        key: ValueKey(style.dark),
+        child: NotificationListener<SizeChangedLayoutNotification>(
+          // The banner settles after its first frame: lay the sheet out again
+          // whenever its height changes.
+          onNotification: (_) {
+            _scheduleMeasure();
+            return false;
+          },
+          child: CustomScrollView(
+            slivers: [
+              const SliverToBoxAdapter(child: FadeSlideIn(child: HomeHeader())),
+              SliverToBoxAdapter(
+                child: Stack(
+                  children: [
+                    // The sheet, starting part-way down the banner.
+                    if (bannerHeight != null)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: bannerHeight * _above + 14,
+                        bottom: 0,
+                        child: _SheetSurface(style: style),
+                      ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 14),
+                        SizeChangedLayoutNotifier(
+                          child: Padding(
+                            key: _bannerKey,
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                            child: ScanArtworkCard(
+                              artwork: hero,
+                              // The card shows the painting's own page — story, Look
+                              // Closer, deep dive; the pill inside it scans.
+                              onTap: () => context.openArtwork(hero.id),
+                              onScan: scan,
+                            ),
                           ),
                         ),
-                      ),
-                      QuickActionsRow(
-                        onScanPhotos: () async {
-                          // The first time, ask for photo access here — the
-                          // visitor has just chosen to scan from photos — so
-                          // the card can show their newest pictures.
-                          var access = false;
-                          try {
-                            access =
-                                (await PhotoManager.requestPermissionExtend(
-                                  requestOption: photoAccessOption,
-                                )).hasAccess;
-                          } catch (_) {}
-                          if (!context.mounted) return;
-                          if (!access) {
-                            ArtToast.show(
-                              context,
-                              'Allow photo access to see your recent photos here.',
-                              actionLabel: 'Settings',
-                              onAction: PhotoManager.openSetting,
-                            );
-                          }
-                          await ScanLauncher.fromPhotos(context, ref);
-                          // The library may have changed while the picker was
-                          // open.
-                          ref.invalidate(latestPhotoProvider);
-                        },
-                        onCollection: () => context.go(AppRoutes.collection),
-                        savedCount: savedCount,
-                        // Saved works come newest first; the card shows the
-                        // latest 3.
-                        thumbs: [
-                          for (final id in newestSaved) ?getArtwork(id)?.image,
-                        ],
-                        latestPhotos: latestPhotos,
-                      ),
-                      RecentScansSection(onScan: scan),
-                      YourWallSection(
-                        works: wallWorks,
-                        onTakeDown: (a) =>
-                            ref.read(wallProvider.notifier).remove(a.id),
-                      ),
-                      const SizedBox(height: AppSpacing.tabBarClearance),
-                    ],
-                  ),
-                ],
+                        QuickActionsRow(
+                          onScanPhotos: () async {
+                            // The first time, ask for photo access here — the
+                            // visitor has just chosen to scan from photos — so
+                            // the card can show their newest pictures.
+                            var access = false;
+                            try {
+                              access =
+                                  (await PhotoManager.requestPermissionExtend(
+                                    requestOption: photoAccessOption,
+                                  )).hasAccess;
+                            } catch (_) {}
+                            if (!context.mounted) return;
+                            if (!access) {
+                              ArtToast.show(
+                                context,
+                                'Allow photo access to see your recent photos here.',
+                                actionLabel: 'Settings',
+                                onAction: PhotoManager.openSetting,
+                              );
+                            }
+                            await ScanLauncher.fromPhotos(context, ref);
+                            // The library may have changed while the picker was
+                            // open.
+                            ref.invalidate(latestPhotoProvider);
+                          },
+                          onCollection: () => context.go(AppRoutes.collection),
+                          savedCount: savedCount,
+                          // Saved works come newest first; the card shows the
+                          // latest 3.
+                          thumbs: [
+                            for (final id in newestSaved)
+                              ?getArtwork(id)?.image,
+                          ],
+                          latestPhotos: latestPhotos,
+                        ),
+                        RecentScansSection(onScan: scan),
+                        YourWallSection(
+                          works: wallWorks,
+                          onTakeDown: (a) =>
+                              ref.read(wallProvider.notifier).remove(a.id),
+                        ),
+                        const SizedBox(height: AppSpacing.tabBarClearance),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // If the content is short, the sheet still runs to the screen's
-            // bottom edge.
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: ColoredBox(color: style.ground),
-            ),
-          ],
+              // If the content is short, the sheet still runs to the screen's
+              // bottom edge.
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: ColoredBox(color: style.ground),
+              ),
+            ],
+          ),
         ),
       ),
     );

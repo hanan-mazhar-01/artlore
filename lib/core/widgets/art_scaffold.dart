@@ -31,9 +31,12 @@ class ArtScaffold extends StatelessWidget {
               statusBarColor: Colors.transparent,
               systemNavigationBarColor: Colors.transparent,
             );
-    Widget content = Material(
+    // The ground is a plain fill, not Material's own colour: that one is an
+    // implicit animation, and on a page that sits paused under another (Home,
+    // while Settings is open) it can be left half-way when the theme changes.
+    Widget content = ColoredBox(
       color: background ?? context.palette.background,
-      child: body,
+      child: Material(type: MaterialType.transparency, child: body),
     );
     if (swipeBack) content = _EdgeSwipeBack(child: content);
     return AnnotatedRegion<SystemUiOverlayStyle>(
