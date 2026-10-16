@@ -107,12 +107,27 @@ Uint8List _frameSync(_FrameArgs a) {
   final right = ((a.frame.right - ox) / k).clamp(left + 1, pw);
   final bottom = ((a.frame.bottom - oy) / k).clamp(top + 1, ph);
 
-  final cropped = img.copyCrop(
+  var cropped = img.copyCrop(
     photo,
     x: left.round(),
     y: top.round(),
     width: (right - left).round(),
     height: (bottom - top).round(),
   );
+  // Sharp, but not larger than the AI needs: a quicker upload.
+  const longest = 2000;
+  if (cropped.width > longest || cropped.height > longest) {
+    cropped = cropped.width >= cropped.height
+        ? img.copyResize(
+            cropped,
+            width: longest,
+            interpolation: img.Interpolation.cubic,
+          )
+        : img.copyResize(
+            cropped,
+            height: longest,
+            interpolation: img.Interpolation.cubic,
+          );
+  }
   return Uint8List.fromList(img.encodeJpg(cropped, quality: 92));
 }

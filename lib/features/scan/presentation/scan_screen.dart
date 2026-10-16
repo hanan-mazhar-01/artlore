@@ -102,10 +102,15 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
       );
       final ctrl = CameraController(
         chosen,
+        // Full HD: sharp enough for the frame's crop, and quick to take.
         ResolutionPreset.veryHigh,
         enableAudio: false,
       );
       await ctrl.initialize();
+      try {
+        await ctrl.setFocusMode(FocusMode.auto);
+        await ctrl.setExposureMode(ExposureMode.auto);
+      } catch (_) {}
       if (!mounted) {
         await ctrl.dispose();
         return;
@@ -152,27 +157,23 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
     // The photo goes to an AI service: ask first, once.
     if (!await ensureAiConsent(context, ref)) return;
     if (!mounted) return;
-    setState(() {
-      _busy = true;
-      _showFlash = true;
-    });
-    Haptics.play(HapticKind.success);
-
-    // Trigger shutter flash
-    Future.delayed(const Duration(milliseconds: 140), () {
-      if (mounted) setState(() => _showFlash = false);
-    });
-
+    setState(() => _busy = true);
     ref.read(scanControllerProvider.notifier).beginCapturing();
 
     if (_cameraController != null && _cameraController!.value.isInitialized) {
       try {
-        // Freeze preview immediately so live recording stops
-        await _cameraController!.pausePreview();
-      } catch (_) {}
-
-      try {
+        // The live preview keeps focusing on its own, so the shot is taken
+        // the moment the shutter is pressed. The flash answers at once.
+        if (mounted) setState(() => _showFlash = true);
+        Future.delayed(const Duration(milliseconds: 140), () {
+          if (mounted) setState(() => _showFlash = false);
+        });
         final xFile = await _cameraController!.takePicture();
+        Haptics.play(HapticKind.success);
+        try {
+          // Freeze the preview only after the photo is taken.
+          await _cameraController!.pausePreview();
+        } catch (_) {}
         final rawBytes = await xFile.readAsBytes();
         // Only what lay between the four corners goes on to be scanned.
         final feed = _feedKey.currentContext?.findRenderObject() as RenderBox?;

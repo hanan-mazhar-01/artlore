@@ -311,7 +311,9 @@ class ScanTray extends StatelessWidget {
               Tappable(
                 onTap: busy ? null : onCapture,
                 semanticLabel: 'Capture artwork',
-                haptic: HapticKind.medium,
+                // No buzz on the press: it would shake the phone as the photo
+                // is taken. The screen buzzes once the shot is done.
+                haptic: HapticKind.none,
                 pressedScale: .92,
                 child: AnimatedContainer(
                   duration: AppMotion.medium,
